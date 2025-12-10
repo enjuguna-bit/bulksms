@@ -20,7 +20,7 @@ import com.facebook.react.shell.MainReactPackage
  * MainApplication — Production Config
  * ----------------------------------------------------------
  * • React Native 0.76.9
- * • Hermes: ✔ ENABLED (Recommended for stability/perf)
+ * • Hermes: ✔ ENABLED (Optimized for RN 0.76+ performance)
  * • Architecture: Old (Fabric OFF for stability)
  * • Includes native SmsPackage
  * ==========================================================

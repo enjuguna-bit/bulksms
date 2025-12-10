@@ -1,0 +1,15 @@
+diff --git a/node_modules/react-native-document-picker/android/build.gradle b/node_modules/react-native-document-picker/android/build.gradle
+index fd24a6e..3fd0c38 100644
+--- a/node_modules/react-native-document-picker/android/build.gradle
++++ b/node_modules/react-native-document-picker/android/build.gradle
+@@ -45,6 +45,10 @@ android {
+         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
+     }
+ 
++    buildFeatures {
++        buildConfig true
++    }
++
+     sourceSets.main {
+         java {
+             if (!isNewArchitectureEnabled()) {

@@ -1,0 +1,13 @@
+diff --git a/node_modules/@op-engineering/op-sqlite/android/build.gradle b/node_modules/@op-engineering/op-sqlite/android/build.gradle
+index 7df016d..6f1b7c8 100644
+--- a/node_modules/@op-engineering/op-sqlite/android/build.gradle
++++ b/node_modules/@op-engineering/op-sqlite/android/build.gradle
+@@ -21,8 +21,6 @@ buildscript {
+ apply plugin: "com.android.library"
+ apply plugin: "kotlin-android"
+ 
+-apply plugin: "com.facebook.react"
+-
+ def getExtOrIntegerDefault(name) {
+   return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["OPSQLite_" + name]).toInteger()
+ }

@@ -1,0 +1,15 @@
+diff --git a/node_modules/@shopify/flash-list/android/build.gradle b/node_modules/@shopify/flash-list/android/build.gradle
+index 0585d2a..f86d41e 100644
+--- a/node_modules/@shopify/flash-list/android/build.gradle
++++ b/node_modules/@shopify/flash-list/android/build.gradle
+@@ -68,6 +68,10 @@ android {
+         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+     }
+ 
++    buildFeatures {
++        buildConfig true
++    }
++
+     lintOptions {
+         abortOnError false
+     }

@@ -103,6 +103,14 @@ android {
 
 dependencies {
     implementation("com.facebook.react:react-android:0.76.9")
+    
+    // Hermes engine - required for React Native 0.76+
+    if (isHermesEnabled) {
+        implementation("com.facebook.react:hermes-android:0.76.9")
+    } else {
+        implementation("org.webkit:android-jsc:+")
+    }
+    
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")

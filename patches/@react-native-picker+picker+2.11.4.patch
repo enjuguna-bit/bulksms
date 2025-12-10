@@ -1,0 +1,15 @@
+diff --git a/node_modules/@react-native-picker/picker/android/build.gradle b/node_modules/@react-native-picker/picker/android/build.gradle
+index 155b3a8..fc41ec5 100644
+--- a/node_modules/@react-native-picker/picker/android/build.gradle
++++ b/node_modules/@react-native-picker/picker/android/build.gradle
+@@ -88,6 +88,10 @@ android {
+         buildConfigField("boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString())
+     }
+ 
++    buildFeatures {
++        buildConfig true
++    }
++
+     sourceSets.main {
+         java {
+             if (isNewArchitectureEnabled()) {

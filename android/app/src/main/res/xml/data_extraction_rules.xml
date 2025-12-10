@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Data extraction rules for BulkSMS (Android 13+) -->
+<data-extraction-rules>
+
+    <!-- Cloud backup (encrypted) -->
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+
+        <!-- Include safe preferences -->
+        <include domain="sharedpref" path="user_prefs.xml" />
+        <include domain="sharedpref" path="app_settings.xml" />
+
+        <!-- Exclude sensitive or transient data -->
+        <exclude domain="file" />
+        <exclude domain="sharedpref" />
+        <exclude domain="database" />
+    </cloud-backup>
+
+    <!-- Device-to-device transfer -->
+    <device-transfer>
+
+        <!-- Include safe preferences -->
+        <include domain="sharedpref" path="user_prefs.xml" />
+        <include domain="sharedpref" path="app_settings.xml" />
+
+        <!-- Exclude sensitive or transient data -->
+        <exclude domain="file" />
+        <exclude domain="sharedpref" />
+        <exclude domain="database" />
+    </device-transfer>
+
+</data-extraction-rules>

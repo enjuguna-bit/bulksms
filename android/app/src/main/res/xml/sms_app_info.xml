@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sms-app>
+    <!-- Display name in Settings > Default SMS App -->
+    <app-name>BulkSMS</app-name>
+
+    <!-- Package of your application -->
+    <package name="com.bulksms.smsmanager" />
+
+    <!-- Required components for SMS/MMS support -->
+    <default-activities>
+        <activity name="com.bulksms.smsmanager.MainActivity" />
+    </default-activities>
+
+    <receivers>
+        <receiver name="com.bulksms.smsmanager.sms.SmsReceiver" />
+        <receiver name="com.bulksms.smsmanager.sms.MmsReceiver" />
+    </receivers>
+
+    <services>
+        <service name="com.bulksms.smsmanager.HeadlessSmsSendService" />
+    </services>
+</sms-app>

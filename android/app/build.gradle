@@ -1,0 +1,112 @@
+// ===========================================================
+// 📦 APP BUILD.GRADLE — BulkSMS
+// ===========================================================
+
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+
+// Helper to determine Hermes state safely
+def isHermesEnabled = project.findProperty("hermesEnabled")?.toBoolean() ?: true
+
+android {
+    namespace = "com.bulksms.smsmanager"
+    compileSdkVersion 34
+    
+    ndkVersion "26.1.10909125"
+
+    defaultConfig {
+        applicationId "com.bulksms.smsmanager"
+        minSdkVersion 24
+        targetSdkVersion 34
+        versionCode 2
+        versionName "1.1.1"
+        multiDexEnabled true
+
+        // Expose Hermes state to Kotlin code
+        buildConfigField "boolean", "IS_HERMES_ENABLED", isHermesEnabled.toString()
+
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
+    }
+
+    // Define a variable to check if we are building for release
+    def isReleaseBuild = gradle.startParameter.taskNames.any { it.contains("Release") }
+
+    splits {
+        abi {
+            // ⚡ DISABLE splits entirely to ensure all native libraries are included
+            enable false
+            reset()
+            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            universalApk true
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+        }
+        release {
+            signingConfig signingConfigs.debug
+            shrinkResources false
+            minifyEnabled false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled true
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    packaging {
+        jniLibs {
+            pickFirsts += [
+                "**/libjsi.so",
+                "**/libc++_shared.so",
+                "**/libreactnative.so",
+                "**/libfbjni.so",
+                "**/libreact_render*.so",
+                "**/libreactnativejni.so",
+                // ⚡ ADD THESE for Hermes support:
+                "**/libhermes.so",
+                "**/libhermes_executor.so"
+            ]
+        }
+        resources {
+            // ⚡ Exclude duplicate metadata files from multiple dependencies
+            // These exclusions prevent build failures when dependencies include
+            // duplicate LICENSE, NOTICE, or Kotlin module files.
+            // Common in React Native apps with androidx + kotlin dependencies.
+            excludes += [
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*",
+                "META-INF/*.kotlin_module"
+            ]
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+}
+
+dependencies {
+    implementation("com.facebook.react:react-android:0.76.9")
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.multidex:multidex:2.0.1")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+}

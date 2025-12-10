@@ -3,7 +3,7 @@ import { AppState, AppStateStatus } from "react-native";
 // import ReactNativeBiometrics, { BiometryType } from "react-native-biometrics";
 // Mock BiometryType for type safety
 type BiometryType = 'TouchID' | 'FaceID' | 'Biometrics';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import SecureStorage from "@/utils/SecureStorage";
 
 const LOCK_TIMEOUT = 1000 * 60; // 1 minute background timeout
 const STORAGE_KEY_LAST_ACTIVE = "app_lock_last_active";

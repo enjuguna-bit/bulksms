@@ -13,7 +13,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import SecureStorage from "@/utils/SecureStorage";
 
 // ---------------------------------------------------------------------------
 // Local PlanType (no longer imported from services/activation)
@@ -103,7 +103,7 @@ const planToMs = (plan: PlanType): number => {
 
 async function safeGetItem(key: string): Promise<string | null> {
   try {
-    return await AsyncStorage.getItem(key);
+    return await SecureStorage.getItem(key);
   } catch (e) {
     console.warn(`${HYBRID_LOG_PREFIX} Failed to read ${key}:`, e);
     return null;
@@ -112,7 +112,7 @@ async function safeGetItem(key: string): Promise<string | null> {
 
 async function safeSetItem(key: string, value: string): Promise<void> {
   try {
-    await AsyncStorage.setItem(key, value);
+    await SecureStorage.setItem(key, value);
   } catch (e) {
     console.warn(`${HYBRID_LOG_PREFIX} Failed to write ${key}:`, e);
   }
@@ -120,7 +120,7 @@ async function safeSetItem(key: string, value: string): Promise<void> {
 
 async function safeMultiSet(entries: [string, string][]): Promise<void> {
   try {
-    await AsyncStorage.multiSet(entries);
+    await SecureStorage.multiSet(entries);
   } catch (e) {
     console.warn(`${HYBRID_LOG_PREFIX} multiSet error:`, e);
   }

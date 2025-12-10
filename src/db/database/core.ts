@@ -1,6 +1,5 @@
 import { openDatabase } from "../sqlite/index";
 import { CONFIG } from "@/constants/config";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Logger from "@/utils/logger";
 
 // State
@@ -119,8 +118,8 @@ export async function initDatabase(): Promise<void> {
             // 8. Run Migrations (Safety net for existing users)
             await safeMigrations();
 
-            // 9. Migrate AsyncStorage data (one-time, on first launch)
-            await migrateAsyncStorageData();
+            // 9. AsyncStorage migration no longer needed - using SecureStorage (SQLite-based)
+            // await migrateAsyncStorageData();
 
             // 10. Mark Ready
             dbReady = true;
@@ -191,8 +190,9 @@ async function safeMigrations() {
 }
 
 // ---------------------------------------------------------
-// 🔄 AsyncStorage → SQLite Migration
+// 🔄 AsyncStorage → SQLite Migration (DEPRECATED - No longer needed with SecureStorage)
 // ---------------------------------------------------------
+/*
 async function migrateAsyncStorageData() {
     Logger.debug("Database", "Checking migration status...");
 
@@ -321,3 +321,4 @@ async function migrateAsyncStorageData() {
         // Don't throw - allow app to continue even if migration fails
     }
 }
+*/

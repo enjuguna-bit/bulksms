@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import SecureStorage from '@/utils/SecureStorage';
 
 export function useLocalStorage<T>(
   key: string,
@@ -11,7 +11,7 @@ export function useLocalStorage<T>(
   useEffect(() => {
     (async () => {
       try {
-        const item = await AsyncStorage.getItem(key);
+        const item = await SecureStorage.getItem(key);
         if (item !== null) {
           setStoredValue(JSON.parse(item));
         }
@@ -27,7 +27,7 @@ export function useLocalStorage<T>(
     try {
       const valueToStore = value instanceof Function ? value(storedValue) : value;
       setStoredValue(valueToStore);
-      await AsyncStorage.setItem(key, JSON.stringify(valueToStore));
+      await SecureStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {
       console.warn(`Error setting localStorage key "${key}":`, error);
     }
@@ -35,7 +35,7 @@ export function useLocalStorage<T>(
 
   const removeValue = async () => {
     try {
-      await AsyncStorage.removeItem(key);
+      await SecureStorage.removeItem(key);
       setStoredValue(initialValue);
     } catch (error) {
       console.warn(`Error removing localStorage key "${key}":`, error);

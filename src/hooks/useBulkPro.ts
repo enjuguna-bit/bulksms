@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Alert, InteractionManager } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import SecureStorage from "@/utils/SecureStorage";
 import DocumentPicker, { types as DocumentTypes, isCancel } from "react-native-document-picker";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import { parseCSV, autoSuggestMapping } from "@/utils/csvParser";
@@ -52,22 +52,22 @@ export function useBulkPro() {
         let mounted = true;
         (async () => {
             try {
-                const storedTemplate = await AsyncStorage.getItem(STORAGE_KEYS.LAST_TEMPLATE);
+                const storedTemplate = await SecureStorage.getItem(STORAGE_KEYS.LAST_TEMPLATE);
                 if (storedTemplate && mounted) setTemplate(storedTemplate);
 
-                const recentsJson = await AsyncStorage.getItem(STORAGE_KEYS.RECENTS);
+                const recentsJson = await SecureStorage.getItem(STORAGE_KEYS.RECENTS);
                 if (recentsJson && mounted) {
                     const parsed = JSON.parse(recentsJson);
                     if (Array.isArray(parsed)) setRecents(parsed.map((x) => String(x)));
                 }
 
-                const excelRowsJson = await AsyncStorage.getItem(STORAGE_KEYS.EXCEL_ROWS);
+                const excelRowsJson = await SecureStorage.getItem(STORAGE_KEYS.EXCEL_ROWS);
                 if (excelRowsJson && mounted) {
                     const parsed = JSON.parse(excelRowsJson);
                     if (Array.isArray(parsed)) setExcelRows(parsed);
                 }
 
-                const lastMode = await AsyncStorage.getItem(STORAGE_KEYS.LAST_MODE);
+                const lastMode = await SecureStorage.getItem(STORAGE_KEYS.LAST_MODE);
                 if (lastMode && mounted && (lastMode === "excel" || lastMode === "contacts")) {
                     setMode(lastMode);
                 }
@@ -84,14 +84,14 @@ export function useBulkPro() {
 
     useEffect(() => {
         if (excelRows.length > 0) {
-            AsyncStorage.setItem(STORAGE_KEYS.EXCEL_ROWS, JSON.stringify(excelRows))
-                .catch(e => console.warn("Failed to save excel rows:", e));
+            SecureStorage.setItem(STORAGE_KEYS.EXCEL_ROWS, JSON.stringify(excelRows))
+                .catch((e: unknown) => console.warn("Failed to save excel rows:", e));
         }
     }, [excelRows]);
 
     useEffect(() => {
-        AsyncStorage.setItem(STORAGE_KEYS.LAST_MODE, mode)
-            .catch(e => console.warn("Failed to save mode:", e));
+        SecureStorage.setItem(STORAGE_KEYS.LAST_MODE, mode)
+            .catch((e: unknown) => console.warn("Failed to save mode:", e));
     }, [mode]);
 
     const loadContacts = useCallback(async () => {
@@ -249,8 +249,8 @@ export function useBulkPro() {
 
         try {
             await Promise.all([
-                AsyncStorage.setItem(STORAGE_KEYS.RECENTS, JSON.stringify(next)),
-                AsyncStorage.setItem(STORAGE_KEYS.LAST_TEMPLATE, template)
+                SecureStorage.setItem(STORAGE_KEYS.RECENTS, JSON.stringify(next)),
+                SecureStorage.setItem(STORAGE_KEYS.LAST_TEMPLATE, template)
             ]);
             setRecents(next);
         } catch (e) {
@@ -261,12 +261,12 @@ export function useBulkPro() {
 
     function clearRecents() {
         setRecents([]);
-        AsyncStorage.removeItem(STORAGE_KEYS.RECENTS);
+        SecureStorage.removeItem(STORAGE_KEYS.RECENTS);
     }
 
     function clearExcelRows() {
         setExcelRows([]);
-        AsyncStorage.removeItem(STORAGE_KEYS.EXCEL_ROWS);
+        SecureStorage.removeItem(STORAGE_KEYS.EXCEL_ROWS);
     }
 
     async function handleSend() {

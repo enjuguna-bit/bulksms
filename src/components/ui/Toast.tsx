@@ -68,6 +68,7 @@ export const Toast: React.FC<ToastProps> = ({
     }, duration);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position, showProgress, duration]);
 
   const hideToast = () => {

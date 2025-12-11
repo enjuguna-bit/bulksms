@@ -10,7 +10,7 @@ import {
   AppState,
   ActivityIndicator,
 } from "react-native";
-import { isDefaultSmsApp, requestDefaultSmsApp } from "@/native/smsRole";
+import { smsRole } from "@/native";
 
 export default function DefaultSmsBanner() {
   const [isDefault, setIsDefault] = useState(true);
@@ -20,7 +20,7 @@ export default function DefaultSmsBanner() {
   const safeCheck = async () => {
     try {
       // 🚀 Dev or missing module bypass happens inside isDefaultSmsApp()
-      const status = await isDefaultSmsApp();
+      const status = await smsRole.isDefault();
       setIsDefault(status);
     } catch (e) {
       console.warn("[DefaultSmsBanner] Check failed:", e);
@@ -49,7 +49,7 @@ export default function DefaultSmsBanner() {
     if (loading) return;
     setLoading(true);
     try {
-      await requestDefaultSmsApp();
+      await smsRole.requestDefault();
       setTimeout(async () => {
         safeCheck();
         setLoading(false);

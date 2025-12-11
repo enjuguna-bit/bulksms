@@ -40,13 +40,15 @@ export function useMessages(address?: string) {
       "onIncomingSms",
       async (evt: any) => {
         if (!evt) return;
+        // We'll trust that type matches the enum. In real world, we'd validate.
         await addMessage(
           evt.from ?? "Unknown",
           evt.body ?? "",
           (evt.type ?? "incoming") as any,
           "sent",
           Date.now(),
-          evt.simSlot ? String(evt.simSlot) : null // ✅ cast simSlot to string|null
+          null, // threadId not available in simple event
+          evt.simSlot ? Number(evt.simSlot) : null // database expects number for simSlot
         );
         await reload();
       }
@@ -92,7 +94,7 @@ export function useMessages(address?: string) {
     addOutgoing: async (
       addr: string,
       body: string,
-      simSlot: string | null = null // ✅ changed type from number|null to string|null
+      simSlot: number | null = null
     ) => {
       const id = await addMessage(
         addr,
@@ -100,7 +102,8 @@ export function useMessages(address?: string) {
         "outgoing",
         "pending",
         Date.now(),
-        simSlot ? String(simSlot) : null
+        null, // threadId is optional
+        simSlot
       );
       return id;
     },

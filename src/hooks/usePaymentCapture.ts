@@ -22,7 +22,8 @@ import { syncRecordWithPOS } from "@/services/pos";
 import { useDebounce } from "@/utils/useDebounce";
 
 import { upsertPaymentRecord, getPaymentRecords, clearOldPaymentRecords } from "@/db/repositories/paymentRecords";
-import { getMessagesByAddress, type MessageRow } from "@/db/repositories/messages";
+import { getMessagesByAddress } from "@/db/repositories/messages";
+import type { MessageRow } from "@/db/database/types";
 import type { CustomerRecord } from "@/db/repositories/paymentRecords";
 
 import { CONFIG } from "@/constants/config";

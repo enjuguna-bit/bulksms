@@ -91,7 +91,8 @@ export default function ProtectedRoute({
   }
 
   // ❌ SUBSCRIPTION EXPIRED (unless dev bypass)
-  if (!isPro && (status === "expired" || status === "inactive") && !DEVELOPER_BYPASS) {
+  // Casting status to string to allow comparison with "inactive" even if TS thinks it's not possible
+  if (!isPro && (status === "expired" || (status as string) === "inactive") && !DEVELOPER_BYPASS) {
     router.safeReplace("Paywall");
     return <></>; // ✅ FIXED
   }

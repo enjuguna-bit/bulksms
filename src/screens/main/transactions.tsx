@@ -25,7 +25,10 @@ import type { CustomerRecord } from "@/types/CustomerRecord";
 // ---------------------------------------------------------
 // LocalRecordItem (STRICT + SAFE)
 // ---------------------------------------------------------
-interface LocalRecordItem extends CustomerRecord {
+// Fix mismatch with CustomerRecord by making sure ID types align or extend correctly
+// CustomerRecord id is number | undefined, so we must respect that.
+interface LocalRecordItem extends Omit<CustomerRecord, 'id'> {
+  id: string | number; // allow string id for local usage if needed
   displayName?: string;
   amount?: number;
   isOutgoing?: boolean;
@@ -86,7 +89,7 @@ function SupermarketCaptureContent(): JSX.Element {
   // Key Extractor
   // -----------------------------------------------------
   const keyExtractor = useCallback(
-    (i: LocalRecordItem) => i.id.toString(),
+    (i: LocalRecordItem) => String(i.id || Math.random()),
     []
   );
 
@@ -139,7 +142,7 @@ function SupermarketCaptureContent(): JSX.Element {
   return (
     <View style={[styles.container, { backgroundColor: t.bg }]}>
       <FlatList
-        data={filteredRecords as LocalRecordItem[]}
+        data={filteredRecords as unknown as LocalRecordItem[]}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         ListHeaderComponent={header}

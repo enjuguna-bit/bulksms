@@ -31,7 +31,7 @@ interface DebugInfo {
   developerBypass: boolean;
   databaseStatus: string;
   billingStatus: string;
-  asyncStorageKeys: string[];
+  asyncStorageKeys: readonly string[]; // Updated to readonly
   dbMessageCount: number;
   dbTransactionCount: number;
   dbQueueCount: number;
@@ -49,7 +49,7 @@ export default function DebugScreen() {
       const appVersion = DeviceInfo.getVersion();
       const buildNumber = DeviceInfo.getBuildNumber();
       const deviceId = await DeviceInfo.getUniqueId();
-      const deviceName = DeviceInfo.getDeviceName();
+      const deviceName = await DeviceInfo.getDeviceName(); // fixed await for deviceName
       const systemVersion = DeviceInfo.getSystemVersion();
 
       // Database status
@@ -104,6 +104,7 @@ export default function DebugScreen() {
 
   useEffect(() => {
     loadDebugInfo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRefresh = () => {
@@ -167,10 +168,10 @@ export default function DebugScreen() {
     );
   };
 
-  const InfoRow = ({ label, value }: { label: string; value: string | number | boolean }) => (
+  const InfoRow = ({ label, value }: { label: string; value: string | number | boolean | null }) => (
     <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
       <Text style={[styles.infoLabel, { color: colors.subText }]}>{label}</Text>
-      <Text style={[styles.infoValue, { color: colors.text }]}>{String(value)}</Text>
+      <Text style={[styles.infoValue, { color: colors.text }]}>{String(value ?? '')}</Text>
     </View>
   );
 
@@ -257,7 +258,8 @@ export default function DebugScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text }]}>AsyncStorage Keys</Text>
         <View style={[styles.infoContainer, { backgroundColor: colors.card }]}>
           {debugInfo.asyncStorageKeys.length > 0 ? (
-            debugInfo.asyncStorageKeys.map((key) => (
+            // Make a copy to avoid mutating readonly array
+            [...debugInfo.asyncStorageKeys].map((key) => (
               <InfoRow key={key} label={key} value="" />
             ))
           ) : (

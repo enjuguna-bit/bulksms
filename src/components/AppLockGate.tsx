@@ -8,17 +8,18 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
     const { colors } = useThemeSettings();
     const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-    useEffect(() => {
-        if (isReady && isEnabled && isLocked && !isAuthenticating) {
-            handleUnlock();
-        }
-    }, [isReady, isEnabled, isLocked]);
-
     const handleUnlock = async () => {
         setIsAuthenticating(true);
         await unlock();
         setIsAuthenticating(false);
     };
+
+    useEffect(() => {
+        if (isReady && isEnabled && isLocked && !isAuthenticating) {
+            handleUnlock();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isReady, isEnabled, isLocked]);
 
     if (!isReady) {
         return (

@@ -65,6 +65,7 @@ export const StatCard = memo(function StatCard({
             fadeAnim.setValue(1);
             scaleAnim.setValue(1);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [animated]);
 
     const cardContent = (

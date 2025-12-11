@@ -18,6 +18,11 @@ jest.mock('@/db/repositories/smsQueue', () => ({
 }));
 
 describe('SMS Queue Logic', () => {
+    // Clear mocks before each test
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
     it('should remove message ONLY if native send returns success (true)', async () => {
         // Setup
         const mockMsg = { id: 101, to_number: '123', body: 'test', timestamp: 123 };
@@ -54,3 +59,4 @@ describe('SMS Queue Logic', () => {
         expect(require('@/db/repositories/smsQueue').markMessageFailed).toHaveBeenCalledWith(102);
     });
 });
+

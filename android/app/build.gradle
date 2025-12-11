@@ -104,6 +104,9 @@ android {
 dependencies {
     implementation("com.facebook.react:react-android:0.76.9")
     
+    // Manually add AsyncStorage
+    implementation project(':@react-native-async-storage_async-storage')
+    
     // Hermes engine - required for React Native 0.76+
     if (isHermesEnabled) {
         implementation("com.facebook.react:hermes-android:0.76.9")

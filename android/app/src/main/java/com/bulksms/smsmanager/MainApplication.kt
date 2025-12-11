@@ -12,8 +12,8 @@ import com.facebook.react.soloader.OpenSourceMergedSoMapping
 // Custom SMS Bridge
 import com.bulksms.smsmanager.SmsPackage
 
-// Core React Native packages
-import com.facebook.react.shell.MainReactPackage
+// AsyncStorage
+import com.reactnativecommunity.asyncstorage.AsyncStoragePackage
 
 /**
  * ==========================================================
@@ -31,13 +31,11 @@ class MainApplication : Application(), ReactApplication {
     object : DefaultReactNativeHost(this) {
 
       override fun getPackages(): List<ReactPackage> {
-        val packages = mutableListOf<ReactPackage>()
-        // Core React Native package
-        packages.add(MainReactPackage())
-        // 📦 Manual Linking for Internal Modules
-        // This is REQUIRED because SmsPackage is not in node_modules
-        packages.add(SmsPackage())
-        return packages
+        // Manually add packages
+        return listOf(
+          SmsPackage(),
+          AsyncStoragePackage()
+        )
       }
 
       // Dev support ON in debug builds only

@@ -11,7 +11,6 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import Clipboard from "@react-native-clipboard/clipboard"; // ← replaces expo-clipboard
 
 // ✅ FIXED SOURCE
 import { MPESA_PLANS } from "@/constants/mpesa";
@@ -68,8 +67,7 @@ export const MpesaPaymentModal = memo(function MpesaPaymentModal({
   );
 
   const handleCopyTill = useCallback(async () => {
-    Clipboard.setString("3484366");
-    Alert.alert("✅ Copied", "Buy Goods Till Number copied to clipboard.");
+    Alert.alert("📱 Till Number", "Buy Goods Till Number: 3484366\n(Please copy manually)");
   }, []);
 
   const renderPlan = useCallback(

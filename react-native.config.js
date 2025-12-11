@@ -28,6 +28,15 @@ module.exports = {
     package: "@react-native-community/cli",
   },
 
-  // No custom autolinking overrides
-  dependencies: {},
+  // Register custom SMS package for autolinking
+  dependencies: {
+    "sms-native": {
+      platforms: {
+        android: {
+          package: "com.bulksms.smsmanager.SmsPackage",
+          packageClassName: "SmsPackage",
+        },
+      },
+    },
+  },
 };

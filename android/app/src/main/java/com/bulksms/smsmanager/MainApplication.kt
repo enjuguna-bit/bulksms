@@ -6,14 +6,12 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
 import com.facebook.react.defaults.DefaultReactNativeHost
+import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
 import com.facebook.soloader.SoLoader
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
-
-// Custom SMS Bridge
+import com.facebook.react.shell.MainReactPackage
 import com.bulksms.smsmanager.SmsPackage
-
-// AsyncStorage
-import com.reactnativecommunity.asyncstorage.AsyncStoragePackage
+import java.lang.reflect.InvocationTargetException
 
 /**
  * ==========================================================
@@ -29,13 +27,34 @@ class MainApplication : Application(), ReactApplication {
 
   override val reactNativeHost: ReactNativeHost =
     object : DefaultReactNativeHost(this) {
-
       override fun getPackages(): List<ReactPackage> {
-        // Manually add packages
-        return listOf(
-          SmsPackage(),
-          AsyncStoragePackage()
-        )
+        // Get all autolinked packages using reflection
+        val packages = mutableListOf<ReactPackage>()
+        
+        try {
+          // Try to load PackageList class using reflection
+          val packageListClass = Class.forName("com.bulksms.smsmanager.PackageList")
+          val constructor = packageListClass.getDeclaredConstructor(Application::class.java)
+          val packageList = constructor.newInstance(this@MainApplication)
+          
+          // Call getPackages() on PackageList
+          val getPackagesMethod = packageListClass.getDeclaredMethod("getPackages")
+          @Suppress("UNCHECKED_CAST")
+          val autolinkedPackages = getPackagesMethod.invoke(packageList) as List<ReactPackage>
+          packages.addAll(autolinkedPackages)
+        } catch (e: ClassNotFoundException) {
+          // PackageList not generated, just add MainReactPackage
+          packages.add(MainReactPackage())
+        } catch (e: Exception) {
+          // Handle other reflection errors
+          e.printStackTrace()
+          packages.add(MainReactPackage())
+        }
+        
+        // Always add our custom SMS package
+        packages.add(SmsPackage())
+        
+        return packages
       }
 
       // Dev support ON in debug builds only

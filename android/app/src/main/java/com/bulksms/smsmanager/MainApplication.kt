@@ -10,8 +10,8 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
 import com.facebook.soloader.SoLoader
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.react.shell.MainReactPackage
+import com.reactnativecommunity.asyncstorage.AsyncStoragePackage
 import com.bulksms.smsmanager.SmsPackage
-import java.lang.reflect.InvocationTargetException
 
 /**
  * ==========================================================
@@ -28,31 +28,80 @@ class MainApplication : Application(), ReactApplication {
   override val reactNativeHost: ReactNativeHost =
     object : DefaultReactNativeHost(this) {
       override fun getPackages(): List<ReactPackage> {
-        // Get all autolinked packages using reflection
         val packages = mutableListOf<ReactPackage>()
         
-        try {
-          // Try to load PackageList class using reflection
-          val packageListClass = Class.forName("com.bulksms.smsmanager.PackageList")
-          val constructor = packageListClass.getDeclaredConstructor(Application::class.java)
-          val packageList = constructor.newInstance(this@MainApplication)
-          
-          // Call getPackages() on PackageList
-          val getPackagesMethod = packageListClass.getDeclaredMethod("getPackages")
-          @Suppress("UNCHECKED_CAST")
-          val autolinkedPackages = getPackagesMethod.invoke(packageList) as List<ReactPackage>
-          packages.addAll(autolinkedPackages)
-        } catch (e: ClassNotFoundException) {
-          // PackageList not generated, just add MainReactPackage
-          packages.add(MainReactPackage())
-        } catch (e: Exception) {
-          // Handle other reflection errors
-          e.printStackTrace()
-          packages.add(MainReactPackage())
-        }
-        
-        // Always add our custom SMS package
+        // Always add core packages
+        packages.add(MainReactPackage())
+        packages.add(AsyncStoragePackage())
         packages.add(SmsPackage())
+        
+        // Add community packages via reflection (may or may not be available)
+        // These are the most likely package class names based on RN 0.76 ecosystem
+        val packageClassNames = listOf(
+          // AsyncStorage (explicitly added above, but try alternate name too)
+          "com.react-native-async-storage.AsyncStoragePackage",
+          
+          // Navigation
+          "com.reactnavigation.native.ReactNavigationPackage",
+          "com.react-navigation.native.ReactNavigationPackage",
+          "com.reactnavigation.bottom-tabs.BottomTabsNavigatorPackage",
+          "com.react-navigation.bottom-tabs.BottomTabsNavigatorPackage",
+          "com.reactnavigation.native-stack.NativeStackNavigatorPackage",
+          "com.react-navigation.native-stack.NativeStackNavigatorPackage",
+          
+          // Core UI
+          "com.swmansion.rnscreens.RNScreensPackage",
+          "com.reactnativecommunity.screens.RNScreensPackage",
+          "com.reactnativecommunity.safeareacontext.SafeAreaContextPackage",
+          "com.th3rdwave.gesturehandler.RNGestureHandlerPackage",
+          "com.reactnativecommunity.gesturehandler.RNGestureHandlerPackage",
+          
+          // Animation and reanimated
+          "com.swmansion.reanimated.ReanimatedPackage",
+          "com.reactnativecommunity.reanimated.ReanimatedPackage",
+          
+          // Network and sensors
+          "com.reactnativecommunity.netinfo.NetInfoPackage",
+          "com.reactnativecommunity.device_info.RNDeviceInfo",
+          "com.reactnative.device.info.RNDeviceInfo",
+          
+          // File operations
+          "com.reactnativecommunity.rnfs.RNFSPackage",
+          "com.reactnativecommunity.fs.RNFSPackage",
+          
+          // UI Components
+          "org.wonday.svg.SvgPackage",
+          "com.horcrux.svg.SvgPackage",
+          "com.reactnativecommunity.blur.BlurViewPackage",
+          "com.reactnativecommunity.picker.PickerPackage",
+          
+          // Communication
+          "com.reactnativecommunity.contacts.RNContactsPackage",
+          "com.reactnativecommunity.share.RNSharePackage",
+          "com.reactnative.community.share.RNSharePackage",
+          "com.reactnativecommunity.documentpicker.DocumentPickerPackage",
+          
+          // Utilities
+          "com.reactnativecommunity.torch.RNTorchPackage",
+          "com.reactnativecommunity.toast.RNToastPackage",
+          "com.reactnativecommunity.blobutil.BlobUtilPackage",
+          "com.reactnativecommunity.lineargradient.LinearGradientPackage",
+          "com.th3rdwave.lineargradient.LinearGradientPackage",
+          
+          // Database
+          "com.opcsqltie.OPSQLitePackage",
+          "com.op-engineering.sqlite.OPSQLitePackage"
+        )
+        
+        for (className in packageClassNames) {
+          try {
+            val clazz = Class.forName(className)
+            val packageInstance = clazz.getDeclaredConstructor().newInstance() as ReactPackage
+            packages.add(packageInstance)
+          } catch (e: Exception) {
+            // Silently skip packages that don't exist
+          }
+        }
         
         return packages
       }

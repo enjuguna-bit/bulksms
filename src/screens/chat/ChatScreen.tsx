@@ -1,8 +1,8 @@
 // ============================================================================
-// 💬 ChatScreen — Chat UI + WhatsApp-like Search System (TS-Stable v4.1 FIXED)
+// 💬 ChatScreen — Optimized Chat UI with Search & Debouncing (v5.0)
 // ============================================================================
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, memo, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 
 import { useMessages } from "@/providers/MessageProvider";
@@ -20,6 +21,8 @@ import ChatHeader from "./ChatHeader";
 import { getMessagesByThread, markThreadRead } from "@/db/repositories/messages";
 import { getThreadDetails, type MessageThread } from "@/db/repositories/threads";
 import type { MessageRow } from "@/db/database";
+import { useDebounce } from "@/hooks/useScreenOptimization";
+import { useThemeSettings } from "@/theme/ThemeProvider";
 
 // ---------------------------------------------------------------------------
 // TYPE DEFINITIONS
@@ -35,30 +38,119 @@ interface ChatScreenProps {
   navigation: any;
 }
 
+// Memoized message bubble wrapper
+const MemoizedMessageBubble = memo(
+  ({
+    msg,
+    isMe,
+    highlight,
+    searchTerm,
+  }: {
+    msg: MessageRow;
+    isMe: boolean;
+    highlight: boolean;
+    searchTerm: string;
+  }) => (
+    <MessageBubble
+      msg={msg}
+      isMe={isMe}
+      highlight={highlight}
+      searchTerm={searchTerm}
+    />
+  ),
+  (prev, next) =>
+    prev.msg.id === next.msg.id &&
+    prev.highlight === next.highlight &&
+    prev.searchTerm === next.searchTerm
+);
+
+// Memoized search bar
+const SearchBar = memo(
+  ({
+    query,
+    onQueryChange,
+    matches,
+    matchIndex,
+    onPrevPress,
+    onNextPress,
+    onClose,
+    colors,
+  }: {
+    query: string;
+    onQueryChange: (text: string) => void;
+    matches: number[];
+    matchIndex: number;
+    onPrevPress: () => void;
+    onNextPress: () => void;
+    onClose: () => void;
+    colors: any;
+  }) => (
+    <View style={[styles.searchBar, { borderColor: colors.border, backgroundColor: colors.card }]}>
+      <TextInput
+        value={query}
+        onChangeText={onQueryChange}
+        placeholder="Search messages..."
+        placeholderTextColor={colors.subText}
+        style={[styles.searchInput, { color: colors.text, borderColor: colors.border }]}
+        maxLength={100}
+      />
+
+      {query.length > 0 && (
+        <Text style={[styles.counter, { color: colors.text }]}>
+          {matchIndex + 1}/{matches.length || 0}
+        </Text>
+      )}
+
+      <TouchableOpacity
+        onPress={onPrevPress}
+        disabled={matches.length === 0}
+        style={{ opacity: matches.length === 0 ? 0.5 : 1 }}
+      >
+        <Text style={styles.navBtn}>⬆️</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={onNextPress}
+        disabled={matches.length === 0}
+        style={{ opacity: matches.length === 0 ? 0.5 : 1 }}
+      >
+        <Text style={styles.navBtn}>⬇️</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={onClose}>
+        <Text style={styles.closeBtn}>✖</Text>
+      </TouchableOpacity>
+    </View>
+  )
+);
+
 export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const { threadId, address } = route.params;
+  const { colors } = useThemeSettings();
 
   const { getThreadMessages, sendMessage, markThreadRead } = useMessages();
 
   const [thread, setThread] = useState<MessageThread | null>(null);
   const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
 
-  // -----------------------------
   // Search State
-  // -----------------------------
   const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [queryRaw, setQueryRaw] = useState("");
+  const query = useDebounce(queryRaw, 300); // Debounce search query
   const [matches, setMatches] = useState<number[]>([]);
   const [matchIndex, setMatchIndex] = useState(0);
 
   const listRef = useRef<FlatList<MessageRow>>(null);
 
-  // -----------------------------
   // Load Thread
-  // -----------------------------
   const loadThread = useCallback(async () => {
-    const t = await getThreadMessages(Number(threadId));
-    setThread(t);
+    try {
+      const t = await getThreadMessages(Number(threadId));
+      setThread(t);
+    } catch (error) {
+      console.error("Failed to load thread:", error);
+    }
   }, [threadId, getThreadMessages]);
 
   useEffect(() => {
@@ -69,9 +161,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     return () => clearInterval(timer);
   }, [loadThread, markThreadRead, threadId]);
 
-  // -----------------------------
-  // Header (Search Toggle)
-  // -----------------------------
+  // Header Setup
   useEffect(() => {
     navigation.setOptions({
       headerShown: true,
@@ -81,7 +171,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
           thread={thread}
           onSearchToggle={() => {
             setSearchOpen((p) => !p);
-            setQuery("");
+            setQueryRaw("");
             setMatches([]);
           }}
         />
@@ -89,9 +179,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     });
   }, [navigation, address, thread]);
 
-  // -----------------------------
-  // Search Logic
-  // -----------------------------
+  // Optimized Search Logic with useMemo
   useEffect(() => {
     if (!query.trim()) {
       setMatches([]);
@@ -112,46 +200,67 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     setMatchIndex(0);
 
     if (ids.length > 0) {
-      listRef.current?.scrollToIndex({ index: ids[0], animated: true });
+      setTimeout(() => {
+        listRef.current?.scrollToIndex({ index: ids[0], animated: true });
+      }, 100);
     }
-  }, [query, thread]);
+  }, [query, thread?.messages?.length]);
 
-  const jumpNext = () => {
+  const jumpNext = useCallback(() => {
     if (matches.length === 0) return;
     const next = (matchIndex + 1) % matches.length;
     setMatchIndex(next);
     listRef.current?.scrollToIndex({ index: matches[next], animated: true });
-  };
+  }, [matches, matchIndex]);
 
-  const jumpPrev = () => {
+  const jumpPrev = useCallback(() => {
     if (matches.length === 0) return;
     const prev = (matchIndex - 1 + matches.length) % matches.length;
     setMatchIndex(prev);
     listRef.current?.scrollToIndex({ index: matches[prev], animated: true });
-  };
+  }, [matches, matchIndex]);
 
-  // -----------------------------
   // Send Message
-  // -----------------------------
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSend = useCallback(async () => {
+    if (!input.trim() || sending) return;
 
-    await sendMessage({
-      address,
-      threadId: Number(threadId),
-      body: input,
-      type: "outgoing",
-    });
+    setSending(true);
+    try {
+      await sendMessage({
+        address,
+        threadId: Number(threadId),
+        body: input,
+        type: "outgoing",
+      });
 
-    setInput("");
-    loadThread();
+      setInput("");
+      await loadThread();
 
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 180);
-  };
+      setTimeout(
+        () => listRef.current?.scrollToEnd({ animated: true }),
+        100
+      );
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    } finally {
+      setSending(false);
+    }
+  }, [input, sending, sendMessage, address, threadId, loadThread]);
 
-  // -----------------------------
+  // Memoized messages with search highlighting
+  const highlightedMessages = useMemo(
+    () =>
+      thread?.messages?.map((msg, idx) => ({
+        msg,
+        highlight:
+          query.length > 0 &&
+          msg.body.toLowerCase().includes(query.toLowerCase()),
+        searchTerm: query,
+      })) ?? [],
+    [thread?.messages, query]
+  );
+
   // Render UI
-  // -----------------------------
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -159,72 +268,77 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     >
       {/* Search Bar */}
       {searchOpen && (
-        <View style={styles.searchBar}>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search messages..."
-            style={styles.searchInput}
-          />
-
-          {query.length > 0 && (
-            <Text style={styles.counter}>
-              {matchIndex + 1}/{matches.length}
-            </Text>
-          )}
-
-          <TouchableOpacity onPress={jumpPrev} disabled={matches.length === 0}>
-            <Text style={styles.navBtn}>⬆️</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={jumpNext} disabled={matches.length === 0}>
-            <Text style={styles.navBtn}>⬇️</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => {
-              setQuery("");
-              setMatches([]);
-            }}
-          >
-            <Text style={styles.closeBtn}>✖</Text>
-          </TouchableOpacity>
-        </View>
+        <SearchBar
+          query={queryRaw}
+          onQueryChange={setQueryRaw}
+          matches={matches}
+          matchIndex={matchIndex}
+          onPrevPress={jumpPrev}
+          onNextPress={jumpNext}
+          onClose={() => {
+            setQueryRaw("");
+            setMatches([]);
+            setSearchOpen(false);
+          }}
+          colors={colors}
+        />
       )}
 
       {/* Messages */}
       <FlatList
         ref={listRef}
         data={thread?.messages ?? []}
-        keyExtractor={(i) => i.id.toString()}
-        renderItem={({ item }) => (
-          <MessageBubble
-            msg={item}
-            isMe={item.type === "outgoing"}
-            highlight={
-              query.length > 0 &&
-              item.body.toLowerCase().includes(query.toLowerCase())
-            }
-            searchTerm={query}
-          />
-        )}
-        contentContainerStyle={{ padding: 12 }}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item, index }) => {
+          const highlighted = highlightedMessages[index];
+          return (
+            <MemoizedMessageBubble
+              msg={item}
+              isMe={item.type === "outgoing"}
+              highlight={highlighted?.highlight || false}
+              searchTerm={highlighted?.searchTerm || ""}
+            />
+          );
+        }}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8 }}
         onContentSizeChange={() =>
           listRef.current?.scrollToEnd({ animated: false })
         }
+        initialNumToRender={20}
+        maxToRenderPerBatch={20}
+        updateCellsBatchingPeriod={50}
+        removeClippedSubviews={true}
+        scrollEventThrottle={16}
       />
 
       {/* Input */}
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.background }]}>
         <TextInput
           value={input}
           onChangeText={setInput}
           placeholder="Type a message"
-          style={styles.input}
+          placeholderTextColor={colors.subText}
+          style={[
+            styles.input,
+            { color: colors.text, borderColor: colors.border },
+          ]}
+          editable={!sending}
+          maxLength={160}
         />
 
-        <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
-          <Text style={styles.sendText}>Send</Text>
+        <TouchableOpacity
+          style={[
+            styles.sendBtn,
+            { opacity: sending || !input.trim() ? 0.6 : 1 },
+          ]}
+          onPress={handleSend}
+          disabled={sending || !input.trim()}
+        >
+          {sending ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.sendText}>Send</Text>
+          )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -239,55 +353,58 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderColor: "#ddd",
-    backgroundColor: "#f9f9f9",
+    gap: 8,
   },
   searchInput: {
     flex: 1,
-    backgroundColor: "#fff",
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#ccc",
+    fontSize: 14,
   },
   counter: {
-    marginHorizontal: 8,
     fontWeight: "600",
-    color: "#555",
+    fontSize: 12,
+    minWidth: 40,
+    textAlign: "center",
   },
   navBtn: {
-    fontSize: 22,
-    marginHorizontal: 4,
+    fontSize: 20,
   },
   closeBtn: {
-    fontSize: 22,
-    marginLeft: 6,
+    fontSize: 20,
     color: "#e11d48",
   },
   inputContainer: {
     flexDirection: "row",
-    padding: 10,
+    padding: 12,
     borderTopWidth: 0.5,
-    borderColor: "#ccc",
-    backgroundColor: "#fff",
+    alignItems: "center",
+    gap: 8,
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ccc",
     borderRadius: 20,
     paddingHorizontal: 15,
-    paddingVertical: 8,
-    marginRight: 10,
+    paddingVertical: 10,
+    fontSize: 14,
   },
   sendBtn: {
     backgroundColor: "#4f46e5",
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 20,
     justifyContent: "center",
+    alignItems: "center",
+    minWidth: 60,
   },
-  sendText: { color: "#fff", fontWeight: "700" },
+  sendText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 13,
+  },
 });

@@ -1,9 +1,8 @@
-// -----------------------------------------------------
-// app/dashboard.tsx — Dashboard (with ProtectedRoute)
-// React Navigation version (no expo-router)
-// -----------------------------------------------------
+// ============================================================
+// Dashboard.tsx — Optimized with memoization & skeleton loaders
+// ============================================================
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, memo } from "react";
 import {
   View,
   Text,
@@ -20,6 +19,11 @@ import { useThemeSettings } from "@/theme/ThemeProvider";
 import { Card, Button, useToast } from "@/components/ui";
 import { LoadingSpinner, EmptyState } from "@/components/shared";
 import { useOptimizedList } from "@/hooks/useOptimizedList";
+import {
+  SkeletonCard,
+  SkeletonStatCard,
+  SkeletonListLoader,
+} from "@/components/shared/SkeletonLoader";
 
 import { getSendLogs, type SendLog, clearSendLogs } from "@/services/storage";
 import { getContactsList } from "@/services/storage";
@@ -35,9 +39,131 @@ import {
   Settings,
 } from "lucide-react-native";
 
-// Components
-import { StatCard } from "@/components/StatCard";
-import { QuickButton } from "@/components/QuickButton";
+// Memoized Components
+const StatCard = memo(
+  ({
+    label,
+    value,
+    color,
+    gradient,
+  }: {
+    label: string;
+    value: number | string;
+    color: string;
+    gradient: string[];
+  }) => (
+    <View style={[styles.statCard, { backgroundColor: color + "15" }]}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+    </View>
+  ),
+  (prev, next) =>
+    prev.label === next.label &&
+    prev.value === next.value &&
+    prev.color === next.color
+);
+
+const QuickButton = memo(
+  ({
+    icon,
+    label,
+    color,
+    onPress,
+  }: {
+    icon: React.ReactNode;
+    label: string;
+    color: string;
+    onPress: () => void;
+  }) => (
+    <TouchableOpacity
+      style={[styles.quickButton, { backgroundColor: color + "15" }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.buttonIcon, { backgroundColor: color }]}>
+        {icon}
+      </View>
+      <Text style={[styles.buttonLabel, { color }]}>{label}</Text>
+    </TouchableOpacity>
+  ),
+  (prev, next) =>
+    prev.label === next.label &&
+    prev.color === next.color
+);
+
+const LogItemComponent = memo(
+  ({
+    item,
+    colors,
+  }: {
+    item: SendLog;
+    colors: any;
+  }) => (
+    <View style={[styles.logItem, { borderColor: colors.border }]}>
+      <View>
+        <Text style={[styles.logPhone, { color: colors.text }]}>
+          {item.phone}
+        </Text>
+        <Text style={[styles.logTime, { color: colors.subText }]}>
+          {new Date(item.at).toLocaleString()}
+        </Text>
+      </View>
+      <Text
+        style={[
+          styles.logStatus,
+          item.status === "SENT"
+            ? { color: colors.success }
+            : item.status === "FAILED"
+              ? { color: colors.error }
+              : { color: colors.warning },
+        ]}
+      >
+        {item.status}
+      </Text>
+    </View>
+  ),
+  (prev, next) =>
+    prev.item.id === next.item.id &&
+    prev.item.status === next.item.status
+);
+
+const StatisticsRow = memo(
+  ({
+    cards,
+    colors,
+  }: {
+    cards: { label: string; value: number; color: string; gradient: string[] }[];
+    colors: any;
+  }) => (
+    <View style={styles.row}>
+      {cards.map((card) => (
+        <StatCard key={card.label} {...card} />
+      ))}
+    </View>
+  ),
+  (prev, next) =>
+    JSON.stringify(prev.cards) === JSON.stringify(next.cards)
+);
+
+const QuickActionsRow = memo(
+  ({ actions }: { actions: Array<{ label: string; color: string; route: string; icon: React.ReactNode }> }) => {
+    const router = useSafeRouter();
+    return (
+      <View style={styles.quickRow}>
+        {actions.map((action) => (
+          <QuickButton
+            key={action.label}
+            icon={action.icon}
+            label={action.label}
+            color={action.color}
+            onPress={() => router.safePush(action.route as any)}
+          />
+        ))}
+      </View>
+    );
+  },
+  (prev, next) => JSON.stringify(prev.actions) === JSON.stringify(next.actions)
+);
 
 export default function Dashboard() {
   return (
@@ -53,16 +179,17 @@ function DashboardContent() {
   const toast = useToast();
 
   const [logs, setLogs] = useState<SendLog[]>([]);
-  const [loading, setLoading] = useState(false);
-  // const [contacts, setContacts] = useState<any[]>([]); // Unused for now, but kept if needed later
+  const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      // Parallel fetch if we need contacts later
       const [l] = await Promise.all([getSendLogs(), getContactsList()]);
       setLogs(l.reverse());
-      // setContacts(c);
+      if (initialLoad) {
+        setInitialLoad(false);
+      }
       toast.showSuccess("Dashboard data refreshed");
     } catch (e) {
       console.error(e);
@@ -70,7 +197,7 @@ function DashboardContent() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [initialLoad, toast]);
 
   const handleClearLogs = useCallback(() => {
     Alert.alert("Confirm", "Clear all logs?", [
@@ -101,30 +228,7 @@ function DashboardContent() {
   const unsupported = logs.filter((l) => l.status === "UNSUPPORTED").length;
 
   const renderLogItem: ListRenderItem<SendLog> = useCallback(
-    ({ item }) => (
-      <View style={[styles.logItem, { borderColor: colors.border }]}>
-        <View>
-          <Text style={[styles.logPhone, { color: colors.text }]}>
-            {item.phone}
-          </Text>
-          <Text style={[styles.logTime, { color: colors.subText }]}>
-            {new Date(item.at).toLocaleString()}
-          </Text>
-        </View>
-        <Text
-          style={[
-            styles.logStatus,
-            item.status === "SENT"
-              ? { color: colors.success }
-              : item.status === "FAILED"
-                ? { color: colors.error }
-                : { color: colors.warning },
-          ]}
-        >
-          {item.status}
-        </Text>
-      </View>
-    ),
+    ({ item }) => <LogItemComponent item={item} colors={colors} />,
     [colors]
   );
 
@@ -135,6 +239,81 @@ function DashboardContent() {
     itemHeight: 60,
   });
 
+  const statCards = [
+    {
+      label: "Total Logs",
+      value: total,
+      color: "#0ea5e9",
+      gradient: colors.gradientPrimary,
+    },
+    {
+      label: "Sent",
+      value: sent,
+      color: "#16a34a",
+      gradient: colors.gradientSuccess,
+    },
+  ];
+
+  const statCards2 = [
+    {
+      label: "Failed",
+      value: failed,
+      color: "#dc2626",
+      gradient: colors.gradientError,
+    },
+    {
+      label: "Unsupported",
+      value: unsupported,
+      color: "#ca8a04",
+      gradient: colors.gradientWarning,
+    },
+  ];
+
+  const quickActions = [
+    {
+      icon: <Send color="#fff" size={20} />,
+      label: "Bulk SMS",
+      color: "#2563eb",
+      route: "BulkPro",
+    },
+    {
+      icon: <FileText color="#fff" size={20} />,
+      label: "Single SMS",
+      color: "#16a34a",
+      route: "SendSms",
+    },
+  ];
+
+  const quickActions2 = [
+    {
+      icon: <Users color="#fff" size={20} />,
+      label: "Customers",
+      color: "#0ea5e9",
+      route: "CustomerDatabase",
+    },
+    {
+      icon: <BarChart2 color="#fff" size={20} />,
+      label: "Transactions",
+      color: "#9333ea",
+      route: "Transactions",
+    },
+  ];
+
+  const quickActions3 = [
+    {
+      icon: <Smartphone color="#fff" size={20} />,
+      label: "Monitor",
+      color: "#f59e0b",
+      route: "Transactions",
+    },
+    {
+      icon: <Settings color="#fff" size={20} />,
+      label: "Settings",
+      color: "#64748b",
+      route: "Settings",
+    },
+  ];
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.text }]}>Dashboard</Text>
@@ -142,116 +321,62 @@ function DashboardContent() {
         Monitor activity and navigate across modules
       </Text>
 
-      {/* ===== Summary Cards ===== */}
-      <View style={styles.row}>
-        <StatCard 
-          label="Total Logs" 
-          value={total} 
-          color="#0ea5e9" 
-          gradient={colors.gradientPrimary}
-        />
-        <StatCard 
-          label="Sent" 
-          value={sent} 
-          color="#16a34a" 
-          gradient={colors.gradientSuccess}
-        />
-      </View>
-      <View style={styles.row}>
-        <StatCard 
-          label="Failed" 
-          value={failed} 
-          color="#dc2626" 
-          gradient={colors.gradientError}
-        />
-        <StatCard 
-          label="Unsupported" 
-          value={unsupported} 
-          color="#ca8a04" 
-          gradient={colors.gradientWarning}
-        />
-      </View>
+      {/* Statistics Cards */}
+      {loading && initialLoad ? (
+        <>
+          <SkeletonStatCard />
+          <SkeletonStatCard />
+        </>
+      ) : (
+        <>
+          <StatisticsRow cards={statCards} colors={colors} />
+          <StatisticsRow cards={statCards2} colors={colors} />
+        </>
+      )}
 
-      {/* ===== Quick Links ===== */}
+      {/* Quick Actions Section */}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
         Quick Actions
       </Text>
 
-      <View style={styles.quickRow}>
-        <QuickButton
-          icon={<Send color="#fff" size={20} />}
-          label="Bulk SMS"
-          color="#2563eb"
-          gradient={colors.gradientPrimary}
-          hapticType="medium"
-          onPress={() => router.safePush("BulkPro")}
-        />
-        <QuickButton
-          icon={<FileText color="#fff" size={20} />}
-          label="Single SMS"
-          color="#16a34a"
-          gradient={colors.gradientSuccess}
-          hapticType="light"
-          onPress={() => router.safePush("SendSms")}
-        />
-      </View>
+      {loading && initialLoad ? (
+        <>
+          <View style={styles.skeletonRow} />
+          <View style={styles.skeletonRow} />
+          <View style={styles.skeletonRow} />
+        </>
+      ) : (
+        <>
+          <QuickActionsRow actions={quickActions} />
+          <QuickActionsRow actions={quickActions2} />
+          <QuickActionsRow actions={quickActions3} />
+        </>
+      )}
 
-      <View style={styles.quickRow}>
-        <QuickButton
-          icon={<Users color="#fff" size={20} />}
-          label="Customers"
-          color="#0ea5e9"
-          gradient={["#0ea5e9", "#0284c7"]}
-          hapticType="light"
-          onPress={() => router.safePush("CustomerDatabase")}
-        />
-        <QuickButton
-          icon={<BarChart2 color="#fff" size={20} />}
-          label="Transactions"
-          color="#9333ea"
-          gradient={["#9333ea", "#7c3aed"]}
-          hapticType="light"
-          onPress={() => router.safePush("Transactions")}
-        />
-      </View>
-
-      <View style={styles.quickRow}>
-        <QuickButton
-          icon={<Smartphone color="#fff" size={20} />}
-          label="Monitor"
-          color="#f59e0b"
-          gradient={colors.gradientWarning}
-          hapticType="warning"
-          onPress={() => router.safePush("Transactions")}
-        />
-        <QuickButton
-          icon={<Settings color="#fff" size={20} />}
-          label="Settings"
-          color="#64748b"
-          gradient={["#64748b", "#475569"]}
-          hapticType="light"
-          onPress={() => router.safeReplace("Settings")}
-        />
-      </View>
-
-      {/* ===== Logs Section ===== */}
+      {/* Logs Section */}
       <Card variant="elevated" style={styles.logsCard}>
         <View style={styles.cardHeader}>
           <Text style={[styles.cardTitle, { color: colors.text }]}>
             Recent Logs
           </Text>
           <View style={{ flexDirection: "row", gap: 8 }}>
-            <TouchableOpacity onPress={loadData}>
-              <RefreshCcw color={colors.accent} size={20} />
+            <TouchableOpacity onPress={loadData} disabled={loading}>
+              <RefreshCcw
+                color={loading ? colors.border : colors.accent}
+                size={20}
+              />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleClearLogs}>
-              <Trash2 color={colors.error} size={20} />
+            <TouchableOpacity onPress={handleClearLogs} disabled={loading}>
+              <Trash2
+                color={loading ? colors.border : colors.error}
+                size={20}
+              />
             </TouchableOpacity>
           </View>
         </View>
 
-        {loading ? (
-          <LoadingSpinner size="large" />
+        {loading && initialLoad ? (
+          <SkeletonListLoader count={3} cardType="simple" />
         ) : logs.length === 0 ? (
           <EmptyState type="logs" />
         ) : (
@@ -281,6 +406,11 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 12,
   },
+  skeletonRow: {
+    height: 60,
+    marginBottom: 12,
+    borderRadius: 12,
+  },
   sectionTitle: {
     fontWeight: "800",
     fontSize: 18,
@@ -291,6 +421,41 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     marginBottom: 12,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 16,
+    justifyContent: "center",
+  },
+  statLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    opacity: 0.7,
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: "900",
+  },
+  quickButton: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  buttonLabel: {
+    fontSize: 12,
+    fontWeight: "700",
   },
   logsCard: {
     marginTop: 24,
@@ -310,7 +475,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderBottomWidth: 1,
     paddingVertical: 12,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   logPhone: {
     fontWeight: "600",

@@ -67,6 +67,7 @@ export function openDatabaseSync(name: string = CONFIG.DB_SMS): SQLiteDatabase {
           executeSql: (sql, params = [], success, error) => {
             try {
               const result = db.execute(sql, params ?? []);
+              // @ts-ignore - op-sqlite types might be tricky with result properties vs promise
               const resultSet = convertToResultSet(result ?? { rowsAffected: 0, rows: [], insertId: undefined });
               success?.(tx, resultSet);
             } catch (err) {
@@ -94,6 +95,7 @@ export function openDatabaseSync(name: string = CONFIG.DB_SMS): SQLiteDatabase {
     executeSql: async (sql: string, params: any[] = []) => {
       try {
         const result = db.execute(sql, params);
+        // @ts-ignore - op-sqlite types might be tricky
         return [convertToResultSet(result)];
       } catch (error) {
         console.error('executeSql error:', error);

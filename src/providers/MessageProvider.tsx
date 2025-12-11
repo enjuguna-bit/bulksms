@@ -106,6 +106,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       loadThreads(true);
       refreshUnreadCounts();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

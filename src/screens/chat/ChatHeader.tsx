@@ -59,7 +59,7 @@ export default function ChatHeader({
       {/* Avatar: last 2 digits of phone */}
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>
-          {address.substring(address.length - 2)}
+          {(address || "?").substring((address || "?").length - 2)}
         </Text>
       </View>
 

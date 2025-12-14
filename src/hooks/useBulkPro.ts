@@ -130,7 +130,7 @@ export function useBulkPro() {
             if (!fileUri) throw new Error("No file URI");
 
             const name = res.name || "";
-            
+
             if (!isFileTypeSupported(name)) {
                 Alert.alert(
                     "Unsupported File",
@@ -154,7 +154,7 @@ export function useBulkPro() {
             }
 
             const result = await parseExcelSmart(path, name);
-            
+
             if (!result.rows.length) {
                 Alert.alert("Import Error", `File is empty or has no valid data rows.\n\nDetected format: ${fileTypeDisplayName}`);
                 return;
@@ -174,7 +174,7 @@ export function useBulkPro() {
             setShowMappingModal(true);
 
             Alert.alert(
-                "Import Successful", 
+                "Import Successful",
                 `Successfully imported ${result.rows.length} records from ${fileTypeDisplayName} file.\n\nReady to map columns.`
             );
         } catch (e: unknown) {
@@ -347,22 +347,31 @@ export function useBulkPro() {
                 failedRef.current += 1;
             } else {
                 try {
-                    // Refactored to use service layer
-                    const result = await sendSingleSms(phone, body);
+                    // Refactored to use service layer with Timeout Protection
+                    const sendPromise = sendSingleSms(phone, body);
+                    const timeoutPromise = new Promise<any>((_, reject) =>
+                        setTimeout(() => reject(new Error("Timeout")), 15000)
+                    );
+
+                    const result = await Promise.race([sendPromise, timeoutPromise]);
+
                     if (result.success) {
                         sentRef.current += 1;
                     } else {
                         failedRef.current += 1;
                         await enqueueSMS(phone, body);
                     }
+
                     await saveSendLog({
                         phone,
                         status: result.success ? "SENT" : "FAILED",
                         at: new Date().toISOString(),
+                        error: result.error ? String(result.error) : undefined
                     });
-                } catch (_) {
+                } catch (err) {
                     failedRef.current += 1;
                     await enqueueSMS(phone, body);
+                    console.warn(`[BulkPro] Send failed or timed out: ${phone}`, err);
                 }
             }
 

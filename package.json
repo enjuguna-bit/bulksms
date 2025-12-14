@@ -25,6 +25,7 @@
     "@shopify/flash-list": "^1.7.1",
     "axios": "^1.7.9",
     "expo-linear-gradient": "^15.0.8",
+    "expo-modules-core": "^3.0.29",
     "jose": "6.1.1",
     "lucide-react-native": "0.553.0",
     "react": "18.3.1",

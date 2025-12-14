@@ -123,7 +123,8 @@ const LogItemComponent = memo(
     </View>
   ),
   (prev, next) =>
-    prev.item.id === next.item.id &&
+    prev.item.at === next.item.at &&
+    prev.item.phone === next.item.phone &&
     prev.item.status === next.item.status
 );
 
@@ -156,7 +157,8 @@ const QuickActionsRow = memo(
             icon={action.icon}
             label={action.label}
             color={action.color}
-            onPress={() => router.safePush(action.route as any)}
+            // Use navigate instead of safePush for known routes to avoid 'ready' checks if they are flaky
+            onPress={() => router.navigate(action.route as any)}
           />
         ))}
       </View>
@@ -182,17 +184,13 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  const loadData = useCallback(async (isManual = false) => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [l] = await Promise.all([getSendLogs(), getContactsList()]);
       setLogs(l.reverse());
       if (initialLoad) {
         setInitialLoad(false);
-      }
-      // Only show success toast on manual refresh
-      if (isManual === true) {
-        toast.showSuccess("Dashboard Updated");
       }
     } catch (e) {
       console.error(e);
@@ -202,9 +200,10 @@ function DashboardContent() {
     }
   }, [initialLoad, toast]);
 
-  const handleManualRefresh = useCallback(() => {
-    loadData(true);
-  }, [loadData]);
+  const handleManualRefresh = useCallback(async () => {
+    await loadData();
+    toast.showSuccess("Dashboard Updated (v7 Verified)");
+  }, [loadData, toast]);
 
   const handleClearLogs = useCallback(() => {
     Alert.alert("Confirm", "Clear all logs?", [
@@ -226,7 +225,7 @@ function DashboardContent() {
   }, [toast]);
 
   useEffect(() => {
-    loadData(false);
+    loadData();
   }, []); // Remove loadData dependency to prevent loop if references result in instability
 
   const total = logs.length;

@@ -163,7 +163,8 @@ export async function hasPerformedInitialSync(): Promise<boolean> {
     const result = await runQuery(
       'SELECT COUNT(*) as count FROM messages WHERE type = "incoming" OR type = "sent"'
     );
-    const count = result.rows.item(0).count;
+    const item = result?.rows?.item(0);
+    const count = item?.count ?? 0;
     return count > 0;
   } catch (error) {
     Logger.error('SmsSync', 'Failed to check sync status', error);

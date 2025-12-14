@@ -4,6 +4,7 @@
 // -----------------------------------------------------
 
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -95,6 +96,13 @@ export default function InboxScreen() {
     }
   }
 
+  // Refresh when screen gains focus (e.g. back from Chat)
+  useFocusEffect(
+    useCallback(() => {
+      loadMessages();
+    }, [])
+  );
+
   // Initial load
   useEffect(() => {
     (async () => {
@@ -154,7 +162,7 @@ export default function InboxScreen() {
   const renderItem = useCallback<ListRenderItem<SmsMessageRecord>>(({ item }) => (
     <TouchableOpacity
       onPress={() =>
-        router.safePush("Chat", { phone: item.address })
+        router.safePush("ChatScreen", { address: item.address })
       }
       onLongPress={() =>
         Alert.alert("Message Options", item.address || "No number", [

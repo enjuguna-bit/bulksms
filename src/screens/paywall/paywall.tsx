@@ -41,7 +41,8 @@ import {
   isDeveloperBypassEnabled,
 } from "@/services/devBypass";
 
-import * as MpesaPaymentModalModule from "@/components/MpesaPaymentModal";
+// Fixed import
+// import * as MpesaPaymentModalModule from "@/components/MpesaPaymentModal";
 
 import { MPESA_PLANS } from "@/constants/mpesa";
 import { MPESA_WORKER_URL } from "@/constants/mpesa";
@@ -80,9 +81,7 @@ const STORAGE_KEYS = {
   LAST_MPESA_PHONE: "paywall:lastMpesaPhone",
 };
 
-const MpesaPaymentModal =
-  (MpesaPaymentModalModule as any).MpesaPaymentModal ??
-  (MpesaPaymentModalModule as any).default;
+import MpesaPaymentModal from "@/components/MpesaPaymentModal";
 
 export default function PaywallScreen(): JSX.Element {
   const router = useSafeRouter();
@@ -175,7 +174,7 @@ export default function PaywallScreen(): JSX.Element {
     try {
       const active = await isSubscriptionActive();
       setMpesaActive(active);
-      
+
       // Get subscription data to calculate remaining time
       const subscription = await getSubscriptionInfo();
       if (subscription) {
@@ -344,29 +343,29 @@ export default function PaywallScreen(): JSX.Element {
 
       if (result.success && result.paymentLink) {
         setActivationMessage("✅ Payment link created. Opening browser...");
-        
+
         // Open the payment link in browser
         await Linking.openURL(result.paymentLink);
-        
+
         // Start polling for payment status
         setActivationMessage("Payment initiated. Awaiting confirmation...");
-        
+
         if (result.transactionId) {
           // Poll for payment status every 10 seconds for 5 minutes
           let pollCount = 0;
           const maxPolls = 30; // 30 * 10 seconds = 5 minutes
-          
+
           const pollInterval = setInterval(async () => {
             pollCount++;
-            
+
             try {
               const statusResult = await checkAndActivateLipanaPayment(result.transactionId!);
-              
+
               if (statusResult.success) {
                 clearInterval(pollInterval);
                 setActivationMessage("✅ Payment confirmed! Subscription activated.");
                 await refreshSubscriptionState();
-                
+
                 // Redirect to main app after successful activation
                 setTimeout(() => {
                   router.safeReplace("Tabs");
@@ -379,7 +378,7 @@ export default function PaywallScreen(): JSX.Element {
               console.error("[Paywall] Lipana polling error:", error);
             }
           }, 10000); // Poll every 10 seconds
-          
+
           // Store interval ID for cleanup
           (window as any).__lipanaPollInterval = pollInterval;
         }
@@ -390,7 +389,7 @@ export default function PaywallScreen(): JSX.Element {
       console.error("Lipana payment error:", error);
       setActivationMessage("❌ Failed to create payment link.");
       Alert.alert(
-        "Payment Error", 
+        "Payment Error",
         error instanceof Error ? error.message : "Failed to create payment link"
       );
     } finally {
@@ -483,14 +482,14 @@ export default function PaywallScreen(): JSX.Element {
       try {
         const sub = smsListener.addListener(async (payload) => {
           console.log("[Paywall] SMS received:", payload.body);
-          
+
           // Use enhanced activation service
           const result = await activateFromEnhancedSms(payload.body, payload.timestamp);
-          
+
           if (result.success) {
             setActivationMessage("✅ Payment detected! Subscription activated.");
             await refreshSubscriptionState();
-            
+
             // Redirect to main app after successful activation
             setTimeout(() => {
               router.safeReplace("Tabs");
@@ -540,7 +539,7 @@ export default function PaywallScreen(): JSX.Element {
     return () => {
       if (supportNavTimerRef.current)
         clearTimeout(supportNavTimerRef.current);
-      
+
       // Cleanup Lipana polling interval
       const pollInterval = (window as any).__lipanaPollInterval;
       if (pollInterval) {

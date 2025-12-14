@@ -248,25 +248,79 @@ export const smsSender = {
 };
 
 // -------------------------------------------------------------------
-// smsListener wrapper (onSmsReceived events)
+// smsListener wrapper (onSmsReceived events) - HARDENED VERSION
 // -------------------------------------------------------------------
 
 const smsEventsEmitter = (() => {
-  if (Platform.OS !== "android" || !SmsListenerModule) return null;
-  return new NativeEventEmitter(SmsListenerModule as NativeModule);
+  if (Platform.OS !== "android") {
+    console.log("[smsListener] Skipping event emitter on non-Android platform");
+    return null;
+  }
+
+  try {
+    // Try multiple possible module names
+    const moduleNames = ['SmsListenerModule', 'SmsListener', 'SMSListener'];
+    let eventEmitterModule: NativeModule | undefined;
+
+    for (const name of moduleNames) {
+      const candidate = (NativeModules as any)[name];
+      if (candidate && typeof candidate === 'object') {
+        console.log(`[smsListener] Found native module: ${name}`);
+        eventEmitterModule = candidate;
+        break;
+      }
+    }
+
+    if (!eventEmitterModule) {
+      console.warn("[smsListener] No SMS listener native module found");
+      return null;
+    }
+
+    // Create event emitter with try-catch for malformed modules
+    try {
+      const emitter = new NativeEventEmitter(eventEmitterModule);
+      console.log("[smsListener] Event emitter created successfully");
+      return emitter;
+    } catch (emitterError) {
+      console.error("[smsListener] Failed to create NativeEventEmitter:", emitterError);
+      return null;
+    }
+  } catch (error) {
+    console.error("[smsListener] Unexpected error during event emitter initialization:", error);
+    return null;
+  }
 })();
 
 /**
  * Subscribe to "onSmsReceived" events emitted from SmsListenerModule.
+ * Always returns a valid subscription object, even if listening fails.
  */
 export function addSmsReceivedListener(
   handler: (payload: IncomingSmsEventPayload) => void
 ): EmitterSubscription | { remove: () => void } {
   if (!smsEventsEmitter) {
-    return { remove: () => { } };
+    console.warn("[addSmsReceivedListener] No event emitter available");
+    return {
+      remove: () => {
+        // No-op for consistency
+      }
+    };
   }
-  const sub = smsEventsEmitter.addListener("onSmsReceived", handler);
-  return sub;
+
+  try {
+    // Try to add the listener
+    const subscription = smsEventsEmitter.addListener("onSmsReceived", handler);
+    console.log("[addSmsReceivedListener] Listener added successfully");
+    return subscription;
+  } catch (error) {
+    console.error("[addSmsReceivedListener] Failed to add listener:", error);
+    // Return a no-op subscription to prevent crashes
+    return {
+      remove: () => {
+        console.log("[addSmsReceivedListener] No-op remove called (listener was never added)");
+      }
+    };
+  }
 }
 
 export const smsListener = {

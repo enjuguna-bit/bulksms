@@ -1,6 +1,6 @@
 // app/paywall.tsx
 // ------------------------------------------------------
-// Full Paywall with hidden 5-tap dev bypass
+// Full Paywall with hidden 5-tap dev bypass - FINAL VERSION
 // ------------------------------------------------------
 
 import React, {
@@ -18,7 +18,7 @@ import {
   ScrollView,
   Alert,
   AppState,
-  Linking, // ✅ Added Linking import
+  Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -27,7 +27,6 @@ import { useBilling } from "@/providers/BillingProvider";
 
 import { smsListener } from "@/native";
 import {
-  activateSubscriptionFromSms,
   getRemainingTime,
   isSubscriptionActive,
   getSubscriptionInfo,
@@ -40,9 +39,6 @@ import {
   enableDeveloperBypass,
   isDeveloperBypassEnabled,
 } from "@/services/devBypass";
-
-// Fixed import
-// import * as MpesaPaymentModalModule from "@/components/MpesaPaymentModal";
 
 import { MPESA_PLANS } from "@/constants/mpesa";
 import { MPESA_WORKER_URL } from "@/constants/mpesa";
@@ -119,6 +115,7 @@ export default function PaywallScreen(): JSX.Element {
 
   const [debugPanelVisible, setDebugPanelVisible] = useState(false);
 
+  // ✅ CORRECT: The native module now guarantees this type
   const smsSubRef = useRef<{ remove: () => void } | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -468,7 +465,7 @@ export default function PaywallScreen(): JSX.Element {
   }, []);
 
   // ----------------------------------------------------
-  // SMS listener + interval refresh
+  // SMS listener + interval refresh - SIMPLIFIED & SAFE
   // ----------------------------------------------------
   useEffect(() => {
     void loadPlanInfo();
@@ -478,15 +475,21 @@ export default function PaywallScreen(): JSX.Element {
       return;
     }
 
-    (async () => {
-      try {
-        const sub = smsListener.addListener(async (payload) => {
-          console.log("[Paywall] SMS received:", payload.body);
+    // ✅ SIMPLIFIED: The native module now handles all safety checks internally
+    // No need for extra null checks here - just set up the listener
+    const setupSmsListener = () => {
+      console.log("[Paywall] Setting up SMS listener...");
+      
+      // The native module guarantees a safe subscription object
+      const subscription = smsListener.addListener(
+        async (payload: { body: string; timestamp: number }) => {
+          console.log("[Paywall] SMS received:", payload.body.substring(0, 100));
 
           // Use enhanced activation service
           const result = await activateFromEnhancedSms(payload.body, payload.timestamp);
 
           if (result.success) {
+            console.log("[Paywall] SMS activation successful!");
             setActivationMessage("✅ Payment detected! Subscription activated.");
             await refreshSubscriptionState();
 
@@ -501,29 +504,43 @@ export default function PaywallScreen(): JSX.Element {
               setActivationMessage(`❌ Activation failed: ${result.reason}`);
             }
           }
-        });
-        smsSubRef.current = sub;
-      } catch (error) {
-        console.error("[Paywall] Failed to setup SMS listener:", error);
-      }
-    })();
+        }
+      );
+      
+      // Store the subscription for cleanup
+      smsSubRef.current = subscription;
+      console.log("[Paywall] SMS listener setup completed");
+    };
 
+    // Setup the SMS listener
+    setupSmsListener();
+
+    // Initial subscription state refresh
     void refreshSubscriptionState();
 
+    // Set up periodic refresh
     intervalRef.current = setInterval(() => {
       void refreshSubscriptionState();
     }, 60000);
 
+    // Cleanup function
     return () => {
-      smsSubRef.current?.remove?.();
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      // ✅ SAFE: The native module guarantees remove() exists
+      if (smsSubRef.current) {
+        smsSubRef.current.remove();
+        smsSubRef.current = null;
+      }
+      
+      // Clean up interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
   }, [
     devBypass,
     isPro,
     router,
-    selectedPlan,
-    handleActivate,
     loadPlanInfo,
     refreshSubscriptionState,
   ]);

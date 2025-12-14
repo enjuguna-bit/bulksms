@@ -157,8 +157,8 @@ const QuickActionsRow = memo(
             icon={action.icon}
             label={action.label}
             color={action.color}
-            // Use navigate instead of safePush for known routes to avoid 'ready' checks if they are flaky
-            onPress={() => router.navigate(action.route as any)}
+            // ✅ FIX: Use safePush instead of navigate
+            onPress={() => router.safePush(action.route as any)}
           />
         ))}
       </View>

@@ -1,5 +1,6 @@
 import { runQuery } from '../database/core';
 import { MessageRow, MsgStatus } from '../database/types';
+import { normalizeThreadId, isValidThreadId, cleanThreadId } from '../utils/threadIdUtils';
 
 const VALID_STATUSES: MsgStatus[] = ["pending", "sent", "delivered", "failed"];
 
@@ -81,9 +82,12 @@ export async function getMessagesByAddress(
 // 🧵 Get Messages by Thread
 // ---------------------------------------------------------
 export async function getMessagesByThread(
-    threadId: string,
+    threadId: string | number,
     limit = 500
 ): Promise<MessageRow[]> {
+    // Normalize thread ID to handle both numeric and string formats
+    const normalizedId = normalizeThreadId(threadId);
+    
     const result = await runQuery(
         `
       SELECT * FROM messages
@@ -91,7 +95,7 @@ export async function getMessagesByThread(
       ORDER BY timestamp DESC
       LIMIT ${limit};
     `,
-        [threadId]
+        [normalizedId]
     );
 
     return result.rows.raw() as MessageRow[];
@@ -131,15 +135,19 @@ export async function getUnreadByThread(): Promise<Record<string, number>> {
 // ---------------------------------------------------------
 // 📘 Mark Thread as Read
 // ---------------------------------------------------------
-export async function markThreadRead(threadId: string): Promise<void> {
-    await runQuery(`UPDATE messages SET isRead = 1 WHERE threadId = ?;`, [threadId]);
+export async function markThreadRead(threadId: string | number): Promise<void> {
+    // Normalize thread ID to handle both numeric and string formats
+    const normalizedId = normalizeThreadId(threadId);
+    await runQuery(`UPDATE messages SET isRead = 1 WHERE threadId = ?;`, [normalizedId]);
 }
 
 // ---------------------------------------------------------
 // 📦 Archive Thread
 // ---------------------------------------------------------
-export async function archiveThread(threadId: string): Promise<void> {
-    await runQuery(`UPDATE messages SET isArchived = 1 WHERE threadId = ?;`, [threadId]);
+export async function archiveThread(threadId: string | number): Promise<void> {
+    // Normalize thread ID to handle both numeric and string formats
+    const normalizedId = normalizeThreadId(threadId);
+    await runQuery(`UPDATE messages SET isArchived = 1 WHERE threadId = ?;`, [normalizedId]);
 }
 
 // ---------------------------------------------------------
@@ -167,6 +175,53 @@ export async function getThreadSummaries(limit = 20, offset = 0): Promise<Messag
         ORDER BY timestamp DESC
         LIMIT ? OFFSET ?;
     `, [limit, offset]);
+
+    return result.rows.raw() as MessageRow[];
+}
+
+// ---------------------------------------------------------
+// 🧵 Get Messages by Thread (String ID - Alias)
+// ---------------------------------------------------------
+/**
+ * Retrieve all messages for a given thread using a phone number (string identifier).
+ * This is an explicit alias for getMessagesByThread that emphasizes string IDs.
+ * 
+ * @param threadId - Phone number or string identifier
+ * @param limit - Maximum messages to retrieve
+ * @returns Array of messages in the thread
+ */
+export async function getMessagesByThreadId(
+    threadId: string | number,
+    limit = 500
+): Promise<MessageRow[]> {
+    return getMessagesByThread(threadId, limit);
+}
+
+// ---------------------------------------------------------
+// 🧵 Get Messages by Address (Direct phone number lookup)
+// ---------------------------------------------------------
+/**
+ * Retrieve all messages for a given phone number address.
+ * This looks up messages both by address field AND threadId for completeness.
+ * 
+ * @param address - Phone number or address string
+ * @param limit - Maximum messages to retrieve (default 500)
+ * @returns Array of messages from/to this address
+ */
+export async function getMessagesByAddressComplete(
+    address: string,
+    limit = 500
+): Promise<MessageRow[]> {
+    // Query messages where either address OR threadId matches the phone number
+    const result = await runQuery(
+        `
+      SELECT * FROM messages
+      WHERE address = ? OR threadId = ?
+      ORDER BY timestamp DESC
+      LIMIT ${limit};
+    `,
+        [address, address]
+    );
 
     return result.rows.raw() as MessageRow[];
 }

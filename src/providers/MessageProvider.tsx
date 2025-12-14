@@ -6,6 +6,7 @@ import { InteractionManager, Alert } from 'react-native';
 import { getThreadsList, getThreadDetails, type MessageThread } from '@/db/repositories/threads';
 import { addMessage, markThreadRead as dbMarkRead, getUnreadByThread } from '@/db/repositories/messages';
 import { performInitialSyncIfNeeded, getExistingMessageCount, checkSmsSyncPermissions } from '@/services/smsSync';
+import { normalizeThreadId } from '@/db/utils/threadIdUtils';
 
 interface MessageContextType {
   threads: MessageThread[];
@@ -70,16 +71,22 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const sendMessage = async (params: { address: string; body: string; type: 'incoming' | 'outgoing' | 'mms'; threadId?: number | string }) => {
-    await addMessage(params.address, params.body, params.type, 'sent', Date.now(), String(params.threadId ?? params.address));
+    // Normalize thread ID to ensure consistency
+    const threadId = params.threadId ? normalizeThreadId(params.threadId) : params.address;
+    await addMessage(params.address, params.body, params.type, 'sent', Date.now(), threadId);
     await refreshThreads();
   };
 
   const getThreadMessages = async (threadId: number | string): Promise<MessageThread> => {
-    return getThreadDetails(String(threadId));
+    // Normalize thread ID to handle both numeric and string formats
+    const normalizedId = normalizeThreadId(threadId);
+    return getThreadDetails(normalizedId);
   };
 
   const markThreadRead = async (threadId: number | string) => {
-    await dbMarkRead(String(threadId));
+    // Normalize thread ID to handle both numeric and string formats
+    const normalizedId = normalizeThreadId(threadId);
+    await dbMarkRead(normalizedId);
     await refreshUnreadCounts();
   };
 

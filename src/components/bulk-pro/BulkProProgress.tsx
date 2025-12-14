@@ -6,6 +6,7 @@ export default function BulkProProgress({
     sending,
     sent,
     failed,
+    queued,
     total,
     paused,
     onPauseResume,
@@ -16,6 +17,7 @@ export default function BulkProProgress({
     sending: boolean;
     sent: number;
     failed: number;
+    queued: number;
     total: number;
     paused: boolean;
     onPauseResume: () => void;
@@ -37,6 +39,7 @@ export default function BulkProProgress({
                         Progress: {sent + failed}/{total} (
                         {Math.round(((sent + failed) / Math.max(1, total)) * 100)}%) · Sent{" "}
                         {sent} • Failed {failed}
+                        {queued > 0 && ` • Queued ${queued} (will send in background)`}
                     </Text>
                 )}
             </View>

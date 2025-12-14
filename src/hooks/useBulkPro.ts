@@ -36,6 +36,7 @@ export function useBulkPro() {
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(0);
     const [failed, setFailed] = useState(0);
+    const [queued, setQueued] = useState(0);
     const [paused, setPaused] = useState(false);
     const [sendSpeed, setSendSpeed] = useState(400);
     const [smsStatus, setSmsStatus] = useState<"checking" | "ok" | "fail" | "unknown">("checking");
@@ -45,6 +46,7 @@ export function useBulkPro() {
     const resumeResolverRef = useRef<(() => void) | null>(null);
     const sentRef = useRef(0);
     const failedRef = useRef(0);
+    const queuedRef = useRef(0);
     const lastFlushRef = useRef(0);
     const lastFlushedCountRef = useRef(0);
 
@@ -93,6 +95,18 @@ export function useBulkPro() {
         SecureStorage.setItem(STORAGE_KEYS.LAST_MODE, mode)
             .catch((e: unknown) => console.warn("Failed to save mode:", e));
     }, [mode]);
+
+    useEffect(() => {
+        return () => {
+            // Stop sending if user leaves the screen to prevent memory leaks/crashes
+            cancelledRef.current = true;
+            // If paused when unmounting, resolve the pause promise to unblock the loop
+            if (pausedRef.current && resumeResolverRef.current) {
+                resumeResolverRef.current();
+                resumeResolverRef.current = null;
+            }
+        };
+    }, []);
 
     const loadContacts = useCallback(async () => {
         try {
@@ -299,6 +313,7 @@ export function useBulkPro() {
         // Reset counters
         sentRef.current = 0;
         failedRef.current = 0;
+        queuedRef.current = 0;
         lastFlushRef.current = Date.now();
         lastFlushedCountRef.current = 0;
 
@@ -306,6 +321,7 @@ export function useBulkPro() {
         setSending(true);
         setSent(0);
         setFailed(0);
+        setQueued(0);
 
         let index = 0;
 
@@ -316,6 +332,7 @@ export function useBulkPro() {
                 // Final flush to ensure UI reflects final state
                 setSent(sentRef.current);
                 setFailed(failedRef.current);
+                setQueued(queuedRef.current);
 
                 setSending(false);
                 sendingGateRef.current = false;
@@ -332,6 +349,7 @@ export function useBulkPro() {
                 if (cancelledRef.current) {
                     setSent(sentRef.current);
                     setFailed(failedRef.current);
+                    setQueued(queuedRef.current);
                     setSending(false);
                     sendingGateRef.current = false;
                     return;
@@ -360,6 +378,7 @@ export function useBulkPro() {
                     } else {
                         failedRef.current += 1;
                         await enqueueSMS(phone, body);
+                        queuedRef.current += 1;
                     }
 
                     await saveSendLog({
@@ -371,6 +390,7 @@ export function useBulkPro() {
                 } catch (err) {
                     failedRef.current += 1;
                     await enqueueSMS(phone, body);
+                    queuedRef.current += 1;
                     console.warn(`[BulkPro] Send failed or timed out: ${phone}`, err);
                 }
             }
@@ -387,6 +407,7 @@ export function useBulkPro() {
             if (diff >= 20 || timeDiff >= 500) {
                 setSent(sentRef.current);
                 setFailed(failedRef.current);
+                setQueued(queuedRef.current);
                 lastFlushRef.current = now;
                 lastFlushedCountRef.current = totalProcessed;
             }
@@ -433,7 +454,7 @@ export function useBulkPro() {
         headers, sampleRows, amountCandidates, showMappingModal, setShowMappingModal,
         contacts, contactsLoading, selectedIds, setSelectedIds, query, setQuery,
         mergedRecipients,
-        sending, sent, failed, paused, sendSpeed, setSendSpeed,
+        sending, sent, failed, queued, paused, sendSpeed, setSendSpeed,
         handleSend, togglePause, stopSending,
         smsStatus,
         runQueueNow,

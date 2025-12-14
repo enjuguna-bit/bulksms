@@ -176,7 +176,9 @@ export function usePaymentCapture() {
             return sorted;
           }
 
+          // ✅ FIX: Generate unique ID for new record
           const newRecord: CustomerRecord = {
+            id: `${phone}-${now}`, // ✅ Generate unique ID
             name,
             phone,
             rawMessage: message,

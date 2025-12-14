@@ -1,5 +1,5 @@
 // ---------------------------------------------------------
-// 🏪 Supermarket Payment Capture Pro — Stable v3.4 (FlatList + Theme)
+// 🏪 Supermarket Payment Capture Pro — Stable v3.4 (FlatList + Theme) - FIXED
 // ---------------------------------------------------------
 import React, { memo, useCallback, useMemo } from "react";
 import {
@@ -83,10 +83,11 @@ function SupermarketCaptureContent(): JSX.Element {
   );
 
   // -----------------------------------------------------
-  // Key Extractor
+  // ✅ FIXED: Defensive Key Extractor with fallback
   // -----------------------------------------------------
   const keyExtractor = useCallback(
-    (i: LocalRecordItem) => i.id.toString(),
+    (i: LocalRecordItem, index: number) => 
+      i.id ? i.id.toString() : `record-${i.phone}-${index}-${Date.now()}`,
     []
   );
 
@@ -152,6 +153,8 @@ function SupermarketCaptureContent(): JSX.Element {
             </Text>
           </View>
         }
+        // ✅ Optional: Add extraData to ensure re-render when records update
+        extraData={records.length}
       />
       <Toast />
     </View>
@@ -338,28 +341,32 @@ const RecordCard = memo(function RecordCard({
   chipBg: string;
   accent: ThemeTokens["accent"];
 }) {
+  // ✅ FIX: Safely determine if outgoing
   const isOutgoing = item.type === "OUTGOING";
   const sideColor = isOutgoing ? accent.outL : accent.inL;
   const nameColor = isOutgoing ? accent.out : accent.in;
+
+  // ✅ FIX: Safely display transaction count
+  const transactionCount = item.transactionCount || 1;
 
   return (
     <View style={[s.recordCard, { backgroundColor: cardBg, borderLeftColor: sideColor }]}>
       <View style={s.recordHeader}>
         <Text style={[s.recordName, { color: nameColor }]}>
-          {item.name} ({item.transactionCount})
+          {item.name || "Unknown"} ({transactionCount})
         </Text>
-        <Text style={[s.recordPhone, { color: text }]}>{item.phone}</Text>
+        <Text style={[s.recordPhone, { color: text }]}>{item.phone || "No Phone"}</Text>
       </View>
 
       <Text
         numberOfLines={2}
         style={[s.recordMessage, { backgroundColor: chipBg, color: subText }]}
       >
-        💬 {item.rawMessage}
+        💬 {item.rawMessage || "No message"}
       </Text>
 
       <Text style={[s.recordMeta, { color: subText }]}>
-        {item.type} • Last Seen: {new Date(item.lastSeen).toLocaleTimeString()}
+        {item.type || "INCOMING"} • Last Seen: {new Date(item.lastSeen || Date.now()).toLocaleTimeString()}
       </Text>
     </View>
   );

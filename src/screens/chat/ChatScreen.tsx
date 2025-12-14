@@ -1,5 +1,5 @@
 // ============================================================================
-// 💬 ChatScreen — Optimized Chat UI with Search & Debouncing (v5.0)
+// 💬 ChatScreen — Optimized Chat UI with Search & Debouncing (v5.0) - FIXED
 // ============================================================================
 
 import React, { useEffect, useRef, useState, useCallback, memo, useMemo } from "react";
@@ -31,8 +31,8 @@ import { useThemeSettings } from "@/theme/ThemeProvider";
 interface ChatScreenProps {
   route: {
     params: {
-      threadId: number;
-      address: string;
+      threadId?: string | number; // ✅ Made optional to handle missing threadId
+      address: string;            // ✅ Address is always passed from InboxScreen
     };
   };
   navigation: any;
@@ -128,8 +128,12 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const { threadId, address } = route.params;
   const { colors } = useThemeSettings();
 
-  const { getThreadMessages, sendMessage, markThreadRead } = useMessages();
+  const { getThreadMessages, sendMessage, markThreadRead: markRead } = useMessages();
 
+  // ✅ FIX: Determine effective thread identifier
+  // Use threadId if provided, otherwise fall back to address (which is always passed from InboxScreen)
+  const effectiveThreadId = threadId ?? address;
+  
   const [thread, setThread] = useState<MessageThread | null>(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -143,23 +147,28 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 
   const listRef = useRef<FlatList<MessageRow>>(null);
 
-  // Load Thread
+  // ✅ FIXED: Load Thread - No Number conversion
   const loadThread = useCallback(async () => {
     try {
-      const t = await getThreadMessages(Number(threadId));
+      // Use effectiveThreadId (could be number, string, or address)
+      const t = await getThreadMessages(effectiveThreadId);
       setThread(t);
     } catch (error) {
       console.error("Failed to load thread:", error);
     }
-  }, [threadId, getThreadMessages]);
+  }, [effectiveThreadId, getThreadMessages]);
 
   useEffect(() => {
     loadThread();
-    markThreadRead(Number(threadId));
+    
+    // Mark thread as read using the effective identifier
+    if (markRead) {
+      markRead(effectiveThreadId);
+    }
 
     const timer = setInterval(loadThread, 3000);
     return () => clearInterval(timer);
-  }, [loadThread, markThreadRead, threadId]);
+  }, [loadThread, markRead, effectiveThreadId]);
 
   // Header Setup
   useEffect(() => {
@@ -220,7 +229,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     listRef.current?.scrollToIndex({ index: matches[prev], animated: true });
   }, [matches, matchIndex]);
 
-  // Send Message
+  // ✅ FIXED: Send Message - Use effectiveThreadId
   const handleSend = useCallback(async () => {
     if (!input.trim() || sending) return;
 
@@ -228,7 +237,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     try {
       await sendMessage({
         address,
-        threadId: Number(threadId),
+        threadId: effectiveThreadId, // Use effectiveThreadId instead of Number(threadId)
         body: input,
         type: "outgoing",
       });
@@ -245,7 +254,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     } finally {
       setSending(false);
     }
-  }, [input, sending, sendMessage, address, threadId, loadThread]);
+  }, [input, sending, sendMessage, address, effectiveThreadId, loadThread]);
 
   // Memoized messages with search highlighting
   const highlightedMessages = useMemo(

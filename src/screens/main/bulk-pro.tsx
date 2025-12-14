@@ -45,7 +45,7 @@ function BulkSMSProContent(): JSX.Element {
     headers, sampleRows, amountCandidates, showMappingModal, setShowMappingModal,
     contacts, contactsLoading, selectedIds, setSelectedIds, query, setQuery,
     mergedRecipients,
-    sending, sent, failed, paused, sendSpeed, setSendSpeed,
+    sending, sent, failed, queued, paused, sendSpeed, setSendSpeed,
     handleSend, togglePause, stopSending,
     smsStatus,
     runQueueNow,
@@ -218,6 +218,7 @@ function BulkSMSProContent(): JSX.Element {
             sending={sending}
             sent={sent}
             failed={failed}
+            queued={queued}
             total={total}
             paused={paused}
             onPauseResume={togglePause}

@@ -182,7 +182,7 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (isManual = false) => {
     try {
       setLoading(true);
       const [l] = await Promise.all([getSendLogs(), getContactsList()]);
@@ -190,7 +190,10 @@ function DashboardContent() {
       if (initialLoad) {
         setInitialLoad(false);
       }
-      toast.showSuccess("Dashboard data refreshed");
+      // Only show success toast on manual refresh
+      if (isManual === true) {
+        toast.showSuccess("Dashboard Updated");
+      }
     } catch (e) {
       console.error(e);
       toast.showError("Failed to load dashboard data");
@@ -198,6 +201,10 @@ function DashboardContent() {
       setLoading(false);
     }
   }, [initialLoad, toast]);
+
+  const handleManualRefresh = useCallback(() => {
+    loadData(true);
+  }, [loadData]);
 
   const handleClearLogs = useCallback(() => {
     Alert.alert("Confirm", "Clear all logs?", [
@@ -219,8 +226,8 @@ function DashboardContent() {
   }, [toast]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadData(false);
+  }, []); // Remove loadData dependency to prevent loop if references result in instability
 
   const total = logs.length;
   const sent = logs.filter((l) => l.status === "SENT").length;
@@ -360,7 +367,7 @@ function DashboardContent() {
             Recent Logs
           </Text>
           <View style={{ flexDirection: "row", gap: 8 }}>
-            <TouchableOpacity onPress={loadData} disabled={loading}>
+            <TouchableOpacity onPress={handleManualRefresh} disabled={loading}>
               <RefreshCcw
                 color={loading ? colors.border : colors.accent}
                 size={20}

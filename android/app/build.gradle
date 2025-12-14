@@ -104,8 +104,7 @@ android {
 dependencies {
     implementation("com.facebook.react:react-android:0.76.9")
     
-    // Manually add AsyncStorage
-    implementation project(':@react-native-async-storage_async-storage')
+    // Autolinking handles AsyncStorage and others automatically
     
     // Hermes engine - required for React Native 0.76+
     if (isHermesEnabled) {
@@ -121,3 +120,5 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
+
+apply from: new File(["node", "--print", "require.resolve('@react-native-community/cli-platform-android/package.json')"].execute(null, rootDir).text.trim(), "../native_modules.gradle"); applyNativeModulesAppBuildGradle(project)

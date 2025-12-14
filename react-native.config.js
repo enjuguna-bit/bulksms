@@ -28,15 +28,5 @@ module.exports = {
     package: "@react-native-community/cli",
   },
 
-  // Register custom SMS package for autolinking
-  dependencies: {
-    "sms-native": {
-      platforms: {
-        android: {
-          package: "com.bulksms.smsmanager.SmsPackage",
-          packageClassName: "SmsPackage",
-        },
-      },
-    },
-  },
+  // Custom SMS package configuration removed - using direct package registration
 };

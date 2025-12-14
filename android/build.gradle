@@ -27,6 +27,8 @@ ext {
     targetSdkVersion = 34
     ndkVersion = "26.1.10909125"
     kotlinVersion = "1.9.24"
+    reactNativeVersion = "0.76.9"
+    REACT_NATIVE_VERSION = "0.76.9"
 }
 
 allprojects {
@@ -44,6 +46,38 @@ allprojects {
         // Additional React Native dependencies
         maven {
             url("$rootDir/../node_modules/@react-native/gradle-plugin")
+        }
+        maven {
+            url("$rootDir/../node_modules/@react-native/gradle-plugin")
+        }
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            force "com.facebook.react:react-android:0.76.9"
+            force "com.facebook.react:hermes-android:0.76.9"
+            dependencySubstitution {
+                substitute module("com.facebook.react:react-native") using module("com.facebook.react:react-android:0.76.9")
+            }
+        }
+    }
+}
+
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            project.android {
+                ndkVersion = rootProject.ext.ndkVersion
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+            }
+        }
+        if (project.plugins.hasPlugin("kotlin-android")) {
+            project.android.kotlinOptions {
+                jvmTarget = "17"
+            }
         }
     }
 }

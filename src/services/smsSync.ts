@@ -18,7 +18,7 @@ export async function checkSmsSyncPermissions(): Promise<boolean> {
   try {
     const hasReadSms = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_SMS);
     const hasReadContacts = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_CONTACTS);
-    
+
     return hasReadSms && hasReadContacts;
   } catch (error) {
     Logger.error('SmsSync', 'Permission check failed', error);
@@ -39,7 +39,7 @@ export async function requestSmsSyncPermissions(): Promise<boolean> {
     ];
 
     const results = await PermissionsAndroid.requestMultiple(permissions);
-    
+
     const allGranted = Object.values(results).every(
       result => result === PermissionsAndroid.RESULTS.GRANTED
     );
@@ -78,34 +78,61 @@ export async function importExistingMessages(): Promise<{ success: boolean; impo
     }
 
     let importedCount = 0;
+    const CHUNK_SIZE = 100; // Batch size for SQLite
 
-    // Process each message and add to local database
-    for (const msg of messages) {
-      try {
-        await addMessage(
-          msg.address || '',
-          msg.body || '',
-          msg.type || 'incoming',
-          msg.status || 'received',
-          msg.timestamp || Date.now(),
-          msg.threadId || msg.address,
-          msg.simSlot || null
-        );
-        importedCount++;
-      } catch (error) {
-        Logger.warn('SmsSync', 'Failed to import message', error);
+    // ⚡ OPTIMIZATION: Use Transaction & Batch Insert
+    // We process in chunks to avoid memory spikes and keep UI responsive
+
+    await runQuery('BEGIN TRANSACTION;');
+
+    try {
+      for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
+        const chunk = messages.slice(i, i + CHUNK_SIZE);
+
+        // Construct bulk INSERT query
+        const placeholders = chunk.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(',');
+        const query = `
+          INSERT INTO messages (address, body, type, status, timestamp, threadId, simSlot)
+          VALUES ${placeholders};
+        `;
+
+        const values: any[] = [];
+        chunk.forEach(msg => {
+          values.push(
+            msg.address || '',
+            msg.body || '',
+            msg.type || 'incoming',
+            msg.status || 'received',
+            msg.timestamp || Date.now(),
+            msg.threadId || msg.address,
+            msg.simSlot || null
+          );
+        });
+
+        await runQuery(query, values);
+        importedCount += chunk.length;
+
+        // Yield to event loop every 500 messages to prevent UI freeze
+        if (i % 500 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
       }
-    }
 
-    Logger.info('SmsSync', `Imported ${importedCount} messages`);
-    return { success: true, imported: importedCount };
+      await runQuery('COMMIT;');
+      Logger.info('SmsSync', `Batch imported ${importedCount} messages`);
+      return { success: true, imported: importedCount };
+
+    } catch (batchError) {
+      await runQuery('ROLLBACK;');
+      throw batchError;
+    }
 
   } catch (error) {
     Logger.error('SmsSync', 'Import failed', error);
-    return { 
-      success: false, 
-      imported: 0, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return {
+      success: false,
+      imported: 0,
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 }
@@ -161,10 +188,10 @@ export async function performInitialSyncIfNeeded(): Promise<{ synced: boolean; i
 
     Logger.info('SmsSync', `Starting initial sync for ${existingCount} messages`);
     const result = await importExistingMessages();
-    
-    return { 
-      synced: result.success, 
-      imported: result.imported 
+
+    return {
+      synced: result.success,
+      imported: result.imported
     };
   } catch (error) {
     Logger.error('SmsSync', 'Initial sync failed', error);

@@ -19,13 +19,16 @@ import {
   ListRenderItem,
   ActivityIndicator,
 } from "react-native";
-import { Search, Inbox, ArrowDownCircle } from "lucide-react-native";
+import { Search, Inbox, MessageCirclePlus } from "lucide-react-native";
 
 import { useSafeRouter } from "@/hooks/useSafeRouter";
 import { useThemeSettings } from "@/theme/ThemeProvider";
 import { smsReader, smsRole, smsListener, type SmsMessageRecord } from "@/native";
 import { useMessageContext } from "@/providers/MessageProvider";
 import { addMessage } from "@/db/repositories/messages";
+import { ThreadItem } from "@/components/inbox/ThreadItem";
+import { prefetchContacts } from "@/utils/contactUtils";
+import { ComposeOptionsSheet } from "@/components/inbox/ComposeOptionsSheet";
 
 // Debounce helper
 function useDebounce(value: string, delay = 300) {
@@ -85,13 +88,16 @@ export default function InboxScreen() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<"all" | "incoming" | "outgoing">("all");
   const [query, setQuery] = useState("");
+  const [composeVisible, setComposeVisible] = useState(false);
   const search = useDebounce(query);
 
-  const listRef = useRef<any>(null);
+  const listRef = useRef<FlatList<any>>(null);
 
   async function loadMessages() {
     setLoading(true);
     try {
+      // Prefetch contacts for name resolution
+      await prefetchContacts();
       const data = await fetchInboxMessages();
       setMessages(data);
     } finally {
@@ -106,16 +112,8 @@ export default function InboxScreen() {
     }, [])
   );
 
-  // Initial load
-  useEffect(() => {
-    (async () => {
-      const isDefault = await smsRole.isDefault();
-      if (!isDefault) {
-        await smsRole.requestDefault();
-      }
-      await loadMessages();
-    })();
-  }, []);
+  // useFocusEffect handles both initial load and refresh on focus
+  // No need for a separate initial useEffect
 
   // Auto-scroll to top when messages change
   useEffect(() => {
@@ -154,8 +152,8 @@ export default function InboxScreen() {
       const q = search.toLowerCase();
       result = result.filter(
         (m) =>
-          m.address?.toLowerCase().includes(q) ||
-          m.body?.toLowerCase().includes(q)
+          (m.address || "").toLowerCase().includes(q) ||
+          (m.body || "").toLowerCase().includes(q)
       );
     }
 
@@ -188,45 +186,38 @@ export default function InboxScreen() {
     refreshThreads();
   }, [router, refreshThreads]);
 
+  // Handle New Chat / Bulk Message
+  const handleCompose = () => {
+    setComposeVisible(true);
+  };
+
+  const handleComposeOption = (optionId: string) => {
+    setComposeVisible(false);
+
+    setTimeout(() => {
+      if (optionId === 'single') {
+        router.safePush("ContactPicker", { mode: 'single' });
+      } else if (optionId === 'bulk') {
+        router.safePush("ContactPicker", { mode: 'multiple' });
+      } else {
+        Alert.alert("Coming Soon", "Group creation will be available in the next update.");
+      }
+    }, 300); // Allow modal to close
+  };
+
   const renderItem = useCallback<ListRenderItem<SmsMessageRecord>>(({ item }) => (
-    <TouchableOpacity
-      onPress={() => handleMessagePress(item)}
+    <ThreadItem
+      item={item}
+      onPress={handleMessagePress}
       onLongPress={() =>
-        Alert.alert("Message Options", item.address || "No number", [
-          { text: "Copy Number", onPress: () => console.log("copy", item.address) },
+        Alert.alert("Thread Options", item.address || "No number", [
+          { text: "Delete", style: "destructive" },
+          { text: "Archive" },
           { text: "Cancel", style: "cancel" },
         ])
       }
-      style={[styles.msgRow, { borderBottomColor: colors.border }]}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.addr, { color: colors.text }]}>{item.address || "Unknown"}</Text>
-        <Text numberOfLines={1} style={[styles.body, { color: colors.subText }]}>
-          {item.body}
-        </Text>
-      </View>
-
-      <View style={styles.metaBox}>
-        <Text style={[styles.time, { color: colors.subText }]}>
-          {new Date(item.timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </Text>
-
-        <Text
-          style={[
-            styles.badge,
-            item.type === "incoming"
-              ? { backgroundColor: colors.chip, color: colors.accent }
-              : { backgroundColor: "#dcfce7", color: "#16a34a" },
-          ]}
-        >
-          {item.type === "incoming" ? "IN" : "OUT"}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  ), [colors, router, handleMessagePress]);
+    />
+  ), [handleMessagePress]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -245,20 +236,26 @@ export default function InboxScreen() {
 
         <View style={styles.filterRow}>
           {["all", "incoming", "outgoing"].map((f) => (
-            <Text
+            <TouchableOpacity
               key={f}
               onPress={() => {
                 setFilter(f as any);
                 listRef.current?.scrollToOffset({ offset: 0, animated: true });
               }}
               style={[
-                styles.filter,
-                { color: colors.subText },
-                filter === f && { color: colors.accent, textDecorationLine: "underline" }
+                styles.filterChip,
+                filter === f && { backgroundColor: colors.chip }
               ]}
             >
-              {f.toUpperCase()}
-            </Text>
+              <Text
+                style={[
+                  styles.filterText,
+                  { color: filter === f ? colors.accent : colors.subText },
+                ]}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
       </View>
@@ -278,16 +275,23 @@ export default function InboxScreen() {
             <Text style={[styles.emptyText, { color: colors.subText }]}>No messages yet</Text>
           </View>
         }
+        ItemSeparatorComponent={() => <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 80 }} />}
       />
 
       {/* Refresh FAB */}
       <TouchableOpacity
-        onPress={loadMessages}
-        style={[styles.fab, { backgroundColor: colors.accent }]}
-        disabled={loading}
+        onPress={handleCompose}
+        style={[styles.fab, { backgroundColor: '#25D366' }]} // WhatsApp Green
+        activeOpacity={0.8}
       >
-        <ArrowDownCircle color="#fff" size={26} />
+        <MessageCirclePlus color="#fff" size={26} />
       </TouchableOpacity>
+
+      <ComposeOptionsSheet
+        visible={composeVisible}
+        onClose={() => setComposeVisible(false)}
+        onOptionSelect={handleComposeOption}
+      />
     </View>
   );
 }
@@ -297,42 +301,38 @@ const styles = StyleSheet.create({
   header: {
     padding: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    elevation: 2,
   },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 10,
-    borderRadius: 8,
-    marginBottom: 8,
+    borderRadius: 20, // Rounded full
+    marginBottom: 12,
+    height: 40,
   },
-  searchInput: { flex: 1, marginLeft: 6, paddingVertical: 8 },
-  filterRow: { flexDirection: "row", gap: 12 },
-  filter: { fontWeight: "600" },
-  msgRow: {
-    flexDirection: "row",
-    padding: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  searchInput: { flex: 1, marginLeft: 6, paddingVertical: 4 },
+  filterRow: { flexDirection: "row", gap: 8 },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'transparent',
   },
-  addr: { fontWeight: "700" },
-  body: { fontSize: 13, marginTop: 2 },
-  metaBox: { alignItems: "flex-end", marginLeft: 8 },
-  time: { fontSize: 12 },
-  badge: {
-    fontSize: 11,
-    fontWeight: "700",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginTop: 4,
-  },
+  filterText: { fontWeight: "600", fontSize: 13 },
   emptyBox: { padding: 40, justifyContent: "center", alignItems: "center" },
   emptyText: { marginTop: 10, fontWeight: "600" },
   fab: {
     position: "absolute",
-    bottom: 20,
-    right: 20,
-    padding: 12,
-    borderRadius: 30,
-    elevation: 3,
+    bottom: 24,
+    right: 24,
+    padding: 16,
+    borderRadius: 16,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });

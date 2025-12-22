@@ -377,7 +377,7 @@ export default function PaywallScreen(): JSX.Element {
           }, 10000); // Poll every 10 seconds
 
           // Store interval ID for cleanup
-          (window as any).__lipanaPollInterval = pollInterval;
+          lipanaPollIntervalRef.current = pollInterval;
         }
       } else {
         throw new Error(result.error || "Failed to create payment link");
@@ -479,7 +479,7 @@ export default function PaywallScreen(): JSX.Element {
     // No need for extra null checks here - just set up the listener
     const setupSmsListener = () => {
       console.log("[Paywall] Setting up SMS listener...");
-      
+
       // The native module guarantees a safe subscription object
       const subscription = smsListener.addListener(
         async (payload: { body: string; timestamp: number }) => {
@@ -506,7 +506,7 @@ export default function PaywallScreen(): JSX.Element {
           }
         }
       );
-      
+
       // Store the subscription for cleanup
       smsSubRef.current = subscription;
       console.log("[Paywall] SMS listener setup completed");
@@ -530,7 +530,7 @@ export default function PaywallScreen(): JSX.Element {
         smsSubRef.current.remove();
         smsSubRef.current = null;
       }
-      
+
       // Clean up interval
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -552,16 +552,18 @@ export default function PaywallScreen(): JSX.Element {
     return () => sub.remove();
   }, [refreshSubscriptionState]);
 
+  // Lipana polling ref
+  const lipanaPollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     return () => {
       if (supportNavTimerRef.current)
         clearTimeout(supportNavTimerRef.current);
 
       // Cleanup Lipana polling interval
-      const pollInterval = (window as any).__lipanaPollInterval;
-      if (pollInterval) {
-        clearInterval(pollInterval);
-        delete (window as any).__lipanaPollInterval;
+      if (lipanaPollIntervalRef.current) {
+        clearInterval(lipanaPollIntervalRef.current);
+        lipanaPollIntervalRef.current = null;
       }
     };
   }, []);
@@ -600,14 +602,7 @@ export default function PaywallScreen(): JSX.Element {
 
           <PaywallFeatures onPrioritySupportTap={onPrioritySupportTap} />
 
-          <PaywallPlans
-            selectedPlan={selectedPlan}
-            setSelectedPlan={setSelectedPlan}
-            loading={loading}
-            mpesaLoading={mpesaLoading}
-            onPurchase={handleStorePurchase}
-            onRestore={handleRestore}
-          />
+          {/* Store Plans removed - Lipana is the only payment method */}
 
           <PaywallMpesa
             mpesaActive={mpesaActive}
@@ -647,15 +642,8 @@ export default function PaywallScreen(): JSX.Element {
         </View>
       </ScrollView>
 
-      {/* M-PESA MODAL */}
-      <MpesaPaymentModal
-        visible={mpesaModalVisible}
-        phone={mpesaPhone}
-        onPhoneChange={setMpesaPhone}
-        onClose={() => setMpesaModalVisible(false)}
-        onSelectPlan={handleSelectPlanFromModal}
-        plans={MPESA_PLANS}
-      />
+
+      {/* M-PESA Modal removed - using Lipana payment only */}
 
       {/* Debug Panel */}
       <PaymentDebugPanel

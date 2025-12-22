@@ -7,7 +7,6 @@ interface PaywallMpesaProps {
     loading: boolean;
     mpesaLoading: boolean;
     onPress: () => void;
-    // ✅ New prop for Lipana
     onLipanaPress?: () => void;
 }
 
@@ -35,28 +34,12 @@ export function PaywallMpesa({
                 </View>
             ) : (
                 <View style={{ gap: 12 }}>
-                    {/* Standard Internal STK Push */}
-                    <TouchableOpacity
-                        style={[
-                            styles.mpesaButton,
-                            (mpesaLoading || loading) && styles.disabledButton,
-                        ]}
-                        onPress={onPress}
-                        disabled={mpesaLoading || loading}
-                    >
-                        {mpesaLoading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={styles.mpesaText}>Pay via M-PESA (Internal)</Text>
-                        )}
-                    </TouchableOpacity>
-
-                    {/* ✅ New Lipana Link Button */}
+                    {/* ✅ Lipana Payment Only */}
                     {onLipanaPress && (
                         <TouchableOpacity
                             style={[
                                 styles.mpesaButton,
-                                { backgroundColor: "#2563eb" }, // Blue to differentiate
+                                { backgroundColor: "#16a34a" },
                                 (mpesaLoading || loading) && styles.disabledButton,
                             ]}
                             onPress={onLipanaPress}
@@ -65,7 +48,7 @@ export function PaywallMpesa({
                             {loading ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
-                                <Text style={styles.mpesaText}>Pay Monthly via Lipana 🔗</Text>
+                                <Text style={styles.mpesaText}>Pay via Lipana M-PESA 🔗</Text>
                             )}
                         </TouchableOpacity>
                     )}

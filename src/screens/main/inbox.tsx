@@ -17,12 +17,15 @@ import {
   Platform,
   FlatList,
   ListRenderItem,
+  ActivityIndicator,
 } from "react-native";
 import { Search, Inbox, ArrowDownCircle } from "lucide-react-native";
 
 import { useSafeRouter } from "@/hooks/useSafeRouter";
 import { useThemeSettings } from "@/theme/ThemeProvider";
 import { smsReader, smsRole, smsListener, type SmsMessageRecord } from "@/native";
+import { useMessageContext } from "@/providers/MessageProvider";
+import { addMessage } from "@/db/repositories/messages";
 
 // Debounce helper
 function useDebounce(value: string, delay = 300) {
@@ -159,11 +162,35 @@ export default function InboxScreen() {
     return result;
   }, [messages, filter, search]);
 
+  const { refreshThreads } = useMessageContext();
+
+  const handleMessagePress = useCallback(async (item: SmsMessageRecord) => {
+    // Sync this message to the database before navigating
+    // UNBLOCK UI: Don't await this, let it run in background
+    addMessage(
+      item.address,
+      item.body,
+      item.type,
+      'sent',
+      item.timestamp,
+      item.address // Use address as threadId
+    ).catch(err => {
+      console.error("Background import failed:", err);
+    });
+
+    // Navigate IMMEDIATELY to avoid freezing
+    router.safePush("ChatScreen", {
+      address: item.address,
+      initialMessage: item // Pass for immediate rendering
+    });
+
+    // Refresh threads in background so the list is updated when we return
+    refreshThreads();
+  }, [router, refreshThreads]);
+
   const renderItem = useCallback<ListRenderItem<SmsMessageRecord>>(({ item }) => (
     <TouchableOpacity
-      onPress={() =>
-        router.safePush("ChatScreen", { address: item.address })
-      }
+      onPress={() => handleMessagePress(item)}
       onLongPress={() =>
         Alert.alert("Message Options", item.address || "No number", [
           { text: "Copy Number", onPress: () => console.log("copy", item.address) },
@@ -199,7 +226,7 @@ export default function InboxScreen() {
         </Text>
       </View>
     </TouchableOpacity>
-  ), [colors, router]);
+  ), [colors, router, handleMessagePress]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

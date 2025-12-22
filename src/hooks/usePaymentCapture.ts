@@ -27,6 +27,11 @@ import type { CustomerRecord } from "@/db/repositories/paymentRecords";
 
 import { CONFIG } from "@/constants/config";
 
+// ✅ NEW: M-PESA inbox scanning and Excel export
+import { scanMpesaInbox, getSavedTransactions, type ScanResult } from "@/services/MpesaInboxScanner";
+import { exportAndShareMpesaExcel, exportMpesaTransactionsToCSV } from "@/utils/exportMpesaExcel";
+import type { ParsedMpesaTransaction } from "@/utils/parseMpesaEnhanced";
+
 export type RecordItem = CustomerRecord;
 
 // ---------------------------------------------------------
@@ -66,6 +71,10 @@ export function usePaymentCapture() {
   // ⭐ NEW FOR DIAGNOSTICS
   const [lastParsed, setLastParsed] = useState<any>(null);
   const [lastError, setLastError] = useState<any>(null);
+
+  // ✅ NEW: M-PESA transactions state
+  const [mpesaTransactions, setMpesaTransactions] = useState<ParsedMpesaTransaction[]>([]);
+  const [lastScanResult, setLastScanResult] = useState<ScanResult | null>(null);
 
   const debouncedSearch = useDebounce(search);
   const appState = useRef<AppStateStatus>(AppState.currentState);
@@ -207,13 +216,50 @@ export function usePaymentCapture() {
   );
 
   // ---------------------------------------------------------
-  // Inbox Scanner - REMOVED
+  // ✅ Inbox Scanner - RE-ENABLED with M-PESA parsing
   // ---------------------------------------------------------
-  // Payment capture uses native SmsListenerModule for real-time M-PESA detection.
-  // SMS messages are now captured in real-time via the native SmsListenerModule only.
   const scanInbox = useCallback(async () => {
-    console.log("[scanInbox] Inbox scanning is disabled - using real-time listener only");
-  }, []);
+    if (Platform.OS !== "android") {
+      Toast.show({ type: "info", text1: "Only available on Android" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      Toast.show({ type: "info", text1: "🔍 Scanning inbox...", text2: "Please wait" });
+
+      const result = await scanMpesaInbox({
+        limit: 500,
+        saveToDb: true,
+        onProgress: (progress) => {
+          // Could update a progress bar here if needed
+          console.log(`[scanInbox] Progress: ${progress.current}% (${progress.phase})`);
+        },
+      });
+
+      setLastScanResult(result);
+      setMpesaTransactions(result.transactions);
+
+      // Convert to CustomerRecords for compatibility with existing UI
+      for (const tx of result.transactions) {
+        if (tx.phone) {
+          const fakeMsg = `${tx.reference} Confirmed. Ksh${tx.amount} ${tx.type === 'RECEIVED' ? 'received from' : 'sent to'} ${tx.name} ${tx.phone}`;
+          await handleIncomingMessage(fakeMsg);
+        }
+      }
+
+      Toast.show({
+        type: "success",
+        text1: `✅ Found ${result.mpesaFound} M-PESA transactions`,
+        text2: `New: ${result.newSaved}, Duplicates: ${result.duplicatesSkipped}`,
+      });
+    } catch (err: any) {
+      console.error("[scanInbox] Error:", err);
+      Toast.show({ type: "error", text1: "Scan failed", text2: err?.message || "Unknown error" });
+    } finally {
+      setLoading(false);
+    }
+  }, [handleIncomingMessage]);
 
   // ---------------------------------------------------------
   // Sync with server
@@ -323,6 +369,38 @@ export function usePaymentCapture() {
     }
   }, [records]);
 
+  // ✅ NEW: Export to Excel with full M-PESA data
+  const handleExportExcel = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Get transactions from database if not already loaded
+      let transactionsToExport = mpesaTransactions;
+      if (transactionsToExport.length === 0) {
+        transactionsToExport = await getSavedTransactions(1000);
+      }
+
+      if (transactionsToExport.length === 0) {
+        Alert.alert("No Data", "No M-PESA transactions found. Scan inbox first.");
+        return;
+      }
+
+      Toast.show({ type: "info", text1: "📊 Generating Excel...", text2: `${transactionsToExport.length} transactions` });
+
+      const success = await exportAndShareMpesaExcel(transactionsToExport, {
+        includeRawMessage: false,
+      });
+
+      if (success) {
+        Toast.show({ type: "success", text1: "✅ Excel exported successfully" });
+      }
+    } catch (err: any) {
+      Alert.alert("Export Error", String(err?.message || err));
+    } finally {
+      setLoading(false);
+    }
+  }, [mpesaTransactions]);
+
   const handleManualRefresh = useCallback(
     async () => {
       const refreshed = await pruneOldRecords();
@@ -358,7 +436,7 @@ export function usePaymentCapture() {
   );
 
   // ---------------------------------------------------------
-  // RETURN — API v3.5
+  // RETURN — API v4.0 (with M-PESA scanning & Excel export)
   // ---------------------------------------------------------
   return {
     // core
@@ -372,9 +450,14 @@ export function usePaymentCapture() {
     listening,
     totalAmount,
 
+    // ✅ NEW: M-PESA transactions
+    mpesaTransactions,
+    lastScanResult,
+
     // actions
     handleParseAndSave,
     handleExportCSV,
+    handleExportExcel, // ✅ NEW: Excel export
     handleManualRefresh,
     toggleListener,
     scanInbox,

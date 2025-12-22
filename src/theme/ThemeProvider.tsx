@@ -1,10 +1,10 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { ColorSchemeName, useColorScheme } from "react-native";
+import { ColorSchemeName, useColorScheme, StatusBar } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { colors as tokens } from "./colors";
 
-type ThemeMode = "system" | "light" | "dark";
+type ThemeMode = "system" | "light" | "dark" | "safaricom";
 export type ThemePalette = {
   background: string;
   text: string;
@@ -33,7 +33,7 @@ type ThemeContextType = {
   largeText: boolean;
   setLargeText: (v: boolean) => void;
   scheme: Exclude<ColorSchemeName, "no-preference">;
-  theme: "light" | "dark";
+  theme: "light" | "dark" | "safaricom";
   colors: ThemePalette;
 };
 
@@ -64,8 +64,8 @@ export const ThemeProvider: React.FC<React.PropsWithChildren> = ({ children }) =
           AsyncStorage.getItem(STORAGE_KEYS.largeText),
         ]);
 
-        if (m === "system" || m === "light" || m === "dark") {
-          setMode(m);
+        if (m === "system" || m === "light" || m === "dark" || m === "safaricom") {
+          setMode(m as ThemeMode);
         }
         if (h) setHighContrast(h === "true");
         if (l) setLargeText(l === "true");
@@ -95,26 +95,47 @@ export const ThemeProvider: React.FC<React.PropsWithChildren> = ({ children }) =
 
   const scheme = useMemo(() => {
     if (mode === "system") return (sys ?? "light") as "light" | "dark";
+    if (mode === "safaricom") return "light"; // Safaricom is essentially a light theme
     return mode;
   }, [mode, sys]);
 
-  const theme = scheme;
+  const theme = useMemo(() => {
+    if (mode === "system") return (sys ?? "light") as "light" | "dark";
+    return mode;
+  }, [mode, sys]);
 
   const colors = useMemo<ThemePalette>(() => {
+    // 1. Determine base palette from mode
+    let palette;
+    if (theme === 'safaricom') {
+      palette = tokens.kenya.safaricom;
+    } else if (theme === 'dark') {
+      palette = tokens.kenya.dark;
+    } else {
+      // Default to Kenya Light for normal light mode
+      palette = tokens.kenya.light;
+    }
+
+    // 2. Build the full theme object
     const isDark = theme === "dark";
+
+    // Allow overrides if using standard palette for non-Kenyan specific parts (gradients etc)
     const base: ThemePalette = {
-      background: isDark ? tokens.gray900 : tokens.background,
-      text: isDark ? tokens.white : tokens.gray900,
-      subText: isDark ? tokens.gray400 : tokens.gray600,
-      card: isDark ? tokens.gray800 : tokens.white,
-      border: isDark ? tokens.gray700 : tokens.border,
-      accent: tokens.primary600,
+      background: palette.background,
+      text: palette.text,
+      subText: palette.subText,
+      card: palette.card,
+      border: palette.border,
+      accent: palette.accent,
+      primary600: palette.primary,
+
+      // Derived values
       chip: isDark ? tokens.primary700 : tokens.primary200,
-      surface: isDark ? tokens.gray800 : tokens.white,
+      surface: palette.surface,
       success: tokens.success500,
       error: tokens.error500,
       warning: tokens.warning500,
-      primary600: tokens.primary600,
+
       gradientPrimary: tokens.gradientPrimary,
       gradientSuccess: tokens.gradientSuccess,
       gradientError: tokens.gradientError,

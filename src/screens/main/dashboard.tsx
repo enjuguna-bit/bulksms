@@ -1,5 +1,5 @@
 // ============================================================
-// Dashboard.tsx — Optimized with memoization & skeleton loaders
+// Dashboard.tsx — Kenyan Business Focus Edition
 // ============================================================
 
 import React, { useEffect, useState, useCallback, memo } from "react";
@@ -11,16 +11,17 @@ import {
   StyleSheet,
   Alert,
   ListRenderItem,
+  ScrollView,
+  StatusBar
 } from "react-native";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useSafeRouter } from "@/hooks/useSafeRouter";
 import { useThemeSettings } from "@/theme/ThemeProvider";
-import { Card, Button, useToast } from "@/components/ui";
-import { LoadingSpinner, EmptyState } from "@/components/shared";
+import { Card, useToast } from "@/components/ui";
+import { EmptyState } from "@/components/shared";
 import { useOptimizedList } from "@/hooks/useOptimizedList";
 import {
-  SkeletonCard,
   SkeletonStatCard,
   SkeletonListLoader,
 } from "@/components/shared/SkeletonLoader";
@@ -29,40 +30,65 @@ import { getSendLogs, type SendLog, clearSendLogs } from "@/services/storage";
 import { getContactsList } from "@/services/storage";
 
 import {
-  FileText,
   Send,
-  BarChart2,
   Users,
-  Trash2,
-  RefreshCcw,
-  Smartphone,
-  Settings,
+  Calendar,
+  FileBarChart,
+  MessageCircle,
+  Banknote,
+  RefreshCw,
+  TrendingUp,
+  Cloud,
+  CalendarDays
 } from "lucide-react-native";
 
+import { kenyaColors } from "@/theme/kenyaTheme";
+import { NetworkWidget } from "@/components/dashboard/NetworkWidget";
+import { KenyaFlag } from "@/components/shared/KenyaFlag";
+
 // Memoized Components
+
+/**
+ * Stat Card
+ */
 const StatCard = memo(
   ({
     label,
     value,
+    unit,
     color,
-    gradient,
+    trend,
+    icon: Icon
   }: {
     label: string;
     value: number | string;
+    unit?: string;
     color: string;
-    gradient: string[];
-  }) => (
-    <View style={[styles.statCard, { backgroundColor: color + "15" }]}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-    </View>
-  ),
-  (prev, next) =>
-    prev.label === next.label &&
-    prev.value === next.value &&
-    prev.color === next.color
+    trend?: string;
+    icon: any;
+  }) => {
+    return (
+      <View style={[styles.statCard, { backgroundColor: color }]}>
+        <View style={styles.statHeader}>
+          <Icon color="white" size={20} style={{ opacity: 0.9 }} />
+          {trend && (
+            <View style={styles.trendBadge}>
+              <Text style={styles.trendText}>{trend}</Text>
+            </View>
+          )}
+        </View>
+
+        <Text style={styles.statValue}>{value}</Text>
+        <Text style={styles.statUnit}>{unit || ''}</Text>
+        <Text style={styles.statLabel}>{label}</Text>
+      </View>
+    )
+  }
 );
 
+/**
+ * Quick Action Button
+ */
 const QuickButton = memo(
   ({
     icon,
@@ -76,19 +102,16 @@ const QuickButton = memo(
     onPress: () => void;
   }) => (
     <TouchableOpacity
-      style={[styles.quickButton, { backgroundColor: color + "15" }]}
+      style={[styles.quickButton]}
       onPress={onPress}
       activeOpacity={0.7}
     >
       <View style={[styles.buttonIcon, { backgroundColor: color }]}>
         {icon}
       </View>
-      <Text style={[styles.buttonLabel, { color }]}>{label}</Text>
+      <Text style={styles.buttonLabel}>{label}</Text>
     </TouchableOpacity>
-  ),
-  (prev, next) =>
-    prev.label === next.label &&
-    prev.color === next.color
+  )
 );
 
 const LogItemComponent = memo(
@@ -105,66 +128,66 @@ const LogItemComponent = memo(
           {item.phone}
         </Text>
         <Text style={[styles.logTime, { color: colors.subText }]}>
-          {new Date(item.at).toLocaleString()}
+          {new Date(item.at).toLocaleString('en-KE')}
         </Text>
       </View>
       <Text
         style={[
           styles.logStatus,
           item.status === "SENT"
-            ? { color: colors.success }
+            ? { color: kenyaColors.statGreen }
             : item.status === "FAILED"
-              ? { color: colors.error }
-              : { color: colors.warning },
+              ? { color: kenyaColors.statRed }
+              : { color: kenyaColors.statOrange },
         ]}
       >
         {item.status}
       </Text>
     </View>
-  ),
-  (prev, next) =>
-    prev.item.at === next.item.at &&
-    prev.item.phone === next.item.phone &&
-    prev.item.status === next.item.status
+  )
 );
 
 const StatisticsRow = memo(
   ({
     cards,
-    colors,
   }: {
-    cards: { label: string; value: number; color: string; gradient: string[] }[];
-    colors: any;
+    cards: any[];
   }) => (
     <View style={styles.row}>
       {cards.map((card) => (
         <StatCard key={card.label} {...card} />
       ))}
     </View>
-  ),
-  (prev, next) =>
-    JSON.stringify(prev.cards) === JSON.stringify(next.cards)
+  )
 );
 
-const QuickActionsRow = memo(
-  ({ actions }: { actions: Array<{ label: string; color: string; route: string; icon: React.ReactNode }> }) => {
+// Removed JSON.stringify on React Elements which causes crashes/bugs
+const QuickActionsGrid = memo(
+  ({ actions }: { actions: Array<{ label: string; color: string; route?: string; icon: React.ReactNode, onPress?: () => void }> }) => {
     const router = useSafeRouter();
+
     return (
-      <View style={styles.quickRow}>
+      <View style={styles.grid}>
         {actions.map((action) => (
-          <QuickButton
-            key={action.label}
-            icon={action.icon}
-            label={action.label}
-            color={action.color}
-            // ✅ FIX: Use safePush instead of navigate
-            onPress={() => router.safePush(action.route as any)}
-          />
+          <View key={action.label} style={styles.gridItem}>
+            <QuickButton
+              icon={action.icon}
+              label={action.label}
+              color={action.color}
+              onPress={() => {
+                if (action.onPress) {
+                  action.onPress();
+                } else if (action.route) {
+                  // Explicit cast to any for dynamic route strings
+                  router.safePush(action.route as any);
+                }
+              }}
+            />
+          </View>
         ))}
       </View>
     );
-  },
-  (prev, next) => JSON.stringify(prev.actions) === JSON.stringify(next.actions)
+  }
 );
 
 export default function Dashboard() {
@@ -176,13 +199,17 @@ export default function Dashboard() {
 }
 
 function DashboardContent() {
-  const router = useSafeRouter();
+  const router = useSafeRouter(); // Not strictly used here but good practice if we needed to navigate from top level
   const { colors } = useThemeSettings();
   const toast = useToast();
 
   const [logs, setLogs] = useState<SendLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
+
+  // Mock data for new widgets
+  const [holidays] = useState("Jamhuri Day in 3 days");
+  const [weather] = useState("Nairobi: 24°C, Sunny");
 
   const loadData = useCallback(async () => {
     try {
@@ -202,7 +229,7 @@ function DashboardContent() {
 
   const handleManualRefresh = useCallback(async () => {
     await loadData();
-    toast.showSuccess("Dashboard Updated (v7 Verified)");
+    toast.showSuccess("Dashboard Updated");
   }, [loadData, toast]);
 
   const handleClearLogs = useCallback(() => {
@@ -215,7 +242,7 @@ function DashboardContent() {
           try {
             await clearSendLogs();
             setLogs([]);
-            toast.showSuccess("All logs cleared successfully");
+            toast.showSuccess("Logs cleared");
           } catch (error) {
             toast.showError("Failed to clear logs");
           }
@@ -226,12 +253,13 @@ function DashboardContent() {
 
   useEffect(() => {
     loadData();
-  }, []); // Remove loadData dependency to prevent loop if references result in instability
+  }, []);
 
   const total = logs.length;
   const sent = logs.filter((l) => l.status === "SENT").length;
-  const failed = logs.filter((l) => l.status === "FAILED").length;
-  const unsupported = logs.filter((l) => l.status === "UNSUPPORTED").length;
+  // Estimate cost: 0.5 KES per SMS
+  const cost = sent * 0.5;
+  const deliveryRate = total > 0 ? Math.round((sent / total) * 100) : 0;
 
   const renderLogItem: ListRenderItem<SendLog> = useCallback(
     ({ item }) => <LogItemComponent item={item} colors={colors} />,
@@ -242,153 +270,174 @@ function DashboardContent() {
     data: logs.slice(0, 30),
     renderItem: renderLogItem,
     keyExtractor: (item, index) => `${item.phone}-${item.at}-${index}`,
-    itemHeight: 60,
+    itemHeight: 70,
   });
 
-  const statCards = [
+  // Kenyan Focused Stats
+  const statCardsRow1 = [
     {
-      label: "Total Logs",
-      value: total,
-      color: "#0ea5e9",
-      gradient: colors.gradientPrimary,
-    },
-    {
-      label: "Sent",
+      label: "SMS Sent Today",
       value: sent,
-      color: "#16a34a",
-      gradient: colors.gradientSuccess,
+      unit: "messages",
+      color: kenyaColors.statGreen,
+      trend: "+12%",
+      icon: Send,
+    },
+    {
+      label: "M-Pesa Users",
+      value: "142", // Mock for Demo as per request
+      unit: "customers",
+      color: kenyaColors.statOrange,
+      trend: "+5%",
+      icon: Users,
     },
   ];
 
-  const statCards2 = [
+  const statCardsRow2 = [
     {
-      label: "Failed",
-      value: failed,
-      color: "#dc2626",
-      gradient: colors.gradientError,
+      label: "Est. Cost Today",
+      value: `KES ${cost}`,
+      unit: "",
+      color: kenyaColors.statRed,
+      trend: "-3%",
+      icon: Banknote,
     },
     {
-      label: "Unsupported",
-      value: unsupported,
-      color: "#ca8a04",
-      gradient: colors.gradientWarning,
+      label: "Delivery Rate",
+      value: `${deliveryRate}%`,
+      unit: "success",
+      color: kenyaColors.statBlue,
+      trend: "+2%",
+      icon: TrendingUp,
     },
   ];
 
+  // Quick Actions from Request
+  // Memoize this array to avoid re-renders if possible, but icons are unstable inline.
+  // It's better to NOT memoize QuickActionsGrid aggressively if props change.
   const quickActions = [
     {
-      icon: <Send color="#fff" size={20} />,
-      label: "Bulk SMS",
-      color: "#2563eb",
+      icon: <Send color="#fff" size={24} />,
+      label: "Send Bulk SMS",
+      color: kenyaColors.safaricomGreen,
       route: "BulkPro",
     },
     {
-      icon: <FileText color="#fff" size={20} />,
-      label: "Single SMS",
-      color: "#16a34a",
-      route: "SendSms",
+      icon: <Banknote color="#fff" size={24} />,
+      label: "M-Pesa Request",
+      color: kenyaColors.mpesa,
+      route: "Transactions",
     },
-  ];
-
-  const quickActions2 = [
     {
-      icon: <Users color="#fff" size={20} />,
-      label: "Customers",
-      color: "#0ea5e9",
+      icon: <Users color="#fff" size={24} />,
+      label: "Import Contacts",
+      color: kenyaColors.importBlue,
       route: "CustomerDatabase",
     },
     {
-      icon: <BarChart2 color="#fff" size={20} />,
-      label: "Transactions",
-      color: "#9333ea",
-      route: "Transactions",
-    },
-  ];
-
-  const quickActions3 = [
-    {
-      icon: <Smartphone color="#fff" size={20} />,
-      label: "Monitor",
-      color: "#f59e0b",
-      route: "Transactions",
+      icon: <Calendar color="#fff" size={24} />,
+      label: "Schedule SMS",
+      color: kenyaColors.schedulePurple,
+      route: "SmsScheduler", // Fixed route
     },
     {
-      icon: <Settings color="#fff" size={20} />,
-      label: "Settings",
-      color: "#64748b",
-      route: "Settings",
+      icon: <FileBarChart color="#fff" size={24} />,
+      label: "Gen. Report",
+      color: kenyaColors.reportRed,
+      route: "Tools",
     },
+    {
+      icon: <MessageCircle color="#fff" size={24} />,
+      label: "WhatsApp Export @TODO",
+      color: kenyaColors.whatsapp,
+      onPress: () => Alert.alert("Coming Soon", "WhatsApp Export is under development"),
+    }
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Dashboard</Text>
-      <Text style={[styles.subtitle, { color: colors.subText }]}>
-        Monitor activity and navigate across modules
-      </Text>
+    <View style={[styles.container, { backgroundColor: kenyaColors.background }]}>
+      <StatusBar backgroundColor={kenyaColors.safaricomGreen} barStyle="light-content" />
 
-      {/* Statistics Cards */}
-      {loading && initialLoad ? (
-        <>
-          <SkeletonStatCard />
-          <SkeletonStatCard />
-        </>
-      ) : (
-        <>
-          <StatisticsRow cards={statCards} colors={colors} />
-          <StatisticsRow cards={statCards2} colors={colors} />
-        </>
-      )}
+      {/* Header */}
+      <View style={styles.toolbar}>
+        <View style={styles.toolbarTitleContainer}>
+          <KenyaFlag width={28} height={20} style={{ marginRight: 10 }} />
+          <View>
+            <Text style={styles.toolbarTitle}>SMS Dashboard</Text>
+            <Text style={styles.toolbarSubtitle}>Kenya Business Edition</Text>
+          </View>
+        </View>
+        <TouchableOpacity onPress={handleManualRefresh} style={styles.refreshButton}>
+          <RefreshCw color={kenyaColors.safaricomGreen} size={20} />
+        </TouchableOpacity>
+      </View>
 
-      {/* Quick Actions Section */}
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>
-        Quick Actions
-      </Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-      {loading && initialLoad ? (
-        <>
-          <View style={styles.skeletonRow} />
-          <View style={styles.skeletonRow} />
-          <View style={styles.skeletonRow} />
-        </>
-      ) : (
-        <>
-          <QuickActionsRow actions={quickActions} />
-          <QuickActionsRow actions={quickActions2} />
-          <QuickActionsRow actions={quickActions3} />
-        </>
-      )}
+        {/* Network Monitor Widget - Safaricom Focus */}
+        <NetworkWidget />
 
-      {/* Logs Section */}
-      <Card variant="elevated" style={styles.logsCard}>
-        <View style={styles.cardHeader}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            Recent Logs
-          </Text>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <TouchableOpacity onPress={handleManualRefresh} disabled={loading}>
-              <RefreshCcw
-                color={loading ? colors.border : colors.accent}
-                size={20}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleClearLogs} disabled={loading}>
-              <Trash2
-                color={loading ? colors.border : colors.error}
-                size={20}
-              />
-            </TouchableOpacity>
+        {/* Statistics Cards */}
+        {loading && initialLoad ? (
+          <>
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+          </>
+        ) : (
+          <>
+            <StatisticsRow cards={statCardsRow1} />
+            <StatisticsRow cards={statCardsRow2} />
+          </>
+        )}
+
+        {/* Quick Actions Grid */}
+        <Text style={styles.sectionTitle}>
+          Quick Actions
+        </Text>
+
+        <QuickActionsGrid actions={quickActions} />
+
+        {/* Helper Widgets Row */}
+        <View style={styles.widgetRow}>
+          <View style={styles.miniWidget}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              <CalendarDays size={16} color={kenyaColors.safaricomRed} />
+              <Text style={styles.miniWidgetTitle}> Events</Text>
+            </View>
+            <Text style={styles.miniWidgetContent}>{holidays}</Text>
+          </View>
+          <View style={styles.miniWidget}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              <Cloud size={16} color={kenyaColors.importBlue} />
+              <Text style={styles.miniWidgetTitle}> Weather</Text>
+            </View>
+            <Text style={styles.miniWidgetContent}>{weather}</Text>
           </View>
         </View>
 
-        {loading && initialLoad ? (
-          <SkeletonListLoader count={3} cardType="simple" />
-        ) : logs.length === 0 ? (
-          <EmptyState type="logs" />
-        ) : (
-          <FlatList {...optimizedListProps} />
-        )}
-      </Card>
+        {/* Logs Section */}
+        <Card variant="elevated" style={styles.logsCard}>
+          <View style={styles.cardHeader}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              Recent Logs
+            </Text>
+            <TouchableOpacity onPress={handleClearLogs} disabled={loading}>
+              <Text style={{ color: kenyaColors.reportRed, fontWeight: '600' }}>Clear All</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loading && initialLoad ? (
+            <SkeletonListLoader count={3} cardType="simple" />
+          ) : logs.length === 0 ? (
+            <EmptyState type="logs" />
+          ) : (
+            <FlatList {...optimizedListProps} scrollEnabled={false} />
+          )}
+        </Card>
+
+        {/* Bottom padding for ScrollView */}
+        <View style={{ height: 20 }} />
+      </ScrollView>
     </View>
   );
 }
@@ -396,75 +445,165 @@ function DashboardContent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 16,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "900",
-    marginBottom: 4,
+  toolbar: {
+    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    marginBottom: 16,
   },
-  subtitle: {
-    marginBottom: 20,
-    fontSize: 16,
+  toolbarTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  toolbarTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#000',
+  },
+  toolbarSubtitle: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '600',
+  },
+  refreshButton: {
+    padding: 8,
+    backgroundColor: '#F0F9F0',
+    borderRadius: 20,
   },
   row: {
     flexDirection: "row",
     gap: 12,
     marginBottom: 12,
   },
-  skeletonRow: {
-    height: 60,
-    marginBottom: 12,
-    borderRadius: 12,
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+  gridItem: {
+    width: '31%', // 3 items per row approx
+    marginBottom: 4,
   },
   sectionTitle: {
     fontWeight: "800",
     fontSize: 18,
     marginBottom: 12,
-    marginTop: 16,
-  },
-  quickRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 12,
+    color: '#333',
+    marginTop: 8,
   },
   statCard: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    justifyContent: "center",
+    elevation: 8, // High elevation for Kenyan sun visibility logic
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    minHeight: 120,
+    justifyContent: 'space-between',
   },
-  statLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    opacity: 0.7,
+  statHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 8,
+  },
+  trendBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  trendText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '700',
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "900",
+    color: 'white',
+  },
+  statUnit: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: -2,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: 'rgba(255,255,255,0.9)',
   },
   quickButton: {
-    flex: 1,
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: 'white',
     borderRadius: 12,
-    padding: 12,
+    padding: 8,
     alignItems: "center",
     justifyContent: "center",
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   buttonIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
+    elevation: 4, // Inner pop
   },
   buttonLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
+    textAlign: 'center',
+    color: '#333',
+  },
+  widgetRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  miniWidget: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#ccc',
+    elevation: 2,
+  },
+  miniWidgetTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#555',
+  },
+  miniWidgetContent: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#000',
   },
   logsCard: {
-    marginTop: 24,
+    marginTop: 8,
   },
   cardHeader: {
     flexDirection: "row",
@@ -488,11 +627,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   logTime: {
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: 12,
+    marginTop: 4,
   },
   logStatus: {
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: 13,
   },
 });

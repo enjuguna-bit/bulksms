@@ -10,6 +10,7 @@ import { ensureContactsPermission, getAllContacts, type SimpleContact } from "@/
 import { saveSendLog } from "@/services/storage";
 import { enqueueSMS, runQueueNow } from "@/background/smsWatcher";
 import { sendSingleSms, canSendSms } from "@/services/smsService";
+import { isDuplicateSend } from "@/db/repositories/sendLogs";
 import type { Recipient } from "@/components/bulk-pro/EditModal";
 
 const STORAGE_KEYS = {
@@ -365,6 +366,16 @@ export function useBulkPro() {
                 failedRef.current += 1;
             } else {
                 try {
+                    // P0 FIX: Check for duplicate sends (same message to same number within 5 minutes)
+                    const isDuplicate = await isDuplicateSend(phone, body, 5 * 60 * 1000);
+                    if (isDuplicate) {
+                        console.log(`[BulkPro] Skipping duplicate: ${phone}`);
+                        // Don't count as failed, just skip
+                        index++;
+                        setTimeout(() => processNext(), sendSpeed);
+                        return;
+                    }
+
                     // Refactored to use service layer with Timeout Protection
                     const sendPromise = sendSingleSms(phone, body);
                     const timeoutPromise = new Promise<any>((_, reject) =>

@@ -44,6 +44,50 @@ export async function getSendLogs(maxAge: number): Promise<SendLog[]> {
 }
 
 /**
+ * Check if the same message was sent to the same number recently (duplicate prevention).
+ * @param phoneNumber - Normalized phone number
+ * @param messageBody - Message content
+ * @param windowMs - Time window to check (default: 5 minutes)
+ * @returns true if duplicate found, false otherwise
+ */
+export async function isDuplicateSend(
+    phoneNumber: string,
+    messageBody: string,
+    windowMs: number = 5 * 60 * 1000
+): Promise<boolean> {
+    const cutoff = Date.now() - windowMs;
+    const result = await runQuery(
+        `SELECT COUNT(*) as count FROM send_logs 
+         WHERE to_number = ? AND body = ? AND timestamp > ? AND status = 'success'`,
+        [phoneNumber, messageBody, cutoff]
+    );
+    const count = result.rows.item(0)?.count || 0;
+    return count > 0;
+}
+
+/**
+ * Check if any message was sent to this number recently (rate limiting per recipient).
+ * @param phoneNumber - Normalized phone number
+ * @param windowMs - Time window to check (default: 1 minute)
+ * @param maxCount - Maximum sends allowed in window (default: 1)
+ * @returns true if rate limit exceeded
+ */
+export async function isRateLimitExceeded(
+    phoneNumber: string,
+    windowMs: number = 60 * 1000,
+    maxCount: number = 1
+): Promise<boolean> {
+    const cutoff = Date.now() - windowMs;
+    const result = await runQuery(
+        `SELECT COUNT(*) as count FROM send_logs 
+         WHERE to_number = ? AND timestamp > ?`,
+        [phoneNumber, cutoff]
+    );
+    const count = result.rows.item(0)?.count || 0;
+    return count >= maxCount;
+}
+
+/**
  * Get send logs with pagination.
  */
 export async function getSendLogsPaginated(limit: number = 50, offset: number = 0): Promise<SendLog[]> {

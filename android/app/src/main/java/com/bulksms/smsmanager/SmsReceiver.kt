@@ -15,6 +15,11 @@ import android.util.Log
  * ------------------------------------------------------------
  * Works when the app is the default SMS handler.
  * ------------------------------------------------------------
+ * ✅ Safaricom Keyword Handling:
+ *    - BAL: Balance inquiry request
+ *    - STOP: Opt-out request
+ *    - INFO: Information request
+ * ------------------------------------------------------------
  */
 class SmsReceiver : BroadcastReceiver() {
 
@@ -42,12 +47,99 @@ class SmsReceiver : BroadcastReceiver() {
 
             // Forward to JS bridge
             SmsListenerModule.sendEventToJs(address, body, timestamp)
+
+            // ✅ Handle Safaricom-specific keywords
+            handleSafaricomKeywords(body, address)
           }
         } catch (e: Exception) {
           Log.e(TAG, "❌ Failed to parse incoming SMS", e)
         }
       }
     }
+  }
+
+  /**
+   * 🇰🇪 Safaricom Keyword Handler
+   * Processes common SMS keywords for bulk messaging systems
+   */
+  private fun handleSafaricomKeywords(body: String, sender: String) {
+    val upperBody = body.trim().uppercase()
+
+    when {
+      upperBody == "BAL" || upperBody.startsWith("BAL ") -> {
+        // User requested balance check
+        logBalanceRequest(sender)
+      }
+      upperBody == "STOP" || upperBody.startsWith("STOP ") -> {
+        // Opt-out request - user wants to unsubscribe
+        handleOptOut(sender)
+      }
+      upperBody == "INFO" || upperBody.startsWith("INFO ") -> {
+        // Information request
+        sendInfoResponse(sender)
+      }
+      upperBody == "HELP" || upperBody.startsWith("HELP ") -> {
+        // Help request
+        logHelpRequest(sender)
+      }
+    }
+  }
+
+  /**
+   * Log balance inquiry request and forward to JS layer
+   */
+  private fun logBalanceRequest(sender: String) {
+    Log.i(TAG, "💰 Balance request from: $sender")
+    
+    // Forward keyword event to JS for handling
+    SmsListenerModule.sendKeywordEventToJs(
+      sender = sender,
+      keyword = "BAL",
+      action = "balance_request"
+    )
+  }
+
+  /**
+   * Handle opt-out/unsubscribe request
+   * This is critical for compliance with Kenyan CA regulations
+   */
+  private fun handleOptOut(sender: String) {
+    Log.i(TAG, "🛑 Opt-out request from: $sender")
+    
+    // Forward keyword event to JS for opt-out processing
+    SmsListenerModule.sendKeywordEventToJs(
+      sender = sender,
+      keyword = "STOP",
+      action = "opt_out"
+    )
+  }
+
+  /**
+   * Handle info request - user wants service information
+   */
+  private fun sendInfoResponse(sender: String) {
+    Log.i(TAG, "ℹ️ Info request from: $sender")
+    
+    // Forward keyword event to JS for info response
+    SmsListenerModule.sendKeywordEventToJs(
+      sender = sender,
+      keyword = "INFO",
+      action = "info_request"
+    )
+  }
+
+  /**
+   * Log help request and forward to JS layer
+   */
+  private fun logHelpRequest(sender: String) {
+    Log.i(TAG, "❓ Help request from: $sender")
+    
+    // Forward keyword event to JS for help response
+    SmsListenerModule.sendKeywordEventToJs(
+      sender = sender,
+      keyword = "HELP",
+      action = "help_request"
+    )
   }
 
   companion object {

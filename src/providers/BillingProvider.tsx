@@ -14,6 +14,7 @@ import React, {
   type ReactNode,
 } from "react";
 import SecureStorage from "@/utils/SecureStorage";
+import { checkStatusOnServer, type ActivationResult } from "@/services/activation";
 
 // ---------------------------------------------------------------------------
 // Local PlanType (no longer imported from services/activation)
@@ -144,19 +145,97 @@ export function BillingProvider({ children }: Props) {
   }, []);
 
   // -------------------------------------------------------------------------
-  // 🔒 Server-side Enforcement (HYBRID NO-OP VERSION)
+  // 🔒 Server-side Enforcement (ACTIVE VERSION)
   //
-  // For now we do not call activation server, we just pass through local values.
-  // When you are ready to integrate phone-based activation, you can reintroduce
-  // server calls here using your new services/activation.ts API.
+  // Validates subscription with server. Falls back to local state with
+  // grace period when offline to maintain usability.
   // -------------------------------------------------------------------------
+  const OFFLINE_GRACE_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 hours grace when offline
+  const SERVER_TIMEOUT_MS = 10000; // 10 second timeout for server calls
+
+  // Helper to add timeout to promises (TSX requires trailing comma in generics)
+  const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+    ]);
+  };
+
   const enforceServerLock = useCallback(
     async (localTrialEnd: number | null, localSubEnd: number | null) => {
-      // No remote enforcement yet, keep local state.
-      return { trialEnd: localTrialEnd, subEnd: localSubEnd };
+      try {
+        // Safety check: ensure checkStatusOnServer is a function
+        if (typeof checkStatusOnServer !== 'function') {
+          console.warn(`${HYBRID_LOG_PREFIX} checkStatusOnServer is not available, using local state`);
+          return { trialEnd: localTrialEnd, subEnd: localSubEnd };
+        }
+
+        // Call activation server with timeout
+        const serverStatus: ActivationResult = await withTimeout(
+          checkStatusOnServer(),
+          SERVER_TIMEOUT_MS,
+          { status: "error", message: "Server timeout" } as ActivationResult
+        );
+
+        if (serverStatus.status === "active" || serverStatus.status === "activated" || serverStatus.status === "renewed") {
+          // Server says active - use server's authoritative expiry time
+          console.log(`${HYBRID_LOG_PREFIX} ✅ Server confirmed active subscription`);
+          const serverExpiry = serverStatus.trialEnd ?? null;
+          return {
+            trialEnd: serverExpiry,
+            subEnd: serverExpiry
+          };
+        } else if (serverStatus.status === "expired") {
+          // Server explicitly says expired - force local expiry
+          console.log(`${HYBRID_LOG_PREFIX} ⚠️ Server says subscription expired`);
+          return {
+            trialEnd: now() - 1,
+            subEnd: null
+          };
+        } else if (serverStatus.status === "not_found") {
+          // New device or cleared data - allow local trial to continue
+          console.log(`${HYBRID_LOG_PREFIX} ℹ️ Device not registered on server, using local state`);
+          return { trialEnd: localTrialEnd, subEnd: localSubEnd };
+        } else {
+          // Error case - apply grace period logic
+          const errorMsg = serverStatus.status === "error" ? serverStatus.message : "Unknown server status";
+          throw new Error(errorMsg || "Unknown server status");
+        }
+      } catch (e) {
+        // Network error or server unreachable - apply offline grace period
+        console.warn(`${HYBRID_LOG_PREFIX} ⚠️ Server unreachable, applying offline grace period:`, e);
+
+        // Check if we have a valid local subscription that's still within grace period
+        const nowTs = now();
+        const hasLocalSub = localSubEnd && localSubEnd > nowTs;
+        const hasLocalTrial = localTrialEnd && localTrialEnd > nowTs;
+
+        if (hasLocalSub || hasLocalTrial) {
+          // Still within local validity - allow access
+          return { trialEnd: localTrialEnd, subEnd: localSubEnd };
+        }
+
+        // Check if recently expired (within grace period)
+        const recentlyExpiredSub = localSubEnd && (nowTs - localSubEnd) < OFFLINE_GRACE_PERIOD_MS;
+        const recentlyExpiredTrial = localTrialEnd && (nowTs - localTrialEnd) < OFFLINE_GRACE_PERIOD_MS;
+
+        if (recentlyExpiredSub) {
+          console.log(`${HYBRID_LOG_PREFIX} 🔄 Offline grace period active for subscription`);
+          return { trialEnd: null, subEnd: nowTs + OFFLINE_GRACE_PERIOD_MS };
+        }
+
+        if (recentlyExpiredTrial) {
+          console.log(`${HYBRID_LOG_PREFIX} 🔄 Offline grace period active for trial`);
+          return { trialEnd: nowTs + OFFLINE_GRACE_PERIOD_MS, subEnd: null };
+        }
+
+        // No valid local state and outside grace period - force expiry
+        return { trialEnd: localTrialEnd, subEnd: localSubEnd };
+      }
     },
     []
   );
+
 
   // -------------------------------------------------------------------------
   // 🔄 Load Stored State + Hybrid Logic

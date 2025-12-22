@@ -12,47 +12,45 @@ export function useSafeRouter() {
   const navigation = useNavigation<any>();
   const [ready, setReady] = useState(false);
 
-  // Mark router ready shortly after mount
+  // Mark router ready shortly after mount (reduced from 150ms to 50ms)
   useEffect(() => {
-    const timer = setTimeout(() => setReady(true), 150);
+    const timer = setTimeout(() => setReady(true), 50);
     return () => clearTimeout(timer);
   }, []);
 
-  // Safe push → navigate()
+  // Safe push → navigate() - REMOVED extra setTimeout for immediate navigation
   const safePush = useCallback(
     (screen: string, params?: Record<string, any>) => {
       if (!ready) {
         console.warn(`[useSafeRouter] push blocked until ready (${screen})`);
         return;
       }
-      setTimeout(() => {
-        try {
-          navigation.navigate(screen, params);
-        } catch (e) {
-          console.warn("[useSafeRouter] push error:", e);
-        }
-      }, 50);
+      try {
+        navigation.navigate(screen, params);
+      } catch (e) {
+        console.error("[useSafeRouter] push error:", e);
+        console.error("[useSafeRouter] Screen:", screen, "Params:", params);
+      }
     },
     [navigation, ready]
   );
 
-  // Safe replace → navigation.reset()
+  // Safe replace → navigation.reset() - REMOVED extra setTimeout for immediate navigation
   const safeReplace = useCallback(
     (screen: string, params?: Record<string, any>) => {
       if (!ready) {
         console.warn(`[useSafeRouter] replace blocked until ready (${screen})`);
         return;
       }
-      setTimeout(() => {
-        try {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: screen, params }],
-          });
-        } catch (e) {
-          console.warn("[useSafeRouter] replace error:", e);
-        }
-      }, 50);
+      try {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: screen, params }],
+        });
+      } catch (e) {
+        console.error("[useSafeRouter] replace error:", e);
+        console.error("[useSafeRouter] Screen:", screen, "Params:", params);
+      }
     },
     [navigation, ready]
   );
@@ -61,7 +59,7 @@ export function useSafeRouter() {
     try {
       navigation.goBack();
     } catch (e) {
-      console.warn("[useSafeRouter] back error:", e);
+      console.error("[useSafeRouter] back error:", e);
     }
   }, [navigation]);
 

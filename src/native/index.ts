@@ -8,6 +8,7 @@
 //  - smsListener       → onSmsReceived event emitter
 //  - smsRole           → default SMS role helpers
 //  - devBypass         → Dev bypass flags from BuildConfig
+//  - bulkSmsScheduler  → WorkManager-based bulk SMS scheduler
 // ----------------------------------------------------------
 // All functions are Android-safe and fail-soft on iOS.
 // ==========================================================
@@ -71,6 +72,18 @@ type NativeSmsSenderModule = {
   sendSms(phoneNumber: string, message: string, simSlot: number): Promise<{ success: boolean; id: number }>;
   getSimCount(): Promise<number>;
   canSendSms(): Promise<boolean>;
+  isSafaricomNetwork(): Promise<boolean>;
+  getNetworkInfo(): Promise<NetworkInfo>;
+};
+
+export type NetworkInfo = {
+  networkOperator: string;
+  networkOperatorName: string;
+  simOperator: string;
+  simOperatorName: string;
+  networkCountryIso: string;
+  simCountryIso: string;
+  detectedCarrier: string;
 };
 
 type NativeSmsListenerModule = {
@@ -97,6 +110,51 @@ type NativeDevBypassBridgeModule = {
   disable(): void;
 };
 
+// Bulk SMS Scheduler types
+export type BulkSmsJobStatus = {
+  workId: string;
+  recipientCount?: number;
+  status: string;
+  state?: string;
+  message?: string;
+  totalSent?: number;
+  totalFailed?: number;
+  totalDelivered?: number;
+};
+
+export type BulkSmsProgressEvent = {
+  current: number;
+  total: number;
+  progress: number;
+  sent: number;
+  failed: number;
+};
+
+export type BulkSmsCompleteEvent = {
+  sent: number;
+  failed: number;
+  delivered: number;
+};
+
+export type BulkSmsOptions = {
+  simSlot?: number;
+  delayMs?: number;
+  maxRetries?: number;
+};
+
+type NativeBulkSmsSchedulerModule = {
+  scheduleBulkSend(
+    recipients: string[],
+    message: string,
+    options: BulkSmsOptions | null
+  ): Promise<BulkSmsJobStatus>;
+  cancelBulkSend(): Promise<BulkSmsJobStatus>;
+  getBulkSendStatus(): Promise<BulkSmsJobStatus>;
+  observeProgress(): Promise<{ status: string; workId?: string }>;
+  addListener?(eventName: string): void;
+  removeListeners?(count: number): void;
+};
+
 // -------------------------------------------------------------------
 // Safe module access helpers
 // -------------------------------------------------------------------
@@ -108,6 +166,7 @@ const {
   RoleHelperModule,
   DefaultSmsRoleModule,
   DevBypassBridgeModule,
+  BulkSmsSchedulerModule,
 } = NativeModules as {
   SmsReaderModule?: NativeSmsReaderModule;
   SmsSenderModule?: NativeSmsSenderModule;
@@ -115,6 +174,7 @@ const {
   RoleHelperModule?: NativeRoleHelperModule;
   DefaultSmsRoleModule?: NativeDefaultSmsRoleModule;
   DevBypassBridgeModule?: NativeDevBypassBridgeModule;
+  BulkSmsSchedulerModule?: NativeBulkSmsSchedulerModule;
 };
 
 // -------------------------------------------------------------------
@@ -243,6 +303,34 @@ export const smsSender = {
     } catch (err) {
       console.warn("[smsSender.getSimCount] error:", err);
       return 1;
+    }
+  },
+
+  /**
+   * 🇰🇪 Check if device is on Safaricom network (Kenya)
+   * Uses MCC/MNC codes: 639 (Kenya) + 02/07 (Safaricom)
+   */
+  async isSafaricomNetwork(): Promise<boolean> {
+    if (Platform.OS !== "android" || !SmsSenderModule) return false;
+    try {
+      return await SmsSenderModule.isSafaricomNetwork();
+    } catch (err) {
+      console.warn("[smsSender.isSafaricomNetwork] error:", err);
+      return false;
+    }
+  },
+
+  /**
+   * 📶 Get network operator info (useful for debugging)
+   * Returns Kenyan carrier detection: Safaricom, Airtel Kenya, Equitel, Faiba
+   */
+  async getNetworkInfo(): Promise<NetworkInfo | null> {
+    if (Platform.OS !== "android" || !SmsSenderModule) return null;
+    try {
+      return await SmsSenderModule.getNetworkInfo();
+    } catch (err) {
+      console.warn("[smsSender.getNetworkInfo] error:", err);
+      return null;
     }
   },
 };
@@ -427,6 +515,139 @@ export const devBypass = {
       }
     } catch (err) {
       console.warn("[devBypass.disable] error:", err);
+    }
+  },
+};
+
+// -------------------------------------------------------------------
+// bulkSmsScheduler wrapper (WorkManager-based bulk SMS)
+// -------------------------------------------------------------------
+
+// Event emitter for bulk SMS progress
+const bulkSmsEventsEmitter = (() => {
+  if (Platform.OS !== "android") return null;
+
+  try {
+    if (BulkSmsSchedulerModule) {
+      return new NativeEventEmitter(BulkSmsSchedulerModule as any);
+    }
+  } catch (error) {
+    console.error("[bulkSmsScheduler] Failed to create event emitter:", error);
+  }
+  return null;
+})();
+
+export const bulkSmsScheduler = {
+  /**
+   * Schedule a bulk SMS sending job using WorkManager.
+   * This is battery-efficient and survives process death.
+   * 
+   * @param recipients Array of phone numbers
+   * @param message Message text to send
+   * @param options Optional configuration:
+   *   - simSlot: SIM slot to use (0 or 1), default 0
+   *   - delayMs: Delay between messages (500-5000ms), default 1500
+   *   - maxRetries: Max retry attempts per message (1-5), default 3
+   */
+  async schedule(
+    recipients: string[],
+    message: string,
+    options?: BulkSmsOptions
+  ): Promise<BulkSmsJobStatus | null> {
+    if (Platform.OS !== "android" || !BulkSmsSchedulerModule) {
+      console.warn("[bulkSmsScheduler.schedule] Not available on this platform");
+      return null;
+    }
+
+    if (!recipients || recipients.length === 0) {
+      console.warn("[bulkSmsScheduler.schedule] No recipients provided");
+      return null;
+    }
+
+    if (!message || message.trim().length === 0) {
+      console.warn("[bulkSmsScheduler.schedule] No message provided");
+      return null;
+    }
+
+    try {
+      const result = await BulkSmsSchedulerModule.scheduleBulkSend(
+        recipients,
+        message,
+        options || null
+      );
+      console.log(`[bulkSmsScheduler.schedule] Job scheduled: ${result.workId}`);
+      return result;
+    } catch (err) {
+      console.error("[bulkSmsScheduler.schedule] error:", err);
+      return null;
+    }
+  },
+
+  /**
+   * Cancel the current bulk SMS sending job.
+   */
+  async cancel(): Promise<BulkSmsJobStatus | null> {
+    if (Platform.OS !== "android" || !BulkSmsSchedulerModule) return null;
+
+    try {
+      const result = await BulkSmsSchedulerModule.cancelBulkSend();
+      console.log("[bulkSmsScheduler.cancel] Job cancelled");
+      return result;
+    } catch (err) {
+      console.error("[bulkSmsScheduler.cancel] error:", err);
+      return null;
+    }
+  },
+
+  /**
+   * Get the current status of the bulk SMS job.
+   */
+  async getStatus(): Promise<BulkSmsJobStatus | null> {
+    if (Platform.OS !== "android" || !BulkSmsSchedulerModule) return null;
+
+    try {
+      return await BulkSmsSchedulerModule.getBulkSendStatus();
+    } catch (err) {
+      console.error("[bulkSmsScheduler.getStatus] error:", err);
+      return null;
+    }
+  },
+
+  /**
+   * Subscribe to progress updates during bulk SMS sending.
+   * Returns a subscription that should be removed when done.
+   */
+  onProgress(
+    handler: (event: BulkSmsProgressEvent) => void
+  ): EmitterSubscription | { remove: () => void } {
+    if (!bulkSmsEventsEmitter) {
+      return { remove: () => { } };
+    }
+
+    try {
+      return bulkSmsEventsEmitter.addListener("BulkSmsProgress", handler);
+    } catch (err) {
+      console.error("[bulkSmsScheduler.onProgress] error:", err);
+      return { remove: () => { } };
+    }
+  },
+
+  /**
+   * Subscribe to completion event when bulk SMS job finishes.
+   * Returns a subscription that should be removed when done.
+   */
+  onComplete(
+    handler: (event: BulkSmsCompleteEvent) => void
+  ): EmitterSubscription | { remove: () => void } {
+    if (!bulkSmsEventsEmitter) {
+      return { remove: () => { } };
+    }
+
+    try {
+      return bulkSmsEventsEmitter.addListener("BulkSmsComplete", handler);
+    } catch (err) {
+      console.error("[bulkSmsScheduler.onComplete] error:", err);
+      return { remove: () => { } };
     }
   },
 };

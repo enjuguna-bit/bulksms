@@ -1,18 +1,42 @@
 /**
- * ToolsScreen.tsx - Optimized with memoization and improved UX
+ * ToolsScreen.tsx - Kenyan Advanced SMS Utilities
  */
 
-import React, { memo, useMemo, useCallback } from "react";
+import React, { memo, useMemo, useCallback, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  TextInput,
+  Alert,
+  Image,
 } from "react-native";
 import { useSafeRouter } from "@/hooks/useSafeRouter";
-import { Send, FileText, BarChart2, ChevronRight } from "lucide-react-native";
+import {
+  Send,
+  FileText,
+  BarChart2,
+  ChevronRight,
+  Calendar,
+  Copy,
+  Banknote,
+  TrendingUp,
+  Trash2,
+  Archive,
+  MessageSquare,
+  Layers,
+  MapPin,
+  Languages,
+  FileDigit,
+  Clock,
+  Search
+} from "lucide-react-native";
 import { useThemeSettings } from "@/theme/ThemeProvider";
+import { Card } from "@/components/ui";
+import { kenyaColors } from "@/theme/kenyaTheme";
+import { KenyaFlag } from "@/components/shared/KenyaFlag";
 
 // Memoized tool card component
 const ToolCard = memo(
@@ -43,11 +67,11 @@ const ToolCard = memo(
         <View style={[styles.iconBox, { backgroundColor: color + "20" }]}>
           <Icon size={24} color={color} strokeWidth={1.5} />
         </View>
-        <View style={styles.content}>
+        <View style={styles.cardContent}>
           <Text style={[styles.cardTitle, { color: colors.text }]}>
             {title}
           </Text>
-          <Text style={[styles.cardDesc, { color: colors.subText }]}>
+          <Text style={[styles.cardDesc, { color: colors.subText }]} numberOfLines={2}>
             {desc}
           </Text>
         </View>
@@ -61,75 +85,187 @@ const ToolCard = memo(
     prev.onPress === next.onPress
 );
 
-// Memoized header
-const ToolsHeader = memo(({ colors }: { colors: any }) => (
-  <View style={styles.header}>
-    <Text style={[styles.title, { color: colors.text }]}>Tools</Text>
-    <Text style={[styles.subtitle, { color: colors.subText }]}>
-      Manage your messaging and payments
-    </Text>
-  </View>
-));
+// Kenyan Special Tool Card
+const KenyanToolCard = memo(
+  ({
+    title,
+    desc,
+    icon: Icon,
+    onPress,
+  }: {
+    title: string;
+    desc: string;
+    icon: any;
+    onPress: () => void;
+  }) => {
+    const { colors } = useThemeSettings();
+
+    return (
+      <TouchableOpacity
+        style={styles.kenyanCard}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View style={styles.kenyanCardHeader}>
+          <View style={styles.kenyanIconContainer}>
+            <Icon size={20} color={kenyaColors.safaricomGreen} />
+          </View>
+          <KenyaFlag width={20} height={14} />
+        </View>
+
+        <Text style={styles.kenyanTitle}>{title}</Text>
+        <Text style={styles.kenyanDesc}>{desc}</Text>
+      </TouchableOpacity>
+    );
+  }
+);
 
 export default function ToolsScreen() {
   const router = useSafeRouter();
   const { colors } = useThemeSettings();
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Memoize tools data to prevent unnecessary re-renders
+  const handleAlert = (feature: string) => {
+    Alert.alert(feature, "This feature is coming soon to the Kenya Edition.");
+  };
+
+  // Standard Tools
   const tools = useMemo(
     () => [
       {
-        id: "bulk",
-        title: "Bulk SMS Pro",
-        desc: "Send mass messages to your customers",
-        icon: Send,
-        route: "BulkPro",
-        color: "#2563eb",
+        id: "schedule",
+        title: "Schedule Bulk SMS",
+        desc: "Plan SMS campaigns for optimal Kenyan time zones",
+        icon: Calendar,
+        route: "SmsScheduler",
+        color: kenyaColors.schedulePurple,
       },
       {
-        id: "single",
-        title: "Single SMS",
-        desc: "Send a quick message to one person",
-        icon: FileText,
-        route: "SendSms",
-        color: "#059669",
+        id: "templates",
+        title: "Message Templates",
+        desc: "Save Swahili/English templates for quick sending",
+        icon: Copy,
+        action: () => handleAlert("Templates"),
+        color: colors.primary600,
       },
       {
-        id: "transactions",
-        title: "Transactions",
-        desc: "View payment history and reports",
-        icon: BarChart2,
-        route: "Transactions",
-        color: "#d97706",
+        id: "mpesa_bulk",
+        title: "M-Pesa Bulk Request",
+        desc: "Send payment requests to multiple contacts",
+        icon: Banknote,
+        action: () => router.safePush("Transactions" as any), // Reuse transactions for now
+        color: kenyaColors.mpesa,
+      },
+      {
+        id: "analyzer",
+        title: "SMS Analyzer",
+        desc: "Analyze SMS costs and delivery rates",
+        icon: TrendingUp,
+        action: () => handleAlert("SMS Analyzer"),
+        color: kenyaColors.statBlue,
+      },
+      {
+        id: "cleaner",
+        title: "Contact Cleaner",
+        desc: "Remove duplicates and invalid Kenyan numbers",
+        icon: Trash2,
+        action: () => router.safePush("CustomerDatabase" as any),
+        color: kenyaColors.statRed,
+      },
+      {
+        id: "backup",
+        title: "SMS Backup",
+        desc: "Backup SMS conversations securely",
+        icon: Archive,
+        action: () => handleAlert("Backup"),
+        color: "#64748b",
       },
     ],
-    []
+    [colors, router]
   );
 
-  // Memoize navigation handler
-  const handleToolPress = useCallback(
-    (route: string) => {
-      router.safePush(route as any);
+  // Kenyan Special Tools
+  const kenyanTools = [
+    {
+      title: "County Broadcast",
+      desc: "Send SMS by Kenyan county",
+      icon: MapPin,
     },
-    [router]
+    {
+      title: "Swahili Translator",
+      desc: "Translate SMS to Swahili",
+      icon: Languages,
+    },
+    {
+      title: "M-Pesa Statements",
+      desc: "Parse M-Pesa SMS statements",
+      icon: FileDigit,
+    },
+    {
+      title: "Business Hours",
+      desc: "Respect 8AM-5PM rules",
+      icon: Clock,
+    }
+  ];
+
+  const filteredTools = tools.filter(t =>
+    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.desc.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ToolsHeader colors={colors} />
 
-      <View style={styles.grid}>
-        {tools.map((tool) => (
-          <ToolCard
-            key={tool.id}
-            title={tool.title}
-            desc={tool.desc}
-            icon={tool.icon}
-            color={tool.color}
-            onPress={() => handleToolPress(tool.route)}
+      {/* Header with Search */}
+      <View style={[styles.header, { backgroundColor: kenyaColors.safaricomGreen }]}>
+        <View>
+          <Text style={styles.headerTitle}>SMS Tools</Text>
+          <Text style={styles.headerSubtitle}>
+            Advanced Utilities for Kenya
+          </Text>
+        </View>
+        <View style={styles.searchBar}>
+          <Search size={20} color="#666" style={{ marginRight: 8 }} />
+          <TextInput
+            placeholder="Search tools..."
+            style={styles.searchInput}
+            placeholderTextColor="#999"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
-        ))}
+        </View>
       </View>
+
+      <View style={styles.content}>
+        {/* Kenyan Special Tools Grid */}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Kenya Special Tools</Text>
+        <View style={styles.kenyanGrid}>
+          {kenyanTools.map((tool, idx) => (
+            <KenyanToolCard
+              key={idx}
+              {...tool}
+              onPress={() => handleAlert(tool.title)}
+            />
+          ))}
+        </View>
+
+        {/* Standard Tools List */}
+        <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 24 }]}>Management Tools</Text>
+        <View style={styles.grid}>
+          {filteredTools.map((tool) => (
+            <ToolCard
+              key={tool.id}
+              title={tool.title}
+              desc={tool.desc}
+              icon={tool.icon}
+              color={tool.color}
+              onPress={() => tool.route ? router.safePush(tool.route as any) : tool.action && tool.action()}
+            />
+          ))}
+        </View>
+      </View>
+
+      <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
@@ -140,18 +276,44 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 24,
-    paddingBottom: 12,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  title: {
-    fontSize: 32,
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "white",
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.9)",
+    marginBottom: 16,
+  },
+  searchBar: {
+    backgroundColor: 'white',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    height: 48,
+    borderRadius: 12,
+  },
+  searchInput: {
+    flex: 1,
+    height: '100%',
+    fontSize: 15,
+    color: '#333',
+  },
+  content: { // Changed from container to content for padding
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "800",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
+    marginBottom: 12,
   },
   grid: {
-    padding: 16,
     gap: 12,
   },
   card: {
@@ -170,7 +332,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 16,
   },
-  content: {
+  cardContent: {
     flex: 1,
   },
   cardTitle: {
@@ -181,4 +343,48 @@ const styles = StyleSheet.create({
   cardDesc: {
     fontSize: 13,
   },
+  kenyanGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  kenyanCard: {
+    width: '48%',
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: kenyaColors.safaricomGreen,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    marginBottom: 4,
+  },
+  kenyanCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  kenyanIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F0F9F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  kenyanTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 4,
+  },
+  kenyanDesc: {
+    fontSize: 11,
+    color: '#666',
+    lineHeight: 14,
+  }
 });

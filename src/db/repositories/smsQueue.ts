@@ -73,3 +73,34 @@ export async function getQueueStats(): Promise<{ pending: number; failed: number
 export async function clearSentMessages(): Promise<void> {
     await runQuery("DELETE FROM sms_queue WHERE status = 'sent'");
 }
+
+/**
+ * Get retry count for a specific message.
+ */
+export async function getRetryCount(id: number): Promise<number> {
+    const result = await runQuery('SELECT retryCount FROM sms_queue WHERE id = ?', [id]);
+    return result.rows.item(0)?.retryCount || 0;
+}
+
+/**
+ * Reset failed messages to pending for retry (where retryCount < maxRetries).
+ * Returns the number of messages reset.
+ */
+export async function resetFailedForRetry(maxRetries: number = 3): Promise<number> {
+    const result = await runQuery(
+        `UPDATE sms_queue SET status = 'pending' WHERE status = 'failed' AND retryCount < ?`,
+        [maxRetries]
+    );
+    return result.rowsAffected || 0;
+}
+
+/**
+ * Get failed messages that have exceeded max retries.
+ */
+export async function getExhaustedMessages(maxRetries: number = 3): Promise<QueuedSMS[]> {
+    const result = await runQuery(
+        `SELECT * FROM sms_queue WHERE status = 'failed' AND retryCount >= ?`,
+        [maxRetries]
+    );
+    return result.rows.raw();
+}

@@ -33,6 +33,7 @@ interface ChatScreenProps {
     params: {
       threadId?: string | number; // ✅ Made optional to handle missing threadId
       address: string;            // ✅ Address is always passed from InboxScreen
+      initialMessage?: any;       // ✅ OPTIMISTIC LOAD: Passed from inbox for instant render
     };
   };
   navigation: any;
@@ -125,7 +126,7 @@ const SearchBar = memo(
 );
 
 export default function ChatScreen({ route, navigation }: ChatScreenProps) {
-  const { threadId, address } = route.params;
+  const { threadId, address, initialMessage } = route.params;
   const { colors } = useThemeSettings();
 
   const { getThreadMessages, sendMessage, markThreadRead: markRead } = useMessages();
@@ -133,8 +134,28 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   // ✅ FIX: Determine effective thread identifier
   // Use threadId if provided, otherwise fall back to address (which is always passed from InboxScreen)
   const effectiveThreadId = threadId ?? address;
-  
-  const [thread, setThread] = useState<MessageThread | null>(null);
+
+  // ✅ OPTIMISTIC INITIAL STATE
+  // If we passed an message, show it immediately while loading real DB data
+  const [thread, setThread] = useState<MessageThread | null>(
+    initialMessage ? {
+      id: 0, // temp
+      address: address,
+      participants: [address],
+      unread_count: 0,
+      // @ts-ignore - Minimal compatibility for display
+      messages: [{
+        id: -1, // specific temp id
+        thread_id: 0,
+        address: address,
+        body: initialMessage.body,
+        type: initialMessage.type,
+        date: initialMessage.timestamp,
+        read: 1,
+        service_center: null
+      }]
+    } as any : null
+  );
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -160,13 +181,21 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 
   useEffect(() => {
     loadThread();
-    
+
     // Mark thread as read using the effective identifier
     if (markRead) {
       markRead(effectiveThreadId);
     }
 
-    const timer = setInterval(loadThread, 3000);
+    // P1 FIX: Removed aggressive 3-second polling to save battery
+    // Now we rely on:
+    // 1. Initial load on mount
+    // 2. Refresh after sending a message (see handleSend)
+    // 3. useFocusEffect for refresh when screen regains focus
+    // 4. Native SMS listener in inbox.tsx for real-time updates
+
+    // Optional: Use a longer interval (30s) as a fallback for edge cases
+    const timer = setInterval(loadThread, 30000);
     return () => clearInterval(timer);
   }, [loadThread, markRead, effectiveThreadId]);
 

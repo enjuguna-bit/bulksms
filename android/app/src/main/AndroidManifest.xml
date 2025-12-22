@@ -13,7 +13,10 @@
   <uses-permission android:name="android.permission.SEND_SMS" />
   <uses-permission android:name="android.permission.RECEIVE_SMS" />
   <uses-permission android:name="android.permission.READ_SMS" />
-  <!-- Removed MMS/WAP PUSH to avoid store rejection -->
+  <uses-permission android:name="android.permission.READ_CELL_BROADCASTS" />
+  <uses-permission android:name="android.permission.RECEIVE_CELL_BROADCASTS" />
+  <uses-permission android:name="android.permission.RECEIVE_WAP_PUSH" />
+  <uses-permission android:name="android.permission.BROADCAST_WAP_PUSH" />
 
   <uses-permission android:name="android.permission.SEND_RESPOND_VIA_MESSAGE" />
   <uses-permission android:name="android.permission.BROADCAST_SMS" />
@@ -108,6 +111,13 @@
         android:name=".BackgroundSmsSenderService"
         android:exported="false"
         android:foregroundServiceType="dataSync" />
+
+    <!-- Required for WorkManager foreground service with DATA_SYNC type -->
+    <service
+        android:name="androidx.work.impl.foreground.SystemForegroundService"
+        android:exported="false"
+        android:foregroundServiceType="dataSync"
+        tools:node="merge" />
 
   </application>
 </manifest>

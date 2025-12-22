@@ -73,5 +73,38 @@ class SmsListenerModule(private val ctx: ReactApplicationContext) :
         Log.w(TAG, "⚠️ ReactContext not active, dropping SMS from $sender")
       }
     }
+
+    /**
+     * ✅ Static method to send keyword events from SmsReceiver.
+     * Emits "onSmsKeyword" event: { phone: string, keyword: string, action: string }
+     * 
+     * @param sender The phone number that sent the keyword
+     * @param keyword The detected keyword (BAL, STOP, INFO, HELP)
+     * @param action The action type (balance_request, opt_out, info_request, help_request)
+     */
+    fun sendKeywordEventToJs(sender: String, keyword: String, action: String) {
+      val context = reactContextRef?.get()
+      if (context != null && context.hasActiveCatalystInstance()) {
+        try {
+          val map = Arguments.createMap().apply {
+            putString("phone", sender)
+            putString("keyword", keyword)
+            putString("action", action)
+            putDouble("timestamp", System.currentTimeMillis().toDouble())
+          }
+
+          context
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+            .emit("onSmsKeyword", map)
+          
+          Log.d(TAG, "🔑 Dispatching keyword event to JS: $keyword from $sender")
+        } catch (e: Exception) {
+          Log.e(TAG, "❌ Failed to send keyword event to JS", e)
+        }
+      } else {
+        Log.w(TAG, "⚠️ ReactContext not active, dropping keyword $keyword from $sender")
+      }
+    }
   }
 }
+

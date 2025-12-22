@@ -11,7 +11,7 @@ export const colors = {
   surface: "#ffffff",
   border: "#e2e8f0",
 
-  // Primary (Enhanced Blue)
+  // Primary (Enhanced Blue - Default)
   primary50: "#eff6ff",
   primary100: "#dbeafe",
   primary200: "#bfdbfe",
@@ -101,4 +101,44 @@ export const colors = {
       elevation: 10,
     },
   },
+
+  // Kenya / Safaricom Specific Palettes
+  kenya: {
+    // Light Mode (Kenya Green)
+    light: {
+      primary: "#006600",
+      primaryDark: "#004400",
+      accent: "#FF9900", // Kenya Orange
+      background: "#FFFFFF",
+      surface: "#F5F5F5",
+      text: "#333333",
+      subText: "#666666",
+      card: "#FFFFFF",
+      border: "#e5e7eb"
+    },
+    // Dark Mode (Brighter Green)
+    dark: {
+      primary: "#009900",
+      primaryDark: "#007700",
+      accent: "#FFAA00",
+      background: "#121212",
+      surface: "#1E1E1E",
+      text: "#E0E0E0",
+      subText: "#AAAAAA",
+      card: "#2D2D2D",
+      border: "#404040"
+    },
+    // Safaricom Theme
+    safaricom: {
+      primary: "#43B02A", // Official Safaricom Green
+      primaryDark: "#008C3E",
+      accent: "#F37021", // M-Pesa Orange
+      background: "#FFFFFF",
+      surface: "#F0F9F4", // Light minty green surface
+      text: "#333333",
+      subText: "#666666",
+      card: "#FFFFFF",
+      border: "#e2e8f0"
+    }
+  }
 };

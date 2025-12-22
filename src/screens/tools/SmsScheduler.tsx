@@ -1,0 +1,229 @@
+
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    Switch,
+    Alert,
+    TouchableOpacity,
+} from 'react-native';
+import { kenyaColors } from '@/theme/kenyaTheme';
+import { useThemeSettings } from '@/theme/ThemeProvider';
+import { Card, Button, Input } from '@/components/ui';
+import { KenyaFlag } from '@/components/shared/KenyaFlag';
+
+export default function SmsSchedulerScreen() {
+    const { colors } = useThemeSettings();
+
+    const [date, setDate] = useState(new Date());
+    const [message, setMessage] = useState('');
+    const [recipient, setRecipient] = useState('Select Contacts');
+    const [isRepeat, setIsRepeat] = useState(false);
+
+    // Business Hours Logic
+    const getIsBusinessHour = (d: Date) => {
+        const hours = d.getHours();
+        // 8 AM to 5 PM
+        return hours >= 8 && hours < 17;
+    };
+
+    const handleSchedule = () => {
+        if (!message) {
+            Alert.alert('Error', 'Please enter a message');
+            return;
+        }
+        Alert.alert(
+            'Success',
+            `SMS Scheduled for ${date.toLocaleString('en-KE')}\nRecipients: ${recipient}`
+        );
+    };
+
+    return (
+        <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+
+            {/* Timezone Info */}
+            <View style={styles.tzContainer}>
+                <Text style={{ color: colors.subText, fontSize: 13 }}>
+                    Timezone: East Africa Time (UTC+3)
+                </Text>
+            </View>
+
+            {/* Business Hours Warning */}
+            {!getIsBusinessHour(date) && (
+                <Card style={[styles.warningCard, { backgroundColor: '#FEF2F2', borderColor: '#FCA5A5' }]}>
+                    <Text style={{ color: '#B91C1C', fontWeight: '700' }}>
+                        ⚠ Outside Kenyan business hours (8AM-5PM)
+                    </Text>
+                </Card>
+            )}
+
+            <Card style={styles.card}>
+                <View style={styles.formGroup}>
+                    <Text style={[styles.label, { color: colors.text }]}>Recipients</Text>
+                    <View style={styles.pickerContainer}>
+                        <KenyaFlag width={20} height={14} style={{ marginRight: 8 }} />
+                        {/* Mock dropdown */}
+                        <TouchableOpacity style={styles.pickerButton} onPress={() => {
+                            // In a real app, open a modal
+                            const options = ["All Customers", "Nairobi Contacts", "M-Pesa Users", "SMS Opt-Ins"];
+                            const next = options[(options.indexOf(recipient) + 1) % options.length];
+                            setRecipient(next || options[0]);
+                        }}>
+                            <Text style={{ color: colors.text }}>{recipient}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                    <Text style={[styles.label, { color: colors.text }]}>Message</Text>
+                    <Input
+                        placeholder="Enter your message..."
+                        multiline
+                        numberOfLines={4}
+                        value={message}
+                        onChangeText={setMessage}
+                        style={{ height: 100, textAlignVertical: 'top' }}
+                    />
+                </View>
+
+                <View style={styles.formGroup}>
+                    <Text style={[styles.label, { color: colors.text }]}>Date & Time</Text>
+                    <View style={styles.row}>
+                        <Button
+                            variant="outline"
+                            title={date.toLocaleDateString()}
+                            onPress={() => {
+                                // Mock date advance
+                                const nextDay = new Date(date);
+                                nextDay.setDate(date.getDate() + 1);
+                                setDate(nextDay);
+                            }}
+                            style={{ flex: 1 }}
+                        />
+                        <View style={{ width: 8 }} />
+                        <Button
+                            variant="outline"
+                            title={date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            onPress={() => {
+                                // Mock time advance + 1 hour
+                                const nextHour = new Date(date);
+                                nextHour.setHours(date.getHours() + 1);
+                                setDate(nextHour);
+                            }}
+                            style={{ flex: 1 }}
+                        />
+                    </View>
+                </View>
+
+                <View style={styles.rowCenter}>
+                    <Text style={{ color: colors.text, flex: 1 }}>Repeat Daily</Text>
+                    <Switch
+                        value={isRepeat}
+                        onValueChange={setIsRepeat}
+                        trackColor={{ true: kenyaColors.safaricomGreen, false: '#e2e8f0' }}
+                    />
+                </View>
+
+            </Card>
+
+            {/* Scheduling Rules */}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Optimization Rules</Text>
+            <Card style={styles.rulesCard}>
+                <RuleItem label="Avoid weekends (common in Kenya)" checked />
+                <RuleItem label="Avoid Kenyan public holidays" checked />
+                <RuleItem label="Optimize for SMS cost (off-peak)" checked />
+            </Card>
+
+            <Button
+                title="Schedule SMS"
+                onPress={handleSchedule}
+                style={{ marginTop: 24, backgroundColor: kenyaColors.safaricomGreen }}
+            />
+
+            <View style={{ height: 40 }} />
+        </ScrollView>
+    );
+}
+
+const RuleItem = ({ label, checked }: { label: string, checked: boolean }) => (
+    <View style={styles.ruleItem}>
+        <View style={[styles.checkbox, checked && { backgroundColor: kenyaColors.safaricomGreen }]}>
+            {checked && <Text style={{ color: 'white', fontSize: 10 }}>✓</Text>}
+        </View>
+        <Text style={{ fontSize: 13, color: '#333' }}>{label}</Text>
+    </View>
+);
+
+const styles = StyleSheet.create({
+    container: {
+        padding: 16,
+        flex: 1,
+    },
+    tzContainer: {
+        marginBottom: 16,
+        alignItems: 'center',
+    },
+    warningCard: {
+        padding: 12,
+        borderWidth: 1,
+        marginBottom: 16,
+        borderRadius: 8,
+    },
+    card: {
+        padding: 16,
+    },
+    formGroup: {
+        marginBottom: 16,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 8,
+    },
+    pickerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+    },
+    pickerButton: {
+        paddingVertical: 12,
+        flex: 1,
+    },
+    row: {
+        flexDirection: 'row',
+    },
+    rowCenter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        marginTop: 24,
+        marginBottom: 12,
+    },
+    rulesCard: {
+        padding: 16,
+    },
+    ruleItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    checkbox: {
+        width: 18,
+        height: 18,
+        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: '#cbd5e1',
+        marginRight: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    }
+});

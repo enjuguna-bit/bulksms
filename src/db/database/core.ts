@@ -109,8 +109,24 @@ export async function initDatabase(): Promise<void> {
 
             await _db.executeSql(`CREATE INDEX IF NOT EXISTS idx_send_logs_timestamp ON send_logs(timestamp);`);
             await _db.executeSql(`CREATE INDEX IF NOT EXISTS idx_send_logs_to_number ON send_logs(to_number);`);
+            // P0 FIX: Composite index for duplicate checking performance
+            await _db.executeSql(`CREATE INDEX IF NOT EXISTS idx_send_logs_duplicate_check ON send_logs(to_number, body, timestamp);`);
 
             await _db.executeSql(`CREATE INDEX IF NOT EXISTS idx_incoming_sms_buffer_receivedAt ON incoming_sms_buffer(receivedAt);`);
+
+            // P2 FIX: Audit log table for bulk operations
+            await _db.executeSql(`
+        CREATE TABLE IF NOT EXISTS audit_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          action TEXT NOT NULL,
+          userId TEXT,
+          details TEXT,
+          affectedCount INTEGER DEFAULT 0,
+          timestamp INTEGER NOT NULL
+        );
+      `);
+            await _db.executeSql(`CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp);`);
+            await _db.executeSql(`CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action);`);
 
             // 7. Set Instance
             db = _db;
@@ -186,6 +202,12 @@ async function safeMigrations() {
     if (!cols.includes("isArchived")) {
         Logger.info("Database", "Applying migration: isArchived");
         await db.executeSql(`ALTER TABLE messages ADD COLUMN isArchived INTEGER DEFAULT 0;`);
+    }
+
+    // P2 FIX: Template versioning - stores the original template used when message was sent
+    if (!cols.includes("templateSnapshot")) {
+        Logger.info("Database", "Applying migration: templateSnapshot");
+        await db.executeSql(`ALTER TABLE messages ADD COLUMN templateSnapshot TEXT;`);
     }
 }
 

@@ -53,6 +53,7 @@ function SupermarketCaptureContent(): JSX.Element {
     filteredRecords,
     handleParseAndSave,
     handleExportCSV,
+    handleExportExcel,
     handleManualRefresh,
     toggleListener,
     scanInbox,
@@ -86,7 +87,7 @@ function SupermarketCaptureContent(): JSX.Element {
   // ✅ FIXED: Defensive Key Extractor with fallback
   // -----------------------------------------------------
   const keyExtractor = useCallback(
-    (i: LocalRecordItem, index: number) => 
+    (i: LocalRecordItem, index: number) =>
       i.id ? i.id.toString() : `record-${i.phone}-${index}-${Date.now()}`,
     []
   );
@@ -109,6 +110,7 @@ function SupermarketCaptureContent(): JSX.Element {
         toggleListener={toggleListener}
         scanInbox={scanInbox}
         handleExportCSV={handleExportCSV}
+        handleExportExcel={handleExportExcel}
         handleManualRefresh={handleManualRefresh}
         sample={sample}
         setSample={setSample}
@@ -177,6 +179,7 @@ interface HeaderProps {
   toggleListener: () => void;
   scanInbox: () => void;
   handleExportCSV: () => void;
+  handleExportExcel: () => void;
   handleManualRefresh: () => void;
   sample: string;
   setSample: (v: string) => void;
@@ -197,6 +200,7 @@ const Header = memo(function Header({
   toggleListener,
   scanInbox,
   handleExportCSV,
+  handleExportExcel,
   handleManualRefresh,
   sample,
   setSample,
@@ -271,7 +275,15 @@ const Header = memo(function Header({
           disabled={loading}
           style={[styles.rowButton, { backgroundColor: t.btn.export }]}
         >
-          <Text style={styles.actionText}>📤 Export</Text>
+          <Text style={styles.actionText}>📄 CSV</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleExportExcel}
+          disabled={loading}
+          style={[styles.rowButton, { backgroundColor: "#107c10" }]}
+        >
+          <Text style={styles.actionText}>📊 Excel</Text>
         </TouchableOpacity>
       </View>
 

@@ -18,6 +18,7 @@ import com.facebook.react.uimanager.ViewManager
  *  - RoleHelperModule → Checks default SMS handler role
  *  - DefaultSmsRoleModule → Requests system default SMS role
  *  - DevBypassBridgeModule → Exposes developer bypass flags
+ *  - BulkSmsSchedulerModule → WorkManager-based bulk SMS scheduling
  * ------------------------------------------------------------
  */
 class SmsPackage : ReactPackage {
@@ -29,7 +30,8 @@ class SmsPackage : ReactPackage {
       SmsListenerModule(reactContext),
       RoleHelperModule(reactContext),
       DefaultSmsRoleModule(reactContext),
-      DevBypassBridgeModule(reactContext)
+      DevBypassBridgeModule(reactContext),
+      BulkSmsSchedulerModule(reactContext)
     )
   }
 

@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.telephony.SmsManager
 import android.telephony.SubscriptionManager
+import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.*
@@ -52,18 +53,30 @@ class SmsSenderModule(private val ctx: ReactApplicationContext) :
 
               when (action) {
                   SENT_ACTION -> {
-                      val success = resultCode == Activity.RESULT_OK
-                      params.putString("status", if (success) "sent" else "failed")
-                      if (!success) {
-                          params.putInt("resultCode", resultCode)
+                      // ✅ Detailed error code mapping for Kenyan carriers
+                      val (status, errorReason) = when (resultCode) {
+                          Activity.RESULT_OK -> "sent" to null
+                          SmsManager.RESULT_ERROR_GENERIC_FAILURE -> "failed" to "GENERIC_FAILURE"
+                          SmsManager.RESULT_ERROR_NO_SERVICE -> "failed" to "NO_SERVICE"
+                          SmsManager.RESULT_ERROR_NULL_PDU -> "failed" to "NULL_PDU"
+                          SmsManager.RESULT_ERROR_RADIO_OFF -> "failed" to "RADIO_OFF"
+                          SmsManager.RESULT_ERROR_LIMIT_EXCEEDED -> "failed" to "LIMIT_EXCEEDED"
+                          SmsManager.RESULT_ERROR_SHORT_CODE_NOT_ALLOWED -> "failed" to "SHORT_CODE_NOT_ALLOWED"
+                          SmsManager.RESULT_ERROR_SHORT_CODE_NEVER_ALLOWED -> "failed" to "SHORT_CODE_NEVER_ALLOWED"
+                          else -> "failed" to "UNKNOWN_ERROR"
                       }
+                      params.putString("status", status)
+                      params.putInt("resultCode", resultCode)
+                      errorReason?.let { params.putString("errorReason", it) }
                       sendEvent(reactContext, "SmsSentResult", params)
-                      Log.d(TAG, "SMS Sent Update: ID=$id Success=$success")
+                      Log.d(TAG, "SMS Sent Update: ID=$id Status=$status Reason=$errorReason")
                   }
                   DELIVERED_ACTION -> {
-                      params.putString("status", "delivered")
+                      val status = if (resultCode == Activity.RESULT_OK) "delivered" else "delivery_failed"
+                      params.putString("status", status)
+                      params.putInt("resultCode", resultCode)
                       sendEvent(reactContext, "SmsDeliveredResult", params)
-                      Log.d(TAG, "SMS Delivered Update: ID=$id")
+                      Log.d(TAG, "SMS Delivered Update: ID=$id Status=$status")
                   }
               }
           } catch (e: Exception) {
@@ -229,6 +242,75 @@ class SmsSenderModule(private val ctx: ReactApplicationContext) :
       promise.resolve(permission == PackageManager.PERMISSION_GRANTED)
     } catch (e: Exception) {
       promise.resolve(false)
+    }
+  }
+
+  /**
+   * 🇰🇪 Check if device is on Safaricom network (Kenya)
+   * Uses MCC/MNC codes: 639 (Kenya) + 02/07 (Safaricom)
+   */
+  @ReactMethod
+  fun isSafaricomNetwork(promise: Promise) {
+    try {
+      val telephonyManager = ctx.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+      if (telephonyManager == null) {
+        promise.resolve(false)
+        return
+      }
+
+      val networkOperator = telephonyManager.networkOperator ?: ""
+      val operatorName = telephonyManager.networkOperatorName ?: ""
+
+      // Safaricom MCC/MNC codes
+      val isSafaricom = networkOperator == "63902" ||  // Safaricom primary
+                        networkOperator == "63907" ||  // Safaricom alternative
+                        operatorName.contains("Safaricom", ignoreCase = true)
+
+      Log.d(TAG, "🇰🇪 Network check: operator=$networkOperator name=$operatorName isSafaricom=$isSafaricom")
+      promise.resolve(isSafaricom)
+    } catch (e: Exception) {
+      Log.e(TAG, "Error checking network operator", e)
+      promise.resolve(false)
+    }
+  }
+
+  /**
+   * 📶 Get network operator info (useful for debugging)
+   */
+  @ReactMethod
+  fun getNetworkInfo(promise: Promise) {
+    try {
+      val telephonyManager = ctx.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+      if (telephonyManager == null) {
+        promise.reject("NO_TELEPHONY", "TelephonyManager not available")
+        return
+      }
+
+      val result = Arguments.createMap().apply {
+        putString("networkOperator", telephonyManager.networkOperator ?: "")
+        putString("networkOperatorName", telephonyManager.networkOperatorName ?: "")
+        putString("simOperator", telephonyManager.simOperator ?: "")
+        putString("simOperatorName", telephonyManager.simOperatorName ?: "")
+        putString("networkCountryIso", telephonyManager.networkCountryIso ?: "")
+        putString("simCountryIso", telephonyManager.simCountryIso ?: "")
+        
+        // Kenyan carrier detection
+        val operator = telephonyManager.networkOperator ?: ""
+        val carrier = when {
+          operator == "63902" || operator == "63907" -> "Safaricom"
+          operator == "63903" -> "Airtel Kenya"
+          operator == "63905" -> "Equitel"
+          operator == "63910" -> "Faiba (JTL)"
+          operator.startsWith("639") -> "Kenya (Unknown)"
+          else -> "International/Unknown"
+        }
+        putString("detectedCarrier", carrier)
+      }
+
+      promise.resolve(result)
+    } catch (e: Exception) {
+      Log.e(TAG, "Error getting network info", e)
+      promise.reject("ERROR", e.message, e)
     }
   }
 

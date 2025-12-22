@@ -35,20 +35,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        // React Native repository - must be first
-        maven {
-            url("$rootDir/../node_modules/react-native/android")
-        }
         // JSC repository
         maven {
             url("$rootDir/../node_modules/jsc-android/dist")
-        }
-        // Additional React Native dependencies
-        maven {
-            url("$rootDir/../node_modules/@react-native/gradle-plugin")
-        }
-        maven {
-            url("$rootDir/../node_modules/@react-native/gradle-plugin")
         }
     }
 

@@ -76,13 +76,42 @@ export function parseMobileMoneyTransaction(message: string): Transaction | null
 }
 
 // ------------------------------------------------------
-// 🟢 Phone normalization
+// 🟢 Phone normalization (P2 FIX: Configurable country code)
 // ------------------------------------------------------
-export function normalizePhone(phone: string): string {
+
+/**
+ * Default country code for phone normalization.
+ * Change this constant to support different regions.
+ * Format: "254" for Kenya, "1" for US/Canada, "44" for UK, etc.
+ */
+export const DEFAULT_COUNTRY_CODE = "254";
+
+/**
+ * Country-specific configurations for phone normalization.
+ */
+const COUNTRY_CONFIGS: Record<string, { localLength: number; withZeroLength: number }> = {
+  "254": { localLength: 9, withZeroLength: 10 },  // Kenya: 7XXXXXXXX or 07XXXXXXXX
+  "1": { localLength: 10, withZeroLength: 10 },    // US/Canada: 10 digits
+  "44": { localLength: 10, withZeroLength: 11 },   // UK: 10 digits or 11 with 0
+  "91": { localLength: 10, withZeroLength: 10 },   // India: 10 digits
+  "27": { localLength: 9, withZeroLength: 10 },    // South Africa
+  "234": { localLength: 10, withZeroLength: 11 },  // Nigeria
+  "255": { localLength: 9, withZeroLength: 10 },   // Tanzania
+  "256": { localLength: 9, withZeroLength: 10 },   // Uganda
+};
+
+/**
+ * Normalize phone number to E.164 format.
+ * 
+ * @param phone - Phone number in various formats
+ * @param countryCode - Optional country code override (default: DEFAULT_COUNTRY_CODE)
+ * @returns Normalized phone in E.164 format (e.g., +254712345678)
+ */
+export function normalizePhone(phone: string, countryCode: string = DEFAULT_COUNTRY_CODE): string {
   if (!phone) return "";
   const str = phone.toString().trim();
 
-  // Preserve existing + if present at start
+  // Preserve existing + if present at start (already international)
   const hasPlus = str.startsWith("+");
 
   // Strip all non-digits
@@ -91,33 +120,41 @@ export function normalizePhone(phone: string): string {
   // If empty after strip, return empty
   if (!digits) return "";
 
-  // Helper: check lengths (Kenya mobile usually 9 digits sans prefix, 10 with 0, 12 with 254)
-
+  // If already has plus, trust the format
   if (hasPlus) {
-    // Already had plus, trust the digits (format: +2547...)
     return "+" + digits;
   }
 
-  // Handle 07... / 01... (Kenya local)
-  if (digits.startsWith("0") && digits.length === 10) {
-    return "+254" + digits.slice(1);
-  }
-
-  // Handle 254... (ISO no plus)
-  if (digits.startsWith("254") && digits.length === 12) {
+  // Check if starts with country code (international format without +)
+  if (digits.startsWith(countryCode) && digits.length === countryCode.length + (COUNTRY_CONFIGS[countryCode]?.localLength || 9)) {
     return "+" + digits;
   }
 
-  // Handle 7... / 1... (Short format, assume Kenya)
-  if ((digits.startsWith("7") || digits.startsWith("1")) && digits.length === 9) {
-    return "+254" + digits;
+  // Handle local format starting with 0
+  if (digits.startsWith("0")) {
+    const withoutZero = digits.slice(1);
+    return "+" + countryCode + withoutZero;
   }
 
-  // Fallback: If it looks international (long enough), append +. Otherwise default to +254 + digits?
-  // Safest default for this specific app seems to be assuming a + prefix if missing for long numbers, or prepending +254.
-  // Given previous logic, let's stick to prepending +254 if unsafe, OR just return +digits if weird.
-  // Use the original fallback logic which seemed to default to +254
-  return "+254" + digits;
+  // Handle short format (just the local number)
+  const config = COUNTRY_CONFIGS[countryCode];
+  if (config && digits.length === config.localLength) {
+    return "+" + countryCode + digits;
+  }
+
+  // Detect if it might be another international format
+  // Common patterns: starts with 00 (international prefix)
+  if (digits.startsWith("00") && digits.length > 10) {
+    return "+" + digits.slice(2);
+  }
+
+  // Fallback: If long enough to be international (11+ digits), assume it has country code
+  if (digits.length >= 11) {
+    return "+" + digits;
+  }
+
+  // Default fallback: Prepend configured country code
+  return "+" + countryCode + digits;
 }
 
 // ------------------------------------------------------

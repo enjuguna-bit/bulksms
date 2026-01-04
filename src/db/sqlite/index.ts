@@ -56,8 +56,12 @@ function convertToResultSet(result: QueryResult): ResultSet {
 // ------------------------------------------------------------
 // openDatabaseSync (expo-sqlite compatible)
 // ------------------------------------------------------------
-export function openDatabaseSync(name: string = CONFIG.DB_SMS): SQLiteDatabase {
+export async function openDatabaseSync(name: string = CONFIG.DB_SMS): Promise<SQLiteDatabase> {
   const db: DB = open({ name });
+
+  // ✅ ADD WAL CONFIGURATION
+  await db.execute('PRAGMA journal_mode = WAL;');
+  await db.execute('PRAGMA synchronous = NORMAL;');
 
   const wrapped: SQLiteDatabase = {
     transaction: (cb) => {
@@ -131,6 +135,6 @@ export function openDatabaseSync(name: string = CONFIG.DB_SMS): SQLiteDatabase {
 // ------------------------------------------------------------
 // Convenience alias
 // ------------------------------------------------------------
-export function openDatabase(name: string = CONFIG.DB_SMS): SQLiteDatabase {
+export function openDatabase(name: string = CONFIG.DB_SMS): Promise<SQLiteDatabase> {
   return openDatabaseSync(name);
 }

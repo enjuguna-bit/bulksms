@@ -152,7 +152,7 @@ export default function RootNavigator() {
         options={{ headerShown: true, title: "System Health" }}
       />
       <Stack.Screen
-        name="MpesaParserTool"
+        name="MpesaParserScreen"
         component={MpesaParserScreen}
         options={{ headerShown: true, title: "M-Pesa Statement Parser" }}
       />

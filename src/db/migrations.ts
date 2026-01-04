@@ -44,9 +44,17 @@ const MIGRATIONS: Migration[] = [
     {
         version: 3,
         name: 'Add priority column to sms_queue',
-        up: [
-            'ALTER TABLE sms_queue ADD COLUMN priority INTEGER DEFAULT 0'
-        ]
+        run: async (db) => {
+            try {
+                // Try to select the column first (cheap check)
+                await db.execute('SELECT priority FROM sms_queue LIMIT 1');
+                console.log('Migration v3: Column "priority" already exists. Skipping.');
+            } catch (e) {
+                // Only runs if column is missing
+                console.log('Migration v3: Adding "priority" column...');
+                await db.execute('ALTER TABLE sms_queue ADD COLUMN priority INTEGER DEFAULT 0;');
+            }
+        }
     },
     {
         version: 4,

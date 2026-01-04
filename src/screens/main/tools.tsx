@@ -210,7 +210,7 @@ export default function ToolsScreen() {
       title: "M-Pesa Statements",
       desc: "Parse M-Pesa PDF statements",
       icon: FileDigit,
-      route: "MpesaParserTool",
+      route: "MpesaParserScreen",
     },
     {
       title: "Financial Scanner",

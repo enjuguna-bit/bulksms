@@ -119,7 +119,7 @@ export type RootStackParamList = {
   TransactionCleaner: undefined;
   DataExport: undefined;
   SystemHealth: undefined;
-  MpesaParserTool: undefined;
+  MpesaParserScreen: undefined;
   SmsScheduler: undefined;
   Debug: undefined;
   LipanaSettings: undefined;

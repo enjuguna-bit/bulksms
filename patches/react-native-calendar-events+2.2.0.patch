@@ -1,0 +1,12 @@
+diff --git a/node_modules/react-native-calendar-events/android/build.gradle b/node_modules/react-native-calendar-events/android/build.gradle
+index 6782479..c2655ba 100644
+--- a/node_modules/react-native-calendar-events/android/build.gradle
++++ b/node_modules/react-native-calendar-events/android/build.gradle
+@@ -6,6 +6,7 @@ def safeExtGet(prop, fallback) {
+ 
+ android {
+     compileSdkVersion safeExtGet('compileSdkVersion', 28)
++    namespace "com.calendarevents"
+     buildToolsVersion safeExtGet('buildToolsVersion', '28.0.3')
+ 
+     defaultConfig {

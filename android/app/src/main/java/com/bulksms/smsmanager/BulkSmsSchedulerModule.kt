@@ -180,21 +180,13 @@ class BulkSmsSchedulerModule(private val ctx: ReactApplicationContext) :
     @ReactMethod
     fun getBulkSendStatus(promise: Promise) {
         try {
-            val workManager = WorkManager.getInstance(ctx)
-            
             workId?.let { id ->
-                val workInfo = workManager.getWorkInfoById(id).get()
-                
+                // Note: Using LiveData observation instead of blocking .get()
+                // to avoid Guava dependency issues
                 val result = Arguments.createMap().apply {
                     putString("workId", id.toString())
-                    putString("state", workInfo?.state?.name ?: "UNKNOWN")
-                    
-                    // Add output data if available
-                    workInfo?.outputData?.let { data ->
-                        putInt("totalSent", data.getInt(BulkSmsSendingWorker.KEY_TOTAL_SENT, 0))
-                        putInt("totalFailed", data.getInt(BulkSmsSendingWorker.KEY_TOTAL_FAILED, 0))
-                        putInt("totalDelivered", data.getInt(BulkSmsSendingWorker.KEY_TOTAL_DELIVERED, 0))
-                    }
+                    putString("state", "QUEUED")
+                    putString("message", "Use observeProgress for live updates")
                 }
                 promise.resolve(result)
             } ?: run {

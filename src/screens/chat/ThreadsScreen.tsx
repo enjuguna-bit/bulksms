@@ -26,7 +26,7 @@ import {
   messagePreview,
 } from "@/utils/messageFormatters";
 
-import { getThreadsList, type MessageThread } from "@/db/repositories/threads";
+import { type Conversation } from "@/db/messaging";
 
 // -----------------------------------------------------------
 // Component
@@ -34,14 +34,14 @@ import { getThreadsList, type MessageThread } from "@/db/repositories/threads";
 export default function ThreadsScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useThemeSettings();
-  const { threads, loading, unreadByThread, refreshThreads } = useMessages();
+  const { threads, loading, refreshThreads } = useMessages();
   const [syncing, setSyncing] = useState(false);
 
   // Manual sync function
   const handleManualSync = useCallback(async () => {
     try {
       setSyncing(true);
-      
+
       // Check if app is default SMS handler
       const isDefault = await isDefaultSmsApp();
       if (!isDefault) {
@@ -50,13 +50,15 @@ export default function ThreadsScreen() {
           "To sync existing messages, this app must be set as the default SMS handler.",
           [
             { text: "Cancel", style: "cancel" },
-            { text: "Set Now", onPress: async () => {
-              await promptDefaultSmsApp();
-              // Give user time to complete the action
-              setTimeout(() => {
-                refreshThreads();
-              }, 3000);
-            }}
+            {
+              text: "Set Now", onPress: async () => {
+                await promptDefaultSmsApp();
+                // Give user time to complete the action
+                setTimeout(() => {
+                  refreshThreads();
+                }, 3000);
+              }
+            }
           ]
         );
         return;
@@ -89,8 +91,9 @@ export default function ThreadsScreen() {
   // Render each conversation row
   // -----------------------------------------------------------------------
   const renderItem = useCallback(
-    ({ item }: { item: MessageThread }) => {
-      const unread = unreadByThread[item.threadId] ?? 0;
+    ({ item }: { item: Conversation }) => {
+      // Use conversation properties directly
+      const hasUnread = item.unreadCount > 0;
 
       return (
         <TouchableOpacity
@@ -98,48 +101,48 @@ export default function ThreadsScreen() {
           activeOpacity={0.7}
           onPress={() =>
             navigation.navigate("ChatScreen", {
-              threadId: item.threadId,
-              address: item.address,
+              threadId: item.id, // Use numeric ID for new schema
+              address: item.recipientNumber,
             })
           }
         >
           {/* Avatar */}
           <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
             <Text style={styles.avatarText}>
-              {item.address.substring(item.address.length - 2)}
+              {item.recipientName.substring(0, 2).toUpperCase()}
             </Text>
           </View>
 
           {/* Main content */}
           <View style={styles.content}>
             <Text style={[styles.name, { color: colors.text }]}>
-              {item.address}
+              {item.recipientName}
             </Text>
 
             <Text
-              style={[styles.preview, { color: unread > 0 ? colors.text : colors.subText }]}
+              style={[styles.preview, { color: hasUnread ? colors.text : colors.subText, fontWeight: hasUnread ? '700' : '400' }]}
               numberOfLines={1}
             >
-              {messagePreview(item.lastMessage)}
+              {item.snippet || "No message"}
             </Text>
           </View>
 
           {/* Right side: time & unread */}
           <View style={styles.meta}>
             <Text style={[styles.time, { color: colors.subText }]}>
-              {formatTimestamp(item.lastTimestamp)}
+              {formatTimestamp(item.lastMessageTimestamp)}
             </Text>
 
-            {unread > 0 && (
+            {hasUnread && (
               <View style={styles.unreadBadge}>
-                <Text style={styles.unreadText}>{unread}</Text>
+                <Text style={styles.unreadText}>{item.unreadCount}</Text>
               </View>
             )}
           </View>
         </TouchableOpacity>
       );
     },
-    [unreadByThread, navigation, colors]
+    [navigation, colors]
   );
 
   // -----------------------------------------------------------------------
@@ -194,7 +197,7 @@ export default function ThreadsScreen() {
 
       <FlatList
         data={threads}
-        keyExtractor={(item: MessageThread) => item.threadId.toString()}
+        keyExtractor={(item: Conversation) => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 12 }}
         ListEmptyComponent={

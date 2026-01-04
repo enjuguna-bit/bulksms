@@ -9,6 +9,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -30,12 +31,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ChevronDown,
   ChevronUp,
-  CreditCard,
   Database,
   Info,
   Palette,
   RotateCcw,
-  Server,
   Shield,
   Smartphone,
   Bug,
@@ -48,8 +47,8 @@ import { useSafeRouter } from "@/hooks/useSafeRouter";
 import { useThemeSettings } from "@/theme/ThemeProvider";
 import { useBilling } from "@/providers/BillingProvider";
 import { isDefaultSmsApp, promptDefaultSmsApp } from "@/services/defaultSmsRole";
-import { saveServerUrl, getServerUrl, clearServerUrl } from "@/services/serverConfig";
-import { checkServerHealth } from "@/services/serverHealth";
+import { BillingDiagnosticsBanner } from "@/components/BillingDiagnosticsBanner";
+
 import { useAppLock } from "@/hooks/useAppLock";
 
 // Enable LayoutAnimation on Android
@@ -66,8 +65,6 @@ const COLORS = {
 } as const;
 
 type ExpandKey =
-  | "billing"
-  | "server"
   | "theme"
   | "security"
   | "backup"
@@ -101,8 +98,8 @@ const Section = memo(function Section({
   const isDark = themeMode === "dark";
   return (
     <View style={[styles.card, getCardStyle(themeMode)]}>
-      <Pressable 
-        onPress={() => onToggle(name)} 
+      <Pressable
+        onPress={() => onToggle(name)}
         style={[styles.sectionHeader, isDark && { backgroundColor: "#1e293b" }]}
       >
         <View style={styles.rowCenter}>
@@ -189,7 +186,7 @@ const AppLockSettings = memo(function AppLockSettings() {
           Enable {biometryType ? biometryType.toUpperCase() : "App Lock"}
         </Text>
       </View>
-      <Switch value={isEnabled} onValueChange={setLockEnabled} />
+      <Switch value={isEnabled} onValueChange={(val) => void setLockEnabled(val)} />
     </View>
   );
 });
@@ -210,25 +207,26 @@ export default function SettingsScreen(): JSX.Element {
     theme,
   } = useThemeSettings();
 
-  const { isPro, status, restore, trialDaysLeft, unlockAdmin } = useBilling();
+  // Only use unlockAdmin from billing - subscription UI removed for now
+  const { unlockAdmin } = useBilling();
 
   const [expanded, setExpanded] = useState<ExpandKey>(null);
   const [isDefaultSms, setIsDefaultSms] = useState(false);
-  const [serverUrl, setServerUrl] = useState("");
-  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
-
   // Admin section
   const [adminVisible, setAdminVisible] = useState(false);
   const [adminCode, setAdminCode] = useState("");
 
-  const APP_VERSION = "1.0.0";
+  // 🔐 Developer bypass - 5 taps within 3 seconds
+  const tapCountRef = useRef(0);
+  const firstTapRef = useRef<number | null>(null);
+  const DEV_TAP_THRESHOLD = 5;
+  const DEV_TAP_WINDOW_MS = 3000;
+
+  const APP_VERSION = "1.1.1";
 
   // Load defaults on mount
   useEffect(() => {
     void (async () => {
-      const url = await getServerUrl();
-      if (url) setServerUrl(url);
-
       if (Platform.OS === "android") {
         const def = await isDefaultSmsApp();
         setIsDefaultSms(def);
@@ -239,41 +237,6 @@ export default function SettingsScreen(): JSX.Element {
   const onToggle = useCallback((key: NonNullable<ExpandKey>) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((prev) => (prev === key ? null : key));
-  }, []);
-
-  const isValidUrl = useCallback((url: string) => /^https?:\/\/.+/.test(url), []);
-
-  // -------------------------------------------------------------
-  // Daraja Server
-  // -------------------------------------------------------------
-  const handleCheckServer = useCallback(async () => {
-    if (!serverUrl) {
-      Alert.alert("Missing URL", "Please enter your server URL first.");
-      return;
-    }
-    if (!isValidUrl(serverUrl)) {
-      Alert.alert("Invalid URL", "Enter a valid http:// or https:// URL.");
-      return;
-    }
-    const ok = await checkServerHealth(serverUrl);
-    setServerOnline(ok);
-    Alert.alert("Server Status", ok ? "✅ Online" : "❌ Cannot reach server");
-  }, [serverUrl, isValidUrl]);
-
-  const handleSaveServer = useCallback(async () => {
-    if (!isValidUrl(serverUrl)) {
-      Alert.alert("Invalid URL", "Enter a valid http:// or https:// URL.");
-      return;
-    }
-    await saveServerUrl(serverUrl);
-    Alert.alert("Saved", "Server URL saved.");
-  }, [serverUrl, isValidUrl]);
-
-  const handleClearServer = useCallback(async () => {
-    await clearServerUrl();
-    setServerUrl("");
-    setServerOnline(null);
-    Alert.alert("Cleared", "Server URL removed.");
   }, []);
 
   // -------------------------------------------------------------
@@ -326,9 +289,6 @@ export default function SettingsScreen(): JSX.Element {
         text: "Reset",
         style: "destructive",
         onPress: async () => {
-          await clearServerUrl();
-          setServerUrl("");
-          setServerOnline(null);
           setMode("system");
           setExpanded(null);
         },
@@ -363,15 +323,38 @@ export default function SettingsScreen(): JSX.Element {
         }}
         keyboardShouldPersistTaps="handled"
       >
+        <BillingDiagnosticsBanner style={{ marginBottom: 16 }} />
+
         {/* Top Status Row */}
         <View style={styles.statusRow}>
           <Text style={{ color: isDefaultSms ? COLORS.success : COLORS.danger }}>
             {isDefaultSms ? "✅ SMS Default" : "⚠️ Not Default"}
           </Text>
 
-          <Text>{isPro ? "Pro" : "Free Trial"}</Text>
-
-          <Pressable onLongPress={() => setAdminVisible((p) => !p)}>
+          <Pressable
+            onLongPress={() => setAdminVisible((p) => !p)}
+            onPress={() => {
+              const now = Date.now();
+              // Reset if too much time passed
+              if (firstTapRef.current === null || now - firstTapRef.current > DEV_TAP_WINDOW_MS) {
+                firstTapRef.current = now;
+                tapCountRef.current = 0;
+              }
+              tapCountRef.current += 1;
+              // Check if threshold reached
+              if (tapCountRef.current >= DEV_TAP_THRESHOLD && now - firstTapRef.current <= DEV_TAP_WINDOW_MS) {
+                tapCountRef.current = 0;
+                firstTapRef.current = null;
+                // Activate dev bypass silently
+                (async () => {
+                  const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+                  await AsyncStorage.setItem('DEV_BYPASS_OVERRIDE', 'true');
+                  await AsyncStorage.setItem('@billing.adminUnlocked', '1');
+                  Alert.alert('🔓', 'Developer mode activated');
+                })();
+              }
+            }}
+          >
             <Text>v{APP_VERSION}</Text>
           </Pressable>
         </View>
@@ -391,81 +374,23 @@ export default function SettingsScreen(): JSX.Element {
             { color: theme === "dark" ? "#94a3b8" : "#64748b" },
           ]}
         >
-          Manage billing, server, theme, permissions, and system options.
+          Manage theme, permissions, security, and system options.
         </Text>
 
-        {/* -------------------------------------------------------------
-           BILLING
-        ------------------------------------------------------------- */}
-        <Section
-          icon={<CreditCard size={20} color={COLORS.primary} />}
-          title="Billing & Subscription"
-          name="billing"
-          expanded={expanded}
-          onToggle={onToggle}
-          themeMode={theme}
+        {/* Quick access to Billing */}
+        <Pressable
+          style={[styles.card, getCardStyle(theme), { padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+          onPress={() => router.safePush("Billing")}
         >
-          <Text style={[styles.itemText, { color: theme === "dark" ? "#f1f5f9" : "#1e293b" }]}>
-            Status: {status} {isPro ? "(Pro)" : "(Free)"}
-          </Text>
-
-          {!isPro && (
-            <Text style={{ color: COLORS.danger, fontWeight: "600" }}>
-              Free trial — {trialDaysLeft ?? 0} days left
+          <View style={styles.rowCenter}>
+            <Text style={{ fontSize: 20 }}>💳</Text>
+            <Text style={[styles.sectionHeaderText, { color: theme === "dark" ? "#f1f5f9" : "#1e293b" }]}>
+              Subscription Plans
             </Text>
-          )}
+          </View>
+          <Text style={{ color: COLORS.primary, fontWeight: '600' }}>View →</Text>
+        </Pressable>
 
-          <Pressable onPress={restore} style={styles.buttonOutline}>
-            <Text style={{ color: theme === "dark" ? "#f1f5f9" : "#1e293b" }}>Restore Purchases</Text>
-          </Pressable>
-
-          {/* 🔁 UPDATED: navigation using safe router */}
-          <Pressable
-            style={styles.buttonOutline}
-            onPress={() => router.safePush("Paywall")}
-          >
-            <Text style={{ color: theme === "dark" ? "#f1f5f9" : "#1e293b" }}>Open Paywall</Text>
-          </Pressable>
-        </Section>
-
-        {/* -------------------------------------------------------------
-           DARAJA SERVER
-        ------------------------------------------------------------- */}
-        <Section
-          icon={<Server size={20} color={COLORS.primary} />}
-          title="Daraja Server"
-          name="server"
-          expanded={expanded}
-          onToggle={onToggle}
-          themeMode={theme}
-        >
-          <TextInput
-            value={serverUrl}
-            onChangeText={setServerUrl}
-            placeholder="https://example.com"
-            autoCapitalize="none"
-            keyboardType="url"
-            style={styles.input}
-          />
-
-          {serverOnline !== null && (
-            <Text style={{ color: serverOnline ? COLORS.success : COLORS.danger }}>
-              {serverOnline ? "Online" : "Offline"}
-            </Text>
-          )}
-
-          <Pressable style={styles.buttonOutline} onPress={handleCheckServer}>
-            <Text style={{ color: theme === "dark" ? "#f1f5f9" : "#1e293b" }}>Check Server Status</Text>
-          </Pressable>
-
-          <Pressable style={styles.buttonOutline} onPress={handleSaveServer}>
-            <Text style={{ color: theme === "dark" ? "#f1f5f9" : "#1e293b" }}>Save Server URL</Text>
-          </Pressable>
-
-          <Pressable style={styles.buttonOutline} onPress={handleClearServer}>
-            <Text style={{ color: COLORS.danger }}>Clear Server URL</Text>
-          </Pressable>
-        </Section>
 
         {/* -------------------------------------------------------------
            THEME / DISPLAY
@@ -671,7 +596,7 @@ export default function SettingsScreen(): JSX.Element {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }
 

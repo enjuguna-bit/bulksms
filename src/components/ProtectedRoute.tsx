@@ -21,8 +21,8 @@ type BillingStatus =
   | "trial"
   | "active"
   | "loading"
-  | "expired"
-  | "inactive";
+  | "loading"
+  | "expired";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -91,7 +91,7 @@ export default function ProtectedRoute({
   }
 
   // ❌ SUBSCRIPTION EXPIRED (unless dev bypass)
-  if (!isPro && (status === "expired" || status === "inactive") && !DEVELOPER_BYPASS) {
+  if (!isPro && status === "expired" && !DEVELOPER_BYPASS) {
     router.safeReplace("Paywall");
     return <></>; // ✅ FIXED
   }

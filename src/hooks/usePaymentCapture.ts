@@ -28,9 +28,11 @@ import type { CustomerRecord } from "@/db/repositories/paymentRecords";
 import { CONFIG } from "@/constants/config";
 
 // ✅ NEW: M-PESA inbox scanning and Excel export
-import { scanMpesaInbox, getSavedTransactions, type ScanResult } from "@/services/MpesaInboxScanner";
+import { scanMpesaInbox, getSavedTransactions, type ScanResult, type ScanProgress } from "@/services/MpesaInboxScanner";
 import { exportAndShareMpesaExcel, exportMpesaTransactionsToCSV } from "@/utils/exportMpesaExcel";
 import type { ParsedMpesaTransaction } from "@/utils/parseMpesaEnhanced";
+
+export type { ScanProgress };
 
 export type RecordItem = CustomerRecord;
 
@@ -75,6 +77,7 @@ export function usePaymentCapture() {
   // ✅ NEW: M-PESA transactions state
   const [mpesaTransactions, setMpesaTransactions] = useState<ParsedMpesaTransaction[]>([]);
   const [lastScanResult, setLastScanResult] = useState<ScanResult | null>(null);
+  const [scanProgress, setScanProgress] = useState<ScanProgress | null>(null);
 
   const debouncedSearch = useDebounce(search);
   const appState = useRef<AppStateStatus>(AppState.currentState);
@@ -187,7 +190,7 @@ export function usePaymentCapture() {
 
           // ✅ FIX: Generate unique ID for new record
           const newRecord: CustomerRecord = {
-            id: `${phone}-${now}`, // ✅ Generate unique ID
+            id: undefined, // Let DB assign ID, or keyExtractor handle it
             name,
             phone,
             rawMessage: message,
@@ -216,7 +219,7 @@ export function usePaymentCapture() {
   );
 
   // ---------------------------------------------------------
-  // ✅ Inbox Scanner - RE-ENABLED with M-PESA parsing
+  // ✅ Inbox Scanner - RE-ENABLED with M-PESA parsing + Progress
   // ---------------------------------------------------------
   const scanInbox = useCallback(async () => {
     if (Platform.OS !== "android") {
@@ -225,6 +228,7 @@ export function usePaymentCapture() {
     }
 
     setLoading(true);
+    setScanProgress({ current: 0, total: 100, phase: 'reading' });
     try {
       Toast.show({ type: "info", text1: "🔍 Scanning inbox...", text2: "Please wait" });
 
@@ -232,8 +236,7 @@ export function usePaymentCapture() {
         limit: 500,
         saveToDb: true,
         onProgress: (progress) => {
-          // Could update a progress bar here if needed
-          console.log(`[scanInbox] Progress: ${progress.current}% (${progress.phase})`);
+          setScanProgress(progress);
         },
       });
 
@@ -253,11 +256,36 @@ export function usePaymentCapture() {
         text1: `✅ Found ${result.mpesaFound} M-PESA transactions`,
         text2: `New: ${result.newSaved}, Duplicates: ${result.duplicatesSkipped}`,
       });
+
+      // Prompt to export
+      if (result.transactions.length > 0) {
+        Alert.alert(
+          "Scan Complete",
+          `Found ${result.transactions.length} transactions. Would you like to export them to Excel?`,
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Export & Share",
+              onPress: () => {
+                // Determine transactions to export - use result directly to ensure we have the latest
+                // We wrap this in a timeout to ensure state updates have processed if needed, 
+                // though passing data directly is safer.
+                exportAndShareMpesaExcel(result.transactions, {
+                  includeRawMessage: false,
+                }).then(success => {
+                  if (success) Toast.show({ type: "success", text1: "✅ Export successful" });
+                });
+              }
+            }
+          ]
+        );
+      }
     } catch (err: any) {
       console.error("[scanInbox] Error:", err);
       Toast.show({ type: "error", text1: "Scan failed", text2: err?.message || "Unknown error" });
     } finally {
       setLoading(false);
+      setScanProgress(null);
     }
   }, [handleIncomingMessage]);
 
@@ -453,6 +481,7 @@ export function usePaymentCapture() {
     // ✅ NEW: M-PESA transactions
     mpesaTransactions,
     lastScanResult,
+    scanProgress, // ✅ Progress state for UI
 
     // actions
     handleParseAndSave,

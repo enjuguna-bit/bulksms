@@ -1,9 +1,12 @@
 package com.bulksms.smsmanager
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
 import android.provider.Telephony
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.*
 import java.util.regex.Pattern
 
@@ -24,15 +27,54 @@ class SmsReaderModule(reactContext: ReactApplicationContext) :
   override fun canOverrideExistingModule(): Boolean = true
 
   // ------------------------------------------------------------
-  // 📜 Read all messages sorted by date (descending)
+  // 🔐 Permission Check - Checks SMS read permission and default handler status
   // ------------------------------------------------------------
   @ReactMethod
-  fun getAll(limit: Int, promise: Promise) {
-    queryMessages(null, limit, promise, parseMpesa = false)
+  fun checkPermissions(promise: Promise) {
+    try {
+      val context = reactApplicationContext
+      
+      val hasReadSmsPermission = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.READ_SMS
+      ) == PackageManager.PERMISSION_GRANTED
+
+      val hasReceiveSmsPermission = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.RECEIVE_SMS
+      ) == PackageManager.PERMISSION_GRANTED
+      
+      val defaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(context)
+      val isDefaultSmsHandler = defaultSmsPackage == context.packageName
+      
+      val result = Arguments.createMap().apply {
+        putBoolean("readSms", hasReadSmsPermission)
+        putBoolean("receiveSms", hasReceiveSmsPermission)
+        putBoolean("isDefaultHandler", isDefaultSmsHandler)
+        putString("defaultPackage", defaultSmsPackage ?: "")
+      }
+      
+      promise.resolve(result)
+    } catch (e: Exception) {
+      promise.reject("PERMISSION_CHECK_ERROR", e.message, e)
+    }
   }
 
   // ------------------------------------------------------------
-  // 📬 Read messages for a specific address
+  // 📜 Read all messages sorted by date (descending) with pagination
+  // ------------------------------------------------------------
+  @ReactMethod
+  fun getAll(limit: Int, promise: Promise) {
+    queryMessages(null, limit, 0, promise, parseMpesa = false)
+  }
+
+  @ReactMethod
+  fun getAllPaginated(limit: Int, offset: Int, promise: Promise) {
+    queryMessages(null, limit, offset, promise, parseMpesa = false)
+  }
+
+  // ------------------------------------------------------------
+  // 📬 Read messages for a specific address with pagination
   // ------------------------------------------------------------
   @ReactMethod
   fun getThreadByAddress(address: String, limit: Int, promise: Promise) {
@@ -40,29 +82,50 @@ class SmsReaderModule(reactContext: ReactApplicationContext) :
       promise.reject("INVALID_ARGS", "address is required")
       return
     }
-    queryMessages("${Telephony.Sms.ADDRESS} = ?", limit, promise, arrayOf(address), false)
+    queryMessages("${Telephony.Sms.ADDRESS} = ?", limit, 0, promise, arrayOf(address), false)
+  }
+
+  @ReactMethod
+  fun getThreadByAddressPaginated(address: String, limit: Int, offset: Int, promise: Promise) {
+    if (address.isBlank()) {
+      promise.reject("INVALID_ARGS", "address is required")
+      return
+    }
+    queryMessages("${Telephony.Sms.ADDRESS} = ?", limit, offset, promise, arrayOf(address), false)
   }
 
   // ------------------------------------------------------------
-  // 💰 Read M-PESA messages only
+  // 💰 Read M-PESA messages only with pagination
   // ------------------------------------------------------------
   @ReactMethod
   fun getMpesaMessages(limit: Int, promise: Promise) {
-    queryMessages(null, limit, promise, parseMpesa = true)
+    queryMessages(null, limit, 0, promise, parseMpesa = true)
+  }
+
+  @ReactMethod
+  fun getMpesaMessagesPaginated(limit: Int, offset: Int, promise: Promise) {
+    queryMessages(null, limit, offset, promise, parseMpesa = true)
   }
 
   // ------------------------------------------------------------
-  // 🧠 Core query logic
+  // 🧠 Core query logic with database-level pagination
   // ------------------------------------------------------------
   private fun queryMessages(
     selection: String?,
     limit: Int,
+    offset: Int,
     promise: Promise,
     selectionArgs: Array<String>? = null,
     parseMpesa: Boolean
   ) {
     try {
       val uri: Uri = Telephony.Sms.CONTENT_URI
+      
+      // ⚡ FIX: Apply LIMIT/OFFSET at database level via sortOrder
+      // This prevents loading entire SMS database into memory
+      val effectiveLimit = if (limit <= 0) DEFAULT_PAGE_SIZE else limit.coerceAtMost(MAX_PAGE_SIZE)
+      val sortOrderWithPagination = "${Telephony.Sms.DATE} DESC LIMIT $effectiveLimit OFFSET $offset"
+      
       val cursor: Cursor? = reactApplicationContext.contentResolver.query(
         uri,
         arrayOf(
@@ -74,7 +137,7 @@ class SmsReaderModule(reactContext: ReactApplicationContext) :
         ),
         selection,
         selectionArgs,
-        "${Telephony.Sms.DATE} DESC"
+        sortOrderWithPagination
       )
 
       val messages = Arguments.createArray()
@@ -85,8 +148,7 @@ class SmsReaderModule(reactContext: ReactApplicationContext) :
         val dateIndex = it.getColumnIndex(Telephony.Sms.DATE)
         val typeIndex = it.getColumnIndex(Telephony.Sms.TYPE)
 
-        var count = 0
-        while (it.moveToNext() && (limit <= 0 || count < limit)) {
+        while (it.moveToNext()) {
           val body = it.getString(bodyIndex) ?: ""
           if (parseMpesa && !isMpesaKeyword(body)) continue
 
@@ -113,7 +175,6 @@ class SmsReaderModule(reactContext: ReactApplicationContext) :
             }
           }
           messages.pushMap(map)
-          count++
         }
       }
       promise.resolve(messages)
@@ -207,12 +268,24 @@ class SmsReaderModule(reactContext: ReactApplicationContext) :
   }
 
   // ------------------------------------------------------------
-  // 📥 Import existing messages for sync
+  // 📥 Import existing messages for sync (with pagination)
+  // ⚡ FIX: Now requires limit/offset to prevent OOM on large databases
   // ------------------------------------------------------------
   @ReactMethod
   fun importExistingMessages(promise: Promise) {
+    // Default: import first page only for backward compatibility
+    importExistingMessagesPaginated(DEFAULT_PAGE_SIZE, 0, promise)
+  }
+
+  @ReactMethod
+  fun importExistingMessagesPaginated(limit: Int, offset: Int, promise: Promise) {
     try {
       val uri: Uri = Telephony.Sms.CONTENT_URI
+      
+      // ⚡ FIX: Apply pagination at database level
+      val effectiveLimit = limit.coerceIn(1, MAX_PAGE_SIZE)
+      val sortOrderWithPagination = "${Telephony.Sms.DATE} DESC LIMIT $effectiveLimit OFFSET $offset"
+      
       val cursor: Cursor? = reactApplicationContext.contentResolver.query(
         uri,
         arrayOf(
@@ -225,7 +298,7 @@ class SmsReaderModule(reactContext: ReactApplicationContext) :
         ),
         null,
         null,
-        "${Telephony.Sms.DATE} DESC"
+        sortOrderWithPagination
       )
 
       val messages = Arguments.createArray()
@@ -269,7 +342,16 @@ class SmsReaderModule(reactContext: ReactApplicationContext) :
           messages.pushMap(map)
         }
       }
-      promise.resolve(messages)
+      
+      // Return result with pagination metadata
+      val result = Arguments.createMap()
+      result.putArray("messages", messages)
+      result.putInt("limit", effectiveLimit)
+      result.putInt("offset", offset)
+      result.putInt("count", messages.size())
+      result.putBoolean("hasMore", messages.size() == effectiveLimit)
+      
+      promise.resolve(result)
     } catch (e: SecurityException) {
       promise.reject(
         "PERMISSION_DENIED",
@@ -283,5 +365,7 @@ class SmsReaderModule(reactContext: ReactApplicationContext) :
 
   companion object {
     private const val TAG = "SmsReaderModule"
+    private const val DEFAULT_PAGE_SIZE = 500
+    private const val MAX_PAGE_SIZE = 10000
   }
 }

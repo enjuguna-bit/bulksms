@@ -158,6 +158,7 @@ export interface PhoneValidationResult {
 /**
  * Validate phone number format and normalize
  * Handles: "+254712345678", "0712345678", "254712345678"
+ * Returns phone in format "254712345678" (without leading +)
  */
 export function validatePhoneNumber(phone: string): PhoneValidationResult {
   const warnings: string[] = [];
@@ -171,8 +172,9 @@ export function validatePhoneNumber(phone: string): PhoneValidationResult {
     };
   }
 
-  // Normalize phone
-  const normalized = normalizePhone(phone);
+  // Normalize phone: normalizePhone() returns "+254712345678" format
+  // Strip the leading + to get "254712345678" for validation and return
+  const normalized = normalizePhone(phone).replace(/^\+/, "");
 
   if (!normalized) {
     return {
@@ -183,7 +185,7 @@ export function validatePhoneNumber(phone: string): PhoneValidationResult {
     };
   }
 
-  // Must be 12 digits (Kenya format)
+  // Must be 12 digits (Kenya format: 254 + 9 local digits)
   if (normalized.length !== 12) {
     return {
       valid: false,
@@ -203,7 +205,7 @@ export function validatePhoneNumber(phone: string): PhoneValidationResult {
     };
   }
 
-  // Identify provider
+  // Identify provider using pattern matching against 254XXXXXXXXX format
   let provider: "M-PESA" | "Airtel" | "Equity" | "Unknown" = "Unknown";
 
   if (PHONE_PATTERNS.MPESA.test(normalized)) {
@@ -212,7 +214,10 @@ export function validatePhoneNumber(phone: string): PhoneValidationResult {
     provider = "Airtel";
   } else if (PHONE_PATTERNS.EQUITY.test(normalized)) {
     provider = "Equity";
-  } else {
+  }
+
+  // Only warn if we couldn't identify provider
+  if (provider === "Unknown") {
     warnings.push(`Unknown provider for number: ${normalized}`);
   }
 
@@ -256,16 +261,16 @@ const AUTHENTIC_SENDERS = [
 ];
 
 const PAYMENT_KEYWORDS = [
-  "confirmed",
-  "received",
-  "sent",
-  "paid",
-  "payment",
-  "deposit",
-  "withdrawal",
-  "transferred",
-  "ksh",
-  "kes",
+  "CONFIRMED",
+  "RECEIVED",
+  "SENT",
+  "PAID",
+  "PAYMENT",
+  "DEPOSIT",
+  "WITHDRAWAL",
+  "TRANSFERRED",
+  "KSH",
+  "KES",
 ];
 
 /**

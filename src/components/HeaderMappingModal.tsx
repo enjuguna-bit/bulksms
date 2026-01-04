@@ -44,7 +44,10 @@ export default function HeaderMappingModal({
     });
   }, [mapping, headers, amountCandidates]);
 
-  const amountOptions = amountCandidates.length ? amountCandidates : headers;
+  // Always show all headers for amount selection, but prioritize amountCandidates at the top
+  const amountOptions = amountCandidates.length 
+    ? [...new Set([...amountCandidates, ...headers])] // Candidates first, then remaining headers
+    : headers;
 
   const safeName = localMap?.name ?? "";
   const safePhone = localMap?.phone ?? "";

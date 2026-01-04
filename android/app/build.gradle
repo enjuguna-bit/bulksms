@@ -5,14 +5,36 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 
+apply plugin: "kotlin-kapt"
+
+apply from: new File(["node", "--print", "require.resolve('expo/package.json')"].execute(null, rootDir).text.trim(), "../scripts/autolinking.gradle")
+
 // Helper to determine Hermes state safely
 def isHermesEnabled = project.findProperty("hermesEnabled")?.toBoolean() ?: true
+
+// Load keystore properties for release signing
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
 
 android {
     namespace = "com.bulksms.smsmanager"
     compileSdkVersion 34
     
     ndkVersion "26.1.10909125"
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
 
     defaultConfig {
         applicationId "com.bulksms.smsmanager"
@@ -49,7 +71,7 @@ android {
             minifyEnabled false
         }
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             shrinkResources false
             minifyEnabled false
             proguardFiles(
@@ -67,6 +89,12 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    sourceSets {
+        main {
+            assets.srcDirs = ['src/main/assets']
+        }
     }
 
     packaging {
@@ -119,6 +147,22 @@ dependencies {
     implementation("androidx.multidex:multidex:2.0.1")
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    
+    // Apache PDFBox for PDF parsing (M-Pesa statement extraction)
+    // Using Android-compatible version
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+
+    def room_version = "2.6.1"
+
+    implementation "androidx.room:room-runtime:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    
+    // Lifecycle components
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
+    
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 apply from: new File(["node", "--print", "require.resolve('@react-native-community/cli-platform-android/package.json')"].execute(null, rootDir).text.trim(), "../native_modules.gradle"); applyNativeModulesAppBuildGradle(project)

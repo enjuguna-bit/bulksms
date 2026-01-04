@@ -24,6 +24,7 @@ const customConfig = {
     extraNodeModules: {
       ...(defaultConfig.resolver.extraNodeModules || {}),
       "@": path.resolve(__dirname, "src"),
+      "crypto": path.resolve(__dirname, "mocks/crypto.js"),
     },
 
     // Let Metro search normally

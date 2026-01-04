@@ -18,26 +18,46 @@ export function useSafeRouter() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Safe push → navigate() - REMOVED extra setTimeout for immediate navigation
+  // Safe push → navigate()
   const safePush = useCallback(
     (screen: string, params?: Record<string, any>) => {
+      // Debug Log
+      if (__DEV__) {
+        console.log(`[NAV] Safe push to ${screen}`, params);
+      }
+
       if (!ready) {
         console.warn(`[useSafeRouter] push blocked until ready (${screen})`);
         return;
       }
+
+      // Validation similar to the requested SafeRouter
+      const safeParams = { ...params };
+      if (screen === 'ChatScreen' || screen.includes('chat')) {
+        if (!safeParams.threadId && safeParams.address) {
+          safeParams.threadId = safeParams.address;
+        }
+        if (!safeParams.address) {
+          safeParams.address = 'Unknown';
+        }
+      }
+
       try {
-        navigation.navigate(screen, params);
+        navigation.navigate(screen, safeParams);
       } catch (e) {
         console.error("[useSafeRouter] push error:", e);
-        console.error("[useSafeRouter] Screen:", screen, "Params:", params);
+        console.error("[useSafeRouter] Screen:", screen, "Params:", safeParams);
+        // Fallback?
       }
     },
     [navigation, ready]
   );
 
-  // Safe replace → navigation.reset() - REMOVED extra setTimeout for immediate navigation
+  // Safe replace → navigation.reset()
   const safeReplace = useCallback(
     (screen: string, params?: Record<string, any>) => {
+      if (__DEV__) console.log(`[NAV] Safe replace to ${screen}`, params);
+
       if (!ready) {
         console.warn(`[useSafeRouter] replace blocked until ready (${screen})`);
         return;
@@ -56,8 +76,13 @@ export function useSafeRouter() {
   );
 
   const back = useCallback(() => {
+    if (__DEV__) console.log('[NAV] Back');
     try {
-      navigation.goBack();
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        console.warn('[useSafeRouter] Cannot go back');
+      }
     } catch (e) {
       console.error("[useSafeRouter] back error:", e);
     }

@@ -1,5 +1,6 @@
 import { runQuery } from '../database/core';
 import { MessageRow, MsgStatus } from '../database/types';
+export type { MessageRow };
 import { normalizeThreadId, isValidThreadId, cleanThreadId } from '../utils/threadIdUtils';
 
 const VALID_STATUSES: MsgStatus[] = ["pending", "sent", "delivered", "failed"];
@@ -14,14 +15,16 @@ export async function addMessage(
     status: MsgStatus,
     timestamp: number,
     threadId: string | null = null,
-    simSlot: number | null = null
+    simSlot: number | null = null,
+    bulkId: string | null = null,
+    deliveryStatus: string | null = null
 ): Promise<number> {
     const result = await runQuery(
         `
-      INSERT INTO messages (address, body, type, status, timestamp, threadId, simSlot)
-      VALUES (?, ?, ?, ?, ?, ?, ?);
+      INSERT INTO messages (address, body, type, status, timestamp, threadId, simSlot, bulkId, deliveryStatus)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     `,
-        [address, body, type, status, timestamp, threadId ?? address, simSlot ?? null]
+        [address, body, type, status, timestamp, threadId ?? address, simSlot ?? null, bulkId, deliveryStatus]
     );
 
     return result.insertId ?? 0;
@@ -87,7 +90,7 @@ export async function getMessagesByThread(
 ): Promise<MessageRow[]> {
     // Normalize thread ID to handle both numeric and string formats
     const normalizedId = normalizeThreadId(threadId);
-    
+
     const result = await runQuery(
         `
       SELECT * FROM messages

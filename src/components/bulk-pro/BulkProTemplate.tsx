@@ -15,6 +15,7 @@ export default function BulkProTemplate({
     onSave,
     onClearRecents,
     disabled,
+    availableFields = [],
 }: {
     template: string;
     setTemplate: (t: string) => void;
@@ -22,6 +23,8 @@ export default function BulkProTemplate({
     onSave: () => void;
     onClearRecents: () => void;
     disabled?: boolean;
+    /** Available field names from Excel headers for dynamic placeholders */
+    availableFields?: string[];
 }) {
     const { colors } = useThemeSettings();
     const templateLen = template.length;
@@ -55,6 +58,49 @@ export default function BulkProTemplate({
             <Text style={{ fontSize: 12, color: colors.subText, marginTop: 6 }}>
                 Characters: {templateLen} · Segments: {templateSegments}
             </Text>
+
+            {/* Available Placeholders */}
+            <View style={styles.placeholdersBox}>
+                <Text style={[styles.placeholderTitle, { color: colors.text }]}>
+                    📝 Available Placeholders (tap to insert)
+                </Text>
+                <View style={styles.placeholderRow}>
+                    {/* Built-in placeholders */}
+                    {['name', 'phone', 'amount'].map((field) => (
+                        <TouchableOpacity
+                            key={field}
+                            style={[styles.placeholderChip, { backgroundColor: colors.accent + '20', borderColor: colors.accent }]}
+                            onPress={() => setTemplate(template + `{${field}}`)}
+                            disabled={disabled}
+                        >
+                            <Text style={[styles.placeholderText, { color: colors.accent }]}>
+                                {`{${field}}`}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                    {/* Dynamic placeholders from Excel */}
+                    {availableFields
+                        .filter(f => !['name', 'phone', 'amount'].includes(f.toLowerCase()))
+                        .slice(0, 10) // Limit to prevent overflow
+                        .map((field) => (
+                            <TouchableOpacity
+                                key={field}
+                                style={[styles.placeholderChip, { backgroundColor: colors.card, borderColor: colors.border }]}
+                                onPress={() => setTemplate(template + `{${field}}`)}
+                                disabled={disabled}
+                            >
+                                <Text style={[styles.placeholderText, { color: colors.text }]}>
+                                    {`{${field}}`}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                </View>
+                {availableFields.length === 0 && (
+                    <Text style={{ fontSize: 11, color: colors.subText, marginTop: 4 }}>
+                        Import Excel to see custom field placeholders
+                    </Text>
+                )}
+            </View>
 
             {recents.length > 0 && (
                 <View style={[styles.recentsBox, { backgroundColor: colors.background }]}>
@@ -100,6 +146,32 @@ const styles = StyleSheet.create({
         padding: 12,
         minHeight: 96,
         textAlignVertical: "top",
+    },
+    placeholdersBox: {
+        marginTop: 8,
+        padding: 10,
+        borderRadius: 10,
+        backgroundColor: 'rgba(0,0,0,0.02)',
+    },
+    placeholderTitle: {
+        fontWeight: '700',
+        fontSize: 12,
+        marginBottom: 8,
+    },
+    placeholderRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+    },
+    placeholderChip: {
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 16,
+        borderWidth: 1,
+    },
+    placeholderText: {
+        fontSize: 12,
+        fontWeight: '600',
     },
     recentsBox: {
         marginTop: 10,

@@ -5,6 +5,43 @@
 
 import { runQuery } from '@/db/database/core';
 import Logger from '@/utils/logger';
+import { smsSender } from '@/native';
+
+// ---------------------------------------------------------------------------
+// 🇰🇪 Network-Aware Thresholds for Kenyan Carriers
+// ---------------------------------------------------------------------------
+// Safaricom network can have delayed delivery reports (up to 6 hours)
+// Other networks typically deliver within 2 hours
+
+const THRESHOLD_SAFARICOM = 6 * 60 * 60 * 1000;  // 6 hours
+const THRESHOLD_DEFAULT = 2 * 60 * 60 * 1000;    // 2 hours
+const THRESHOLD_AIRTEL = 4 * 60 * 60 * 1000;     // 4 hours (Airtel Kenya)
+
+/**
+ * ⚡ Get network-aware stale threshold based on current carrier.
+ * Kenyan networks (especially Safaricom) can have significant delivery delays.
+ */
+export async function getNetworkAwareThreshold(): Promise<number> {
+    try {
+        const networkInfo = await smsSender.getNetworkInfo();
+        const carrier = networkInfo?.detectedCarrier;
+        
+        switch (carrier) {
+            case 'Safaricom':
+                Logger.debug('Reconciliation', 'Using Safaricom threshold (6h)');
+                return THRESHOLD_SAFARICOM;
+            case 'Airtel Kenya':
+                Logger.debug('Reconciliation', 'Using Airtel threshold (4h)');
+                return THRESHOLD_AIRTEL;
+            default:
+                Logger.debug('Reconciliation', `Using default threshold (2h) for ${carrier || 'unknown'}`);
+                return THRESHOLD_DEFAULT;
+        }
+    } catch (error) {
+        Logger.warn('Reconciliation', 'Failed to detect network, using default threshold', error);
+        return THRESHOLD_DEFAULT;
+    }
+}
 
 export interface StaleMessage {
     id: number;
@@ -18,14 +55,17 @@ export interface StaleMessage {
  * Get messages that are stuck in 'sent' or 'pending' state for too long.
  * These may have missed delivery callbacks.
  * 
- * @param staleThresholdMs - Time in ms after which a message is considered stale (default: 2 hours)
+ * @param staleThresholdMs - Time in ms after which a message is considered stale
+ *                          If not provided, uses network-aware default
  * @param limit - Maximum messages to return
  */
 export async function getStaleMessages(
-    staleThresholdMs: number = 2 * 60 * 60 * 1000,
+    staleThresholdMs?: number,
     limit: number = 100
 ): Promise<StaleMessage[]> {
-    const cutoff = Date.now() - staleThresholdMs;
+    // ⚡ Use network-aware threshold if not explicitly provided
+    const threshold = staleThresholdMs ?? await getNetworkAwareThreshold();
+    const cutoff = Date.now() - threshold;
     const result = await runQuery(
         `SELECT id, to_number, status, timestamp, retryCount 
          FROM send_logs 
@@ -93,15 +133,20 @@ export async function getReconciliationStats(): Promise<{
  * For local SMS sending, we can only mark as 'unknown' after timeout.
  * 
  * @param staleThresholdMs - Time after which to consider a message stale
+ *                          If not provided, uses network-aware default
  * @returns Number of messages reconciled
  */
 export async function runReconciliation(
-    staleThresholdMs: number = 2 * 60 * 60 * 1000
+    staleThresholdMs?: number
 ): Promise<{ reconciled: number; details: string }> {
     try {
-        Logger.info('Reconciliation', 'Starting message status reconciliation...');
+        // ⚡ Get network-aware threshold
+        const threshold = staleThresholdMs ?? await getNetworkAwareThreshold();
+        const thresholdHours = (threshold / (60 * 60 * 1000)).toFixed(1);
+        
+        Logger.info('Reconciliation', `Starting reconciliation (threshold: ${thresholdHours}h)...`);
 
-        const staleMessages = await getStaleMessages(staleThresholdMs);
+        const staleMessages = await getStaleMessages(threshold);
 
         if (staleMessages.length === 0) {
             Logger.info('Reconciliation', 'No stale messages found');
@@ -137,10 +182,16 @@ export async function runReconciliation(
  * @returns Cleanup function to stop the scheduler
  */
 export function scheduleReconciliation(intervalMs: number = 60 * 60 * 1000): () => void {
-    // Run immediately on startup
+    // Run immediately on startup with network-aware threshold
     runReconciliation().catch(err =>
         Logger.error('Reconciliation', 'Startup reconciliation failed', err)
     );
+    
+    // Log network info for debugging
+    getNetworkAwareThreshold().then(threshold => {
+        const hours = (threshold / (60 * 60 * 1000)).toFixed(1);
+        Logger.info('Reconciliation', `Scheduled with ${hours}h threshold for current network`);
+    }).catch(() => {});
 
     // Schedule periodic runs
     const intervalId = setInterval(() => {

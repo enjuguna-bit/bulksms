@@ -1,7 +1,7 @@
 // src/screens/debug/DebugScreen.tsx
 // Comprehensive debug screen with diagnostics and tools
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -31,7 +31,7 @@ interface DebugInfo {
   developerBypass: boolean;
   databaseStatus: string;
   billingStatus: string;
-  asyncStorageKeys: string[];
+  asyncStorageKeys: readonly string[];
   dbMessageCount: number;
   dbTransactionCount: number;
   dbQueueCount: number;
@@ -44,12 +44,12 @@ export default function DebugScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadDebugInfo = async () => {
+  const loadDebugInfo = useCallback(async () => {
     try {
       const appVersion = DeviceInfo.getVersion();
       const buildNumber = DeviceInfo.getBuildNumber();
       const deviceId = await DeviceInfo.getUniqueId();
-      const deviceName = DeviceInfo.getDeviceName();
+      const deviceName = await DeviceInfo.getDeviceName();
       const systemVersion = DeviceInfo.getSystemVersion();
 
       // Database status
@@ -61,7 +61,7 @@ export default function DebugScreen() {
       try {
         await initDatabase();
         databaseStatus = 'Connected';
-        
+
         // Get counts
         const messagesResult = await runQuery('SELECT COUNT(*) as count FROM messages', []);
         dbMessageCount = messagesResult?.rows?.item(0)?.count || 0;
@@ -100,11 +100,11 @@ export default function DebugScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [status, isPro]);
 
   useEffect(() => {
     loadDebugInfo();
-  }, []);
+  }, [loadDebugInfo]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -354,4 +354,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-

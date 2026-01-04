@@ -9,7 +9,7 @@ import {
     FlatList,
 } from "react-native";
 import { useThemeSettings } from "@/theme/ThemeProvider";
-import type { Recipient } from "./EditModal";
+import type { Recipient } from "@/types/bulkSms";
 
 export default function RecipientsModal({
     visible,

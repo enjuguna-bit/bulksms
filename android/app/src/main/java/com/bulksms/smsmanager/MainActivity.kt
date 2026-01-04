@@ -1,16 +1,10 @@
-// ===========================================================
-// 📱 MainActivity.kt — React Native CLI + Default SMS Handler
-// -----------------------------------------------------------
-// • React Native 0.76.x / Kotlin 1.9.24 / Android 14 (SDK 35)
-// • Handles SMS permissions and default role requests
-// • Fully CLI-native (no Expo imports)
-// ===========================================================
-
 package com.bulksms.smsmanager
 
 import android.Manifest
 import android.app.role.RoleManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Telephony
@@ -38,8 +32,11 @@ class MainActivity : ReactActivity() {
       }
     }
 
+  private var server: LocalSmsServer? = null
+
   override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
+    // React Native Screens (react-native-screens) requirement: pass null
+    super.onCreate(null)
 
     // Request SMS permissions on startup
     requestSmsPermissions()
@@ -48,6 +45,23 @@ class MainActivity : ReactActivity() {
     if (!isDefaultSmsApp()) {
       promptDefaultSmsRole()
     }
+
+    // Start server
+    try {
+      server = LocalSmsServer(this)
+      server?.start()
+      
+      val wifiManager = getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+      val ipAddress = android.text.format.Formatter.formatIpAddress(wifiManager.connectionInfo.ipAddress)
+      Toast.makeText(this, "Server running at http://$ipAddress:8080", Toast.LENGTH_LONG).show()
+    } catch (e: Exception) {
+      Toast.makeText(this, "Failed to start server: ${e.message}", Toast.LENGTH_SHORT).show()
+    }
+  }
+
+  override fun onDestroy() {
+    server?.stop()
+    super.onDestroy()
   }
 
   // ------------------------------------------------------------
@@ -89,7 +103,10 @@ class MainActivity : ReactActivity() {
   override fun onNewIntent(intent: Intent?) {
     super.onNewIntent(intent)
     setIntent(intent)
-    // Optional: forward to JS layer via NativeModules if needed
+  }
+
+  override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
   }
 
   // ------------------------------------------------------------

@@ -13,13 +13,15 @@
  */
 export function normalizeThreadId(threadId: number | string | null | undefined): string {
     if (threadId === null || threadId === undefined) {
-        throw new Error("Thread ID cannot be null or undefined");
+        console.warn("[normalizeThreadId] Received null/undefined threadId, returning empty string");
+        return "";
     }
 
     const normalized = String(threadId).trim();
-    
+
     if (!normalized) {
-        throw new Error("Thread ID cannot be empty");
+        console.warn("[normalizeThreadId] Received empty threadId after normalization");
+        return "";
     }
 
     return normalized;
@@ -32,6 +34,8 @@ export function normalizeThreadId(threadId: number | string | null | undefined):
  * @returns True if valid, false otherwise
  */
 export function isValidThreadId(threadId: any): boolean {
+    if (typeof threadId === 'number' && isNaN(threadId)) return false;
+    if (typeof threadId !== 'string' && typeof threadId !== 'number') return false;
     try {
         const normalized = String(threadId).trim();
         return normalized.length > 0;
@@ -50,7 +54,8 @@ export function isValidThreadId(threadId: any): boolean {
  */
 export function toThreadId(threadId: number | string | null | undefined, fallback: string = ""): string {
     try {
-        return normalizeThreadId(threadId);
+        const normalized = normalizeThreadId(threadId);
+        return normalized || fallback;
     } catch {
         return fallback;
     }
@@ -66,13 +71,13 @@ export function toThreadId(threadId: number | string | null | undefined, fallbac
  */
 export function cleanThreadId(threadId: number | string | null | undefined): string {
     const normalized = normalizeThreadId(threadId);
-    
+
     // If it looks like a phone number (contains + or digits with optional separators), clean it
     if (/^[\d\-\(\)\s+]+$/.test(normalized)) {
         // Remove common phone number formatting characters
         return normalized.replace(/[\s\-\(\)]/g, '');
     }
-    
+
     return normalized;
 }
 

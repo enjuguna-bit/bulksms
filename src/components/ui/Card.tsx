@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, TouchableOpacity, Pressable } from 'react-native';
+import { View, StyleSheet, ViewStyle, TouchableOpacity, Pressable, StyleProp } from 'react-native';
 import { useThemeSettings } from '@/theme/ThemeProvider';
 
 interface CardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   variant?: 'default' | 'elevated' | 'outlined' | 'pressable';
   shadow?: 'sm' | 'md' | 'lg' | 'xl';
   gradient?: string[];
@@ -13,9 +13,9 @@ interface CardProps {
   disabled?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({ 
-  children, 
-  style, 
+export const Card: React.FC<CardProps> = ({
+  children,
+  style,
   variant = 'default',
   shadow = 'md',
   gradient,
@@ -79,11 +79,11 @@ export const Card: React.FC<CardProps> = ({
 
   if (gradient) {
     const gradientColors = gradient;
-    
+
     try {
       // Try to import LinearGradient dynamically
       const LinearGradient = require("expo-linear-gradient").LinearGradient;
-      
+
       const gradientCard = (
         <LinearGradient
           colors={gradientColors as [string, string, ...string[]]}

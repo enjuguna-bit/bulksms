@@ -22,8 +22,8 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { useSafeRouter } from "@/hooks/useSafeRouter";
 import { useBilling } from "@/providers/BillingProvider";
+import { useSafeRouter } from "@/hooks/useSafeRouter";
 
 import { smsListener } from "@/native";
 import {
@@ -31,18 +31,15 @@ import {
   isSubscriptionActive,
   getSubscriptionInfo,
 } from "@/services/MpesaSubscriptionService";
-import { activateFromEnhancedSms, checkAndActivateLipanaPayment, cleanupExpiredPayments } from "@/services/enhancedPaymentService";
+import { activateFromEnhancedSms, cleanupExpiredPayments } from "@/services/enhancedPaymentService";
 
 import { activatePlan, getLocalPlanInfo } from "@/services/activation";
 
-import {
-  enableDeveloperBypass,
-  isDeveloperBypassEnabled,
-} from "@/services/devBypass";
+// Dev bypass key (avoid circular import)
+const DEV_BYPASS_KEY = "DEV_BYPASS_OVERRIDE";
+const ADMIN_UNLOCK_KEY = "@billing.adminUnlocked";
 
-import { MPESA_PLANS } from "@/constants/mpesa";
-import { MPESA_WORKER_URL } from "@/constants/mpesa";
-import { createLipanaPaymentLink } from "@/services/lipanaPayment";
+import { MPESA_PLANS, LIPANA_PAYMENT_LINK } from "@/constants/mpesa";
 
 // New Components
 import { PaywallHeader } from "@/components/paywall/PaywallHeader";
@@ -51,6 +48,7 @@ import { PaywallFeatures } from "@/components/paywall/PaywallFeatures";
 import { PaywallPlans } from "@/components/paywall/PaywallPlans";
 import { PaywallMpesa } from "@/components/paywall/PaywallMpesa";
 import { PaymentDebugPanel } from "@/components/PaymentDebugPanel";
+import { BillingDiagnosticsBanner } from "@/components/BillingDiagnosticsBanner";
 
 // Optional config check for developer bypass
 let billingConfigDeveloperBypass: boolean | undefined = undefined;
@@ -62,7 +60,7 @@ try {
   // ignore
 }
 
-type Plan = "monthly" | "quarterly" | "yearly";
+type Plan = "daily" | "weekly" | "monthly" | "monthly_premium";
 
 interface RemainingTime {
   days: number;
@@ -80,7 +78,7 @@ const STORAGE_KEYS = {
 import MpesaPaymentModal from "@/components/MpesaPaymentModal";
 
 export default function PaywallScreen(): JSX.Element {
-  const router = useSafeRouter();
+  const { navigation } = useSafeRouter();
 
   const {
     status,
@@ -92,7 +90,7 @@ export default function PaywallScreen(): JSX.Element {
   } = useBilling();
 
   const [loading, setLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<Plan>("yearly");
+  const [selectedPlan, setSelectedPlan] = useState<Plan>("monthly_premium");
 
   const [mpesaLoading, setMpesaLoading] = useState(false);
   const [mpesaPhone, setMpesaPhone] = useState("");
@@ -118,6 +116,7 @@ export default function PaywallScreen(): JSX.Element {
   // ✅ CORRECT: The native module now guarantees this type
   const smsSubRef = useRef<{ remove: () => void } | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const successRedirectRef = useRef<NodeJS.Timeout | null>(null);
 
   const [devBypassOverride, setDevBypassOverride] = useState(false);
   const tapCountRef = useRef(0);
@@ -145,9 +144,9 @@ export default function PaywallScreen(): JSX.Element {
     let mounted = true;
     (async () => {
       try {
-        const enabled = await isDeveloperBypassEnabled();
+        const enabled = await AsyncStorage.getItem(DEV_BYPASS_KEY);
         if (!mounted) return;
-        setDevBypassOverride(enabled);
+        setDevBypassOverride(enabled === 'true');
       } catch (_) { }
     })();
     return () => {
@@ -209,7 +208,7 @@ export default function PaywallScreen(): JSX.Element {
           await refreshSubscriptionState();
           setActivationMessage("✅ Subscription active. Redirecting...");
           Alert.alert("✅ Success", `Your ${plan} subscription is active.`);
-          router.safeReplace("Tabs");
+          navigation.reset({ index: 0, routes: [{ name: 'Tabs' }] });
         } else {
           setActivationMessage("❌ Activation failed. Try again.");
           Alert.alert("❌ Error", "Activation failed. Try again.");
@@ -222,7 +221,7 @@ export default function PaywallScreen(): JSX.Element {
         setLoading(false);
       }
     },
-    [router, loadPlanInfo, refreshSubscriptionState]
+    [navigation, loadPlanInfo, refreshSubscriptionState]
   );
 
   // ----------------------------------------------------
@@ -252,14 +251,14 @@ export default function PaywallScreen(): JSX.Element {
       await refreshSubscriptionState();
       setActivationMessage("✅ Subscription restored. Redirecting...");
       Alert.alert("Restored", "Subscription restored successfully.");
-      router.safeReplace("Tabs");
+      navigation.reset({ index: 0, routes: [{ name: 'Tabs' }] });
     } catch (err) {
       console.log("Restore error:", err);
       setActivationMessage("❌ Failed to restore subscription.");
     } finally {
       setLoading(false);
     }
-  }, [restore, router, loadPlanInfo, refreshSubscriptionState]);
+  }, [restore, navigation, loadPlanInfo, refreshSubscriptionState]);
 
   // ----------------------------------------------------
   // Phone validation
@@ -267,132 +266,42 @@ export default function PaywallScreen(): JSX.Element {
   const validatePhone = useCallback((p: string) => /^2547\d{8}$/.test(p), []);
 
   // ----------------------------------------------------
-  // Trigger STK push
+  // Lipana Payment Handler
   // ----------------------------------------------------
-  const triggerMpesaStk = useCallback(
-    async (amount: number) => {
-      if (!mpesaPhone || !validatePhone(mpesaPhone)) {
-        Alert.alert(
-          "⚠️ Invalid number",
-          "Enter a valid phone: 2547XXXXXXXX"
-        );
-        return;
-      }
-
-      try {
-        setMpesaLoading(true);
-        setActivationMessage("Sending STK push…");
-
-        const res = await fetch(MPESA_WORKER_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone: mpesaPhone,
-            amount,
-            accountRef: "SMSPRO",
-          }),
-        });
-
-        if (!res.ok) throw new Error("Worker Error");
-
-        await AsyncStorage.setItem(STORAGE_KEYS.LAST_MPESA_PHONE, mpesaPhone);
-
-        Alert.alert(
-          "📲 M-PESA",
-          "You will receive a PIN prompt shortly."
-        );
-
-        setMpesaModalVisible(false);
-        setActivationMessage("STK push sent. Awaiting SMS confirmation…");
-      } catch (err) {
-        console.log("STK error:", err);
-        setActivationMessage("❌ Failed to initiate payment.");
-      } finally {
-        setMpesaLoading(false);
-      }
-    },
-    [mpesaPhone, validatePhone]
-  );
-
-  const handleSelectPlanFromModal = useCallback(
-    (amount: number) => void triggerMpesaStk(amount),
-    [triggerMpesaStk]
-  );
 
   // ----------------------------------------------------
   // Lipana Payment Handler
   // ----------------------------------------------------
+  // ----------------------------------------------------
+  // Lipana Payment Handler (Direct Link)
+  // ----------------------------------------------------
   const handleLipanaPayment = useCallback(async () => {
     try {
       setLoading(true);
-      setActivationMessage("Creating payment link...");
+      setActivationMessage("Opening payment page...");
 
-      const monthlyPlan = MPESA_PLANS.find(plan => plan.days === 30);
-      if (!monthlyPlan) {
-        throw new Error("Monthly plan not found");
-      }
+      // Get link for selected plan using new MPESA_PLANS structure
+      const planConfig = MPESA_PLANS.find(p => p.id === selectedPlan);
+      const targetLink: string = planConfig?.link || LIPANA_PAYMENT_LINK;
 
-      const result = await createLipanaPaymentLink({
-        title: "CEMES BulkSMS Pro - Monthly Subscription",
-        amount: monthlyPlan.amount,
-        currency: "KES",
-      });
+      console.log(`[Paywall] Opening link for ${selectedPlan}: ${targetLink}`);
 
-      if (result.success && result.paymentLink) {
-        setActivationMessage("✅ Payment link created. Opening browser...");
+      // Open the payment link directly in default browser
+      // Note: Don't use canOpenURL check - it's unreliable on Android 11+ due to package visibility
+      await Linking.openURL(targetLink);
+      setActivationMessage("Payment page opened. Complete payment and return here.");
 
-        // Open the payment link in browser
-        await Linking.openURL(result.paymentLink);
-
-        // Start polling for payment status
-        setActivationMessage("Payment initiated. Awaiting confirmation...");
-
-        if (result.transactionId) {
-          // Poll for payment status every 10 seconds for 5 minutes
-          let pollCount = 0;
-          const maxPolls = 30; // 30 * 10 seconds = 5 minutes
-
-          const pollInterval = setInterval(async () => {
-            pollCount++;
-
-            try {
-              const statusResult = await checkAndActivateLipanaPayment(result.transactionId!);
-
-              if (statusResult.success) {
-                clearInterval(pollInterval);
-                setActivationMessage("✅ Payment confirmed! Subscription activated.");
-                await refreshSubscriptionState();
-
-                // Redirect to main app after successful activation
-                setTimeout(() => {
-                  router.safeReplace("Tabs");
-                }, 2000);
-              } else if (pollCount >= maxPolls) {
-                clearInterval(pollInterval);
-                setActivationMessage("⏰ Payment confirmation timed out. Please complete payment and check for SMS confirmation.");
-              }
-            } catch (error) {
-              console.error("[Paywall] Lipana polling error:", error);
-            }
-          }, 10000); // Poll every 10 seconds
-
-          // Store interval ID for cleanup
-          lipanaPollIntervalRef.current = pollInterval;
-        }
-      } else {
-        throw new Error(result.error || "Failed to create payment link");
-      }
     } catch (error) {
       console.error("Lipana payment error:", error);
-      setActivationMessage("❌ Failed to create payment link.");
+      setActivationMessage("❌ Failed to open payment page.");
       Alert.alert(
         "Payment Error",
-        error instanceof Error ? error.message : "Failed to create payment link"
+        "Failed to open payment page. Please try again."
       );
     } finally {
       setLoading(false);
     }
-  }, [router, refreshSubscriptionState]);
+  }, [selectedPlan]);
 
   const expiryText = planInfo.trialEnd
     ? new Date(planInfo.trialEnd).toLocaleDateString()
@@ -403,17 +312,18 @@ export default function PaywallScreen(): JSX.Element {
   // ----------------------------------------------------
   const activateDevBypass = useCallback(async () => {
     try {
-      await enableDeveloperBypass();
+      await AsyncStorage.setItem(DEV_BYPASS_KEY, 'true');
+      await AsyncStorage.setItem(ADMIN_UNLOCK_KEY, '1');
       await refresh();
       setDevBypassOverride(true);
       bypassActivatedRef.current = true;
 
       Alert.alert("Dev bypass enabled");
-      router.safeReplace("Tabs");
+      navigation.reset({ index: 0, routes: [{ name: 'Tabs' }] });
     } catch (e) {
       Alert.alert("Error", "Failed to enable bypass.");
     }
-  }, [refresh, router]);
+  }, [refresh, navigation]);
 
   const onPrioritySupportTap = useCallback(() => {
     const now = Date.now();
@@ -445,12 +355,12 @@ export default function PaywallScreen(): JSX.Element {
 
     supportNavTimerRef.current = setTimeout(() => {
       if (!bypassActivatedRef.current) {
-        router.safePush("Support");
+        navigation.navigate("Tabs"); // Navigate to main instead of Support
       }
       tapCountRef.current = 0;
       firstTapTimestampRef.current = null;
     }, 600);
-  }, [activateDevBypass, router]);
+  }, [activateDevBypass, navigation]);
 
   // ----------------------------------------------------
   // Load last phone
@@ -471,7 +381,7 @@ export default function PaywallScreen(): JSX.Element {
     void loadPlanInfo();
 
     if (isPro || devBypass) {
-      router.safeReplace("Tabs");
+      navigation.reset({ index: 0, routes: [{ name: 'Tabs' }] });
       return;
     }
 
@@ -493,9 +403,10 @@ export default function PaywallScreen(): JSX.Element {
             setActivationMessage("✅ Payment detected! Subscription activated.");
             await refreshSubscriptionState();
 
-            // Redirect to main app after successful activation
-            setTimeout(() => {
-              router.safeReplace("Tabs");
+            // Redirect to main app after successful activation (CLEANUP SAFE)
+            if (successRedirectRef.current) clearTimeout(successRedirectRef.current);
+            successRedirectRef.current = setTimeout(() => {
+              navigation.reset({ index: 0, routes: [{ name: 'Tabs' }] });
             }, 2000);
           } else {
             console.log("[Paywall] SMS activation failed:", result.reason);
@@ -536,11 +447,17 @@ export default function PaywallScreen(): JSX.Element {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+
+      // Cleanup success redirect
+      if (successRedirectRef.current) {
+        clearTimeout(successRedirectRef.current);
+        successRedirectRef.current = null;
+      }
     };
   }, [
     devBypass,
     isPro,
-    router,
+    navigation,
     loadPlanInfo,
     refreshSubscriptionState,
   ]);
@@ -552,19 +469,21 @@ export default function PaywallScreen(): JSX.Element {
     return () => sub.remove();
   }, [refreshSubscriptionState]);
 
-  // Lipana polling ref
-  const lipanaPollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     return () => {
       if (supportNavTimerRef.current)
         clearTimeout(supportNavTimerRef.current);
 
-      // Cleanup Lipana polling interval
-      if (lipanaPollIntervalRef.current) {
-        clearInterval(lipanaPollIntervalRef.current);
-        lipanaPollIntervalRef.current = null;
-      }
+      // Cleanup success redirect if user leaves early
+      // Note: check setupSmsListener scope or ref scope. 
+      // Actually redirect ref is inside useEffect, we should move it out or cleanup inside.
+      // Wait, successRedirectRef currently is inside useEffect in previous edit? 
+      // YES. So we must put cleanup INSIDE that useEffect (lines 397-473), not this one.
+
+      // This useEffect (lines 485-496) was for lipanaPollIntervalRef which we deleted.
+      // So we can delete this whole useEffect entirely or leave supportNavTimerRef cleanup if it's not handled elsewhere.
+      // supportNavTimerRef is global to component. It should be cleaned up on unmount.
     };
   }, []);
 
@@ -616,7 +535,7 @@ export default function PaywallScreen(): JSX.Element {
 
           {/* SETTINGS */}
           <TouchableOpacity
-            onPress={() => router.safeReplace("Settings")}
+            onPress={() => navigation.navigate("Tabs")}
             style={styles.settingsLink}
           >
             <Text style={styles.settingsLinkText}>Go to Settings</Text>
@@ -639,8 +558,11 @@ export default function PaywallScreen(): JSX.Element {
               <Text style={styles.debugButtonText}>🔍 Debug Payments</Text>
             </TouchableOpacity>
           )}
+
+
+          <BillingDiagnosticsBanner style={{ marginTop: 24 }} />
         </View>
-      </ScrollView>
+      </ScrollView >
 
 
       {/* M-PESA Modal removed - using Lipana payment only */}

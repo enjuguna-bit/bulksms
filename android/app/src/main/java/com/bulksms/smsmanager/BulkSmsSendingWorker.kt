@@ -77,8 +77,8 @@ class BulkSmsSendingWorker(
         // Defaults
         private const val DEFAULT_DELAY_MS = 1500L  // 1.5 seconds between messages
         private const val DEFAULT_MAX_RETRIES = 3
-        private const val MIN_DELAY_MS = 500L       // Minimum 0.5 seconds
-        private const val MAX_DELAY_MS = 5000L      // Maximum 5 seconds
+        private const val MIN_DELAY_MS = 750L       // Minimum 0.75 seconds
+        private const val MAX_DELAY_MS = 3000L      // Maximum 3 seconds
         private const val BASE_BACKOFF_MS = 2000L   // 2 seconds base for exponential backoff
         
         // Work request builder

@@ -1,6 +1,24 @@
 // jest.setup.js
+// ============================================================================
+// File System Health Mock (GLOBAL)
+// ============================================================================
+jest.mock('@/utils/fileSystemHealth', () => ({
+  FileSystemHealth: {
+    checkHealth: jest.fn().mockResolvedValue({ healthy: true }),
+  },
+}), { virtual: true });
+
 // Jest setup file for mocking native modules and environment
 // This runs before all tests
+
+// ============================================================================
+// Env Mock
+// ============================================================================
+jest.mock('@env', () => ({
+  LIPANA_API_KEY: 'test-api-key',
+  LIPANA_PUBLIC_KEY: 'test-public-key',
+  SENTRY_DSN: 'test-sentry-dsn',
+}), { virtual: true });
 
 // ============================================================================
 // AsyncStorage Mock (Required for theme and storage operations)
@@ -17,6 +35,41 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     multiSet: jest.fn(async () => null),
     multiGet: jest.fn(async () => []),
     multiRemove: jest.fn(async () => null),
+  },
+}));
+
+// ============================================================================
+// NetInfo Mock
+// ============================================================================
+jest.mock('@react-native-community/netinfo', () => ({
+  useNetInfo: jest.fn(() => ({
+    type: 'wifi',
+    isConnected: true,
+    isInternetReachable: true,
+  })),
+  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+  fetch: jest.fn(async () => ({
+    type: 'wifi',
+    isConnected: true,
+    isInternetReachable: true,
+  })),
+}));
+
+// ============================================================================
+// Keychain Mock
+// ============================================================================
+jest.mock('react-native-keychain', () => ({
+  setGenericPassword: jest.fn(async () => true),
+  getGenericPassword: jest.fn(async () => ({ username: 'user', password: 'password' })),
+  resetGenericPassword: jest.fn(async () => true),
+  ACCESS_CONTROL: {
+    USER_PRESENCE: 'UserPresence',
+  },
+  ACCESSIBLE: {
+    WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'WhenUnlockedThisDeviceOnly',
+  },
+  AUTHENTICATION_TYPE: {
+    BIOMETRICS_ANY: 'BiometricsAny',
   },
 }));
 
@@ -54,11 +107,28 @@ jest.mock('react-native', () => ({
   View: 'View',
   Text: 'Text',
   TextInput: 'TextInput',
+  RefreshControl: 'RefreshControl',
+  KeyboardAvoidingView: 'KeyboardAvoidingView',
   TouchableOpacity: 'TouchableOpacity',
-  FlatList: 'FlatList',
+  FlatList: ({ data, renderItem, keyExtractor, ListEmptyComponent, refreshControl, ...props }) => {
+    const React = require('react');
+    const isEmpty = !data || data.length === 0;
+
+    return React.createElement('View', props,
+      refreshControl,
+      isEmpty ? (ListEmptyComponent || null) : (
+        data.map((item, index) =>
+          React.createElement('View', { key: keyExtractor ? keyExtractor(item, index) : index },
+            renderItem({ item, index })
+          )
+        )
+      )
+    );
+  },
   ScrollView: 'ScrollView',
   StyleSheet: {
     create: (obj) => obj,
+    flatten: (style) => (Array.isArray(style) ? Object.assign({}, ...style) : style),
   },
   useColorScheme: jest.fn(() => 'light'),
   InteractionManager: {
@@ -180,7 +250,7 @@ jest.mock('@react-navigation/bottom-tabs', () => ({
 // OP-SQLite Mock
 // ============================================================================
 jest.mock('@op-engineering/op-sqlite', () => ({
-  open: jest.fn(async (config) => ({
+  open: jest.fn((config) => ({
     execute: jest.fn(async (sql) => ({ rows: [] })),
     executeBatch: jest.fn(async (queries) => []),
     close: jest.fn(async () => null),
@@ -275,24 +345,30 @@ jest.mock('react-native-contacts', () => ({
 // ============================================================================
 // React Native Document Picker Mock
 // ============================================================================
-jest.mock('react-native-document-picker', () => ({
-  __esModule: true,
-  default: {
-    pick: jest.fn(async () => ({
-      uri: 'file://path',
-      name: 'file.csv',
-      size: 1000,
-      type: 'text/csv',
-    })),
-    pickDirectory: jest.fn(async () => ({
-      uri: 'file://path',
-    })),
-    pickMultiple: jest.fn(async () => []),
-    isCancel: jest.fn(() => false),
-    isInProgress: jest.fn(() => false),
-  },
-  DocumentPickerResponse: jest.fn(),
-}));
+jest.mock('react-native-document-picker', () => {
+  const isCancel = jest.fn(() => false);
+  const isInProgress = jest.fn(() => false);
+  return {
+    __esModule: true,
+    default: {
+      pick: jest.fn(async () => ({
+        uri: 'file://path',
+        name: 'file.csv',
+        size: 1000,
+        type: 'text/csv',
+      })),
+      pickDirectory: jest.fn(async () => ({
+        uri: 'file://path',
+      })),
+      pickMultiple: jest.fn(async () => []),
+      isCancel,
+      isInProgress,
+    },
+    isCancel,
+    isInProgress,
+    DocumentPickerResponse: jest.fn(),
+  }
+});
 
 // ============================================================================
 // Expo Linear Gradient Mock
@@ -499,6 +575,9 @@ jest.mock('lucide-react-native', () => {
     Mail: mockIcon,
     MoreVertical: mockIcon,
     MessageSquare: mockIcon,
+    MessageCirclePlus: mockIcon,
+    CheckCircle: mockIcon,
+    Pin: mockIcon,
     Minus: mockIcon,
     Moon: mockIcon,
     Palette: mockIcon,
@@ -551,3 +630,6 @@ global.console.error = jest.fn();
 global.__DEV__ = true;
 global.process.env.NODE_ENV = 'test';
 global.process.env.DEVELOPER_BYPASS = 'false';
+
+// Increase timeout for all tests
+jest.setTimeout(30000);

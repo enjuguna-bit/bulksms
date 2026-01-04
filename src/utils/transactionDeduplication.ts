@@ -12,7 +12,7 @@
  * Uses content hashing + timestamp for reliable deduplication
  */
 
-import crypto from "crypto";
+// import crypto from "crypto"; // ❌ Node.js crypto not available in RN
 
 // ===================================================================
 // Configuration
@@ -31,8 +31,8 @@ export const DEDUP_CONFIG = {
 // ===================================================================
 
 /**
- * Create SHA-256 hash of message content
- * Normalizes whitespace and case for robust comparison
+ * Simple DJB2-based hash for React Native compatibility
+ * (Replaces crypto.createHash which fails in RN)
  */
 export function hashMessageContent(message: string): string {
   const normalized = message
@@ -40,7 +40,11 @@ export function hashMessageContent(message: string): string {
     .replace(/\s+/g, " ")
     .trim();
 
-  return crypto.createHash("sha256").update(normalized).digest("hex");
+  let hash = 5381;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = ((hash << 5) + hash) + normalized.charCodeAt(i); /* hash * 33 + c */
+  }
+  return (hash >>> 0).toString(16); // Return hex string
 }
 
 /**

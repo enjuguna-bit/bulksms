@@ -98,7 +98,7 @@ export default function PaymentDashboard() {
 
       <FlatList
         data={sortedRecords}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id ? String(item.id) : `payment-${index}`}
         refreshing={loading}
         onRefresh={handleManualRefresh}
         style={{ marginTop: 20 }}

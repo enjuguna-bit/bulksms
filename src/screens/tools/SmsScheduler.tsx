@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,19 +8,24 @@ import {
     Switch,
     Alert,
     TouchableOpacity,
+    ActivityIndicator
 } from 'react-native';
 import { kenyaColors } from '@/theme/kenyaTheme';
 import { useThemeSettings } from '@/theme/ThemeProvider';
 import { Card, Button, Input } from '@/components/ui';
 import { KenyaFlag } from '@/components/shared/KenyaFlag';
+import { useSafeRouter } from "@/hooks/useSafeRouter";
+import { SchedulerService } from '@/services/SchedulerService';
 
 export default function SmsSchedulerScreen() {
     const { colors } = useThemeSettings();
+    const router = useSafeRouter();
 
     const [date, setDate] = useState(new Date());
     const [message, setMessage] = useState('');
-    const [recipient, setRecipient] = useState('Select Contacts');
+    const [recipient, setRecipient] = useState('');
     const [isRepeat, setIsRepeat] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     // Business Hours Logic
     const getIsBusinessHour = (d: Date) => {
@@ -29,15 +34,51 @@ export default function SmsSchedulerScreen() {
         return hours >= 8 && hours < 17;
     };
 
-    const handleSchedule = () => {
-        if (!message) {
+    // Initialize date to next hour
+    useEffect(() => {
+        const next = new Date();
+        next.setHours(next.getHours() + 1);
+        next.setMinutes(0);
+        setDate(next);
+    }, []);
+
+    const handleSchedule = async () => {
+        if (!message.trim()) {
             Alert.alert('Error', 'Please enter a message');
             return;
         }
-        Alert.alert(
-            'Success',
-            `SMS Scheduled for ${date.toLocaleString('en-KE')}\nRecipients: ${recipient}`
-        );
+        if (!recipient.trim()) {
+            Alert.alert('Error', 'Please select a recipient (Single phone number for now)');
+            return;
+        }
+
+        // Basic phone validation (placeholder)
+        // In fully integrated version, use contact picker result
+        if (recipient.length < 10) {
+            Alert.alert('Error', 'Invalid phone number format. Use 07... or 254...');
+            return;
+        }
+
+        const scheduledTime = date.getTime();
+        if (scheduledTime <= Date.now()) {
+            Alert.alert('Error', 'Please select a future time');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await SchedulerService.scheduleMessage(recipient, message, scheduledTime);
+
+            Alert.alert(
+                'Success',
+                `SMS Scheduled for ${date.toLocaleString('en-KE')}`,
+                [{ text: 'OK', onPress: () => router.back() }]
+            );
+        } catch (error) {
+            Alert.alert('Error', 'Failed to schedule SMS');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -61,19 +102,20 @@ export default function SmsSchedulerScreen() {
 
             <Card style={styles.card}>
                 <View style={styles.formGroup}>
-                    <Text style={[styles.label, { color: colors.text }]}>Recipients</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>Recipient (Phone)</Text>
                     <View style={styles.pickerContainer}>
                         <KenyaFlag width={20} height={14} style={{ marginRight: 8 }} />
-                        {/* Mock dropdown */}
-                        <TouchableOpacity style={styles.pickerButton} onPress={() => {
-                            // In a real app, open a modal
-                            const options = ["All Customers", "Nairobi Contacts", "M-Pesa Users", "SMS Opt-Ins"];
-                            const next = options[(options.indexOf(recipient) + 1) % options.length];
-                            setRecipient(next || options[0]);
-                        }}>
-                            <Text style={{ color: colors.text }}>{recipient}</Text>
-                        </TouchableOpacity>
+                        <Input
+                            placeholder="0712 345 678"
+                            value={recipient}
+                            onChangeText={setRecipient}
+                            keyboardType="phone-pad"
+                            style={{ flex: 1, borderWidth: 0, height: 40 }}
+                        />
                     </View>
+                    <Text style={{ fontSize: 11, color: colors.subText, marginTop: 4 }}>
+                        * Enter single number manually for now. Contact picker integration coming soon.
+                    </Text>
                 </View>
 
                 <View style={styles.formGroup}>
@@ -123,6 +165,7 @@ export default function SmsSchedulerScreen() {
                         value={isRepeat}
                         onValueChange={setIsRepeat}
                         trackColor={{ true: kenyaColors.safaricomGreen, false: '#e2e8f0' }}
+                        disabled={true} // Feature flag off for initial release
                     />
                 </View>
 
@@ -137,8 +180,9 @@ export default function SmsSchedulerScreen() {
             </Card>
 
             <Button
-                title="Schedule SMS"
+                title={loading ? "Scheduling..." : "Schedule SMS"}
                 onPress={handleSchedule}
+                disabled={loading}
                 style={{ marginTop: 24, backgroundColor: kenyaColors.safaricomGreen }}
             />
 

@@ -1,9 +1,30 @@
 // -----------------------------------------------------
 // src/services/lipanaPayment.ts
-// Lipana API integration for M-PESA STK Push payments
+// Lipana API integration using official SDK
 // -----------------------------------------------------
 
 import { LIPANA_API } from "@/constants/mpesa";
+
+// Lazy-load SDK to avoid crash on module import
+// The SDK may use crypto which isn't available until properly mocked
+let _lipanaInstance: any = null;
+
+function getLipana() {
+  if (!_lipanaInstance) {
+    try {
+      // Dynamic import to defer SDK initialization
+      const { Lipana } = require('@lipana/sdk');
+      _lipanaInstance = new Lipana({
+        apiKey: LIPANA_API.SECRET_KEY,
+        environment: 'production'
+      });
+    } catch (e) {
+      console.error('[LipanaSDK] Failed to initialize:', e);
+      return null;
+    }
+  }
+  return _lipanaInstance;
+}
 
 export interface LipanaPaymentRequest {
   title: string;
@@ -20,86 +41,66 @@ export interface LipanaPaymentResponse {
 }
 
 /**
- * Creates a payment link using Lipana API
- * @param paymentData - Payment details
- * @returns Promise with payment link or error
+ * Creates a payment link using Lipana SDK
  */
 export async function createLipanaPaymentLink(
   paymentData: LipanaPaymentRequest
 ): Promise<LipanaPaymentResponse> {
   try {
-    const response = await fetch(`${LIPANA_API.BASE_URL}/payment-links`, {
-      method: 'POST',
-      headers: {
-        'x-api-key': LIPANA_API.SECRET_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        title: paymentData.title,
-        amount: paymentData.amount,
-        currency: paymentData.currency || 'KES',
-      }),
+    const lipana = getLipana();
+    if (!lipana) {
+      return { success: false, error: 'SDK not available' };
+    }
+    const result = await lipana.paymentLinks.create({
+      title: paymentData.title,
+      amount: paymentData.amount,
+      currency: paymentData.currency || 'KES',
+      options: {
+        phone: paymentData.phone
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    
     return {
       success: true,
-      paymentLink: data.payment_url || data.paymentLink,
-      transactionId: data.id || data.transaction_id,
+      paymentLink: result.payment_url || result.link || result.url,
+      transactionId: result.id,
     };
-  } catch (error) {
-    console.error('[Lipana] Payment link creation failed:', error);
+  } catch (error: any) {
+    console.error('[LipanaSDK] Create Link failed:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to create payment link',
+      error: error.message || 'SDK Error',
     };
   }
 }
 
 /**
- * Checks transaction status using Lipana API
- * @param transactionId - Transaction ID to check
- * @returns Promise with transaction status
+ * Checks transaction status using Lipana SDK
  */
 export async function checkLipanaTransactionStatus(
   transactionId: string
 ): Promise<{ success: boolean; status?: string; error?: string }> {
   try {
-    const response = await fetch(`${LIPANA_API.BASE_URL}/transactions/${transactionId}`, {
-      method: 'GET',
-      headers: {
-        'x-api-key': LIPANA_API.SECRET_KEY,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const lipana = getLipana();
+    if (!lipana) {
+      return { success: false, error: 'SDK not available' };
     }
-
-    const data = await response.json();
-    
+    const result = await lipana.transactions.retrieve(transactionId);
     return {
       success: true,
-      status: data.status,
+      status: result.status,
     };
-  } catch (error) {
-    console.error('[Lipana] Transaction status check failed:', error);
+  } catch (error: any) {
+    console.error('[LipanaSDK] Check Status failed:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to check transaction status',
+      error: error.message,
     };
   }
 }
 
 /**
- * Gets all transactions from Lipana API
- * @returns Promise with transactions list
+ * Gets all transactions using Lipana SDK
  */
 export async function getLipanaTransactions(): Promise<{
   success: boolean;
@@ -107,28 +108,23 @@ export async function getLipanaTransactions(): Promise<{
   error?: string;
 }> {
   try {
-    const response = await fetch(`${LIPANA_API.BASE_URL}/transactions`, {
-      method: 'GET',
-      headers: {
-        'x-api-key': LIPANA_API.SECRET_KEY,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const lipana = getLipana();
+    if (!lipana) {
+      return { success: false, transactions: [], error: 'SDK not available' };
     }
+    const result = await lipana.transactions.list();
+    const txs = Array.isArray(result) ? result : result.data || result.transactions;
 
-    const data = await response.json();
-    
     return {
       success: true,
-      transactions: data.transactions || data,
+      transactions: txs || [],
     };
-  } catch (error) {
-    console.error('[Lipana] Failed to get transactions:', error);
+  } catch (error: any) {
+    console.error('[LipanaSDK] Get Transactions failed:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to get transactions',
+      error: error.message,
     };
   }
 }
+

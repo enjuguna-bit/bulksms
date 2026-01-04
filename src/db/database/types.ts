@@ -12,4 +12,6 @@ export type MessageRow = {
     threadId?: string | null;
     isRead?: number;
     isArchived?: number;
+    deliveryStatus?: string; // e.g. 'sent', 'delivered', 'failed' (from network)
+    bulkId?: string | null;  // Batch ID for bulk sends
 };

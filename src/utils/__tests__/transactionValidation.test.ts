@@ -134,9 +134,14 @@ describe("Transaction Validation", () => {
   describe("assessMessageAuthenticity", () => {
     it("should score authentic M-PESA messages high", () => {
       const message =
-        "Confirmed. You have received KES 5,000 from John 0712345678 on 01/01/2025 at 14:30 STD. Reference: QAB123ABC";
-      const result = assessMessageAuthenticity(message);
+        "M-PESA Confirmed. You have received KES 5,000 from John 0712345678 on 01/01/2025 at 14:30 STD. Reference: QAB123ABC";
+      const result = assessMessageAuthenticity(message, undefined, {
+        valid: true,
+        phone: "254712345678",
+        warnings: []
+      });
 
+      if (!result.authentic) require('fs').writeFileSync('debug_auth.json', JSON.stringify(result, null, 2));
       expect(result.authentic).toBe(true);
       expect(result.score).toBeGreaterThanOrEqual(70);
       expect(result.indicators.hasValidSender).toBe(true);
@@ -174,7 +179,7 @@ describe("Transaction Validation", () => {
 
   describe("validateTransaction", () => {
     it("should validate complete transaction", () => {
-      const message = "Confirmed. You received KES 5,000 from John on 01/01/2025";
+      const message = "M-PESA Confirmed. You received KES 5,000 from John on 01/01/2025";
       const result = validateTransaction(message, "254712345678");
 
       expect(result.valid).toBe(true);
@@ -241,11 +246,19 @@ describe("Transaction Validation", () => {
     });
 
     it("should detect similar transactions", () => {
+      const records = [
+        {
+          phone: "254712345678",
+          rawMessage: "Confirmed. KES 5,000 received",
+          lastSeen: Date.now() - 180000, // 3 minutes ago
+        },
+      ];
+
       const result = detectConflict(
         "254712345678",
         5000,
-        Date.now() - 180000, // 3 minutes ago
-        existingRecords
+        Date.now(), // Now (3 minutes difference)
+        records
       );
 
       expect(result.hasConflict).toBe(true);

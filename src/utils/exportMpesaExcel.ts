@@ -4,6 +4,7 @@
 // Generates .xlsx files with formatted data
 // ------------------------------------------------------
 
+import { Platform, PermissionsAndroid } from 'react-native';
 import * as XLSX from 'xlsx';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import Share from 'react-native-share';
@@ -140,7 +141,11 @@ export async function exportMpesaTransactionsToExcel(
         const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
 
         // Save to file
-        const filePath = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${filename}.xlsx`;
+        const dir = Platform.OS === 'android'
+            ? ReactNativeBlobUtil.fs.dirs.DownloadDir
+            : ReactNativeBlobUtil.fs.dirs.DocumentDir;
+
+        const filePath = `${dir}/${filename}.xlsx`;
         await ReactNativeBlobUtil.fs.writeFile(filePath, wbout, 'base64');
 
         Logger.info('ExportExcel', `File saved to: ${filePath}`);
@@ -160,6 +165,30 @@ export async function exportAndShareMpesaExcel(
     transactions: ParsedMpesaTransaction[],
     options?: ExportOptions
 ): Promise<boolean> {
+    // Check storage permissions first (Android only)
+    if (Platform.OS === 'android') {
+        try {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                {
+                    title: 'Storage Permission Required',
+                    message: 'This app needs access to storage to save Excel files',
+                    buttonNeutral: 'Ask Me Later',
+                    buttonNegative: 'Cancel',
+                    buttonPositive: 'OK',
+                }
+            );
+
+            if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+                Logger.warn('ExportExcel', 'Storage permission denied');
+                return false;
+            }
+        } catch (err) {
+            Logger.error('ExportExcel', 'Permission request failed', err);
+            return false;
+        }
+    }
+
     const result = await exportMpesaTransactionsToExcel(transactions, options);
 
     if (!result.success || !result.filePath) {
@@ -196,6 +225,24 @@ export async function exportMpesaTransactionsToCSV(
             return { success: false, error: 'No transactions to export' };
         }
 
+        // Check storage permissions (Android only)
+        if (Platform.OS === 'android') {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                {
+                    title: 'Storage Permission Required',
+                    message: 'This app needs access to storage to save CSV files',
+                    buttonNeutral: 'Ask Me Later',
+                    buttonNegative: 'Cancel',
+                    buttonPositive: 'OK',
+                }
+            );
+
+            if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+                return { success: false, error: 'Storage permission denied' };
+            }
+        }
+
         const csvFilename = filename || `MpesaTransactions_${formatDateForFilename(new Date())}`;
 
         // CSV header
@@ -210,7 +257,11 @@ export async function exportMpesaTransactionsToCSV(
         const csvContent = header + rows;
 
         // Save to file
-        const filePath = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${csvFilename}.csv`;
+        const dir = Platform.OS === 'android'
+            ? ReactNativeBlobUtil.fs.dirs.DownloadDir
+            : ReactNativeBlobUtil.fs.dirs.DocumentDir;
+
+        const filePath = `${dir}/${csvFilename}.csv`;
         await ReactNativeBlobUtil.fs.writeFile(filePath, csvContent, 'utf8');
 
         Logger.info('ExportCSV', `File saved to: ${filePath}`);

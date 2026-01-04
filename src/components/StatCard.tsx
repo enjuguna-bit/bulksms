@@ -65,7 +65,7 @@ export const StatCard = memo(function StatCard({
             fadeAnim.setValue(1);
             scaleAnim.setValue(1);
         }
-    }, [animated]);
+    }, [animated, fadeAnim, scaleAnim]);
 
     const cardContent = (
         <View style={[styles.statCard, { borderLeftColor: color }, style]}>

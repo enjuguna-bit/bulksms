@@ -112,7 +112,7 @@ export async function scanMpesaInbox(options?: {
             const msg = messages[i];
             const body = typeof msg === 'string' ? msg : msg.body;
 
-            if (!isMpesaMessage(body)) continue;
+            if (!body || !isMpesaMessage(body)) continue;
 
             const parsed = parseMpesaMessage(body);
             if (!parsed || !parsed.reference) continue;

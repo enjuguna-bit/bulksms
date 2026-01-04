@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { runQuery } from '@/db/database/core';
-import { addMessage } from '@/db/repositories/messages';
+import { syncMessageFromNative } from '@/db/messaging';
 import Logger from '@/utils/logger';
 
 export interface BufferedSms {
@@ -20,8 +20,8 @@ export interface BufferedSms {
  */
 export async function bufferIncomingSms(body: string, address?: string): Promise<void> {
     await runQuery(
-        `INSERT INTO incoming_sms_buffer (body, receivedAt) VALUES (?, ?)`,
-        [body, Date.now()]
+        `INSERT INTO incoming_sms_buffer (body, receivedAt, address) VALUES (?, ?, ?)`,
+        [body, Date.now(), address || null]
     );
 }
 
@@ -85,7 +85,8 @@ export async function processBufferedMessages(
             return 0;
         }
 
-        Logger.info('SmsProcessor', `Processing ${messages.length} buffered messages`);
+        const stats = await getBufferStats();
+        Logger.info('SmsProcessor', `Processing ${messages.length} buffered messages (Pending: ${stats.pending}, Oldest: ${stats.oldest})`);
 
         let processed = 0;
 
@@ -94,8 +95,18 @@ export async function processBufferedMessages(
                 if (processor) {
                     await processor(msg);
                 } else {
-                    // Default processing: Just log and remove
-                    Logger.debug('SmsProcessor', `Processed: ${msg.body.substring(0, 50)}...`);
+                    // Default processing: Insert into new messaging schema
+                    if (msg.address) {
+                        await syncMessageFromNative(
+                            msg.address,
+                            msg.body,
+                            'incoming',
+                            msg.receivedAt
+                        );
+                        Logger.debug('SmsProcessor', `Synced message from ${msg.address} to new schema`);
+                    } else {
+                        Logger.warn('SmsProcessor', `Skipping message without address: ${msg.body.substring(0, 50)}...`);
+                    }
                 }
 
                 await removeBufferedMessage(msg.id);

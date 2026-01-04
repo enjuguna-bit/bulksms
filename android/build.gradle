@@ -1,11 +1,11 @@
 buildscript {
     ext {
-        buildToolsVersion = "34.0.0"
+        buildToolsVersion = "33.0.2"
         minSdkVersion = 24
         compileSdkVersion = 34
         targetSdkVersion = 34
         ndkVersion = "26.1.10909125"
-        kotlinVersion = "1.9.24"
+        kotlinVersion = "1.9.25"
     }
     repositories {
         google()
@@ -14,19 +14,20 @@ buildscript {
         maven { url("$rootDir/../node_modules/@react-native/gradle-plugin") }
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.3.2")
+        classpath("com.android.tools.build:gradle:8.1.1")
+        classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     }
 }
 
 // ⚡ FIX: Expose variables to rootProject.ext so libraries like op-sqlite can find them
 ext {
-    buildToolsVersion = "34.0.0"
+    buildToolsVersion = "33.0.2"
     minSdkVersion = 24
     compileSdkVersion = 34
     targetSdkVersion = 34
     ndkVersion = "26.1.10909125"
-    kotlinVersion = "1.9.24"
+    kotlinVersion = "1.9.25"
     reactNativeVersion = "0.76.9"
     REACT_NATIVE_VERSION = "0.76.9"
 }
@@ -57,6 +58,7 @@ subprojects {
         if (project.hasProperty("android")) {
             project.android {
                 ndkVersion = rootProject.ext.ndkVersion
+                buildToolsVersion = "35.0.0"
                 compileOptions {
                     sourceCompatibility JavaVersion.VERSION_17
                     targetCompatibility JavaVersion.VERSION_17

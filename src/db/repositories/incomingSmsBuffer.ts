@@ -4,15 +4,18 @@ export interface StoredSmsMessage {
     id?: number;
     body: string;
     receivedAt: number;
+    address?: string;
 }
 
 /**
  * Add a new incoming SMS to the buffer.
+ * @param body - Message body
+ * @param address - Sender phone number
  */
-export async function addIncomingSms(body: string): Promise<void> {
+export async function addIncomingSms(body: string, address?: string): Promise<void> {
     await runQuery(
-        'INSERT INTO incoming_sms_buffer (body, receivedAt) VALUES (?, ?)',
-        [body, Date.now()]
+        'INSERT INTO incoming_sms_buffer (body, receivedAt, address) VALUES (?, ?, ?)',
+        [body, Date.now(), address || null]
     );
 }
 

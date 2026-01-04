@@ -173,6 +173,14 @@ export default function ToolsScreen() {
         color: kenyaColors.statRed,
       },
       {
+        id: "trans_cleaner",
+        title: "Transaction Cleaner",
+        desc: "Find and remove duplicate M-Pesa records",
+        icon: Trash2,
+        action: () => router.safePush("TransactionCleaner" as any),
+        color: "#ca8a04", // Yellow/Gold
+      },
+      {
         id: "backup",
         title: "SMS Backup",
         desc: "Backup SMS conversations securely",
@@ -190,21 +198,31 @@ export default function ToolsScreen() {
       title: "County Broadcast",
       desc: "Send SMS by Kenyan county",
       icon: MapPin,
+      route: null,
     },
     {
       title: "Swahili Translator",
       desc: "Translate SMS to Swahili",
       icon: Languages,
+      route: null,
     },
     {
       title: "M-Pesa Statements",
-      desc: "Parse M-Pesa SMS statements",
+      desc: "Parse M-Pesa PDF statements",
       icon: FileDigit,
+      route: "MpesaParserTool",
+    },
+    {
+      title: "Financial Scanner",
+      desc: "Scan Inbox for M-Pesa/Bank SMS",
+      icon: Search,
+      route: "InboxScanner",
     },
     {
       title: "Business Hours",
       desc: "Respect 8AM-5PM rules",
       icon: Clock,
+      route: null,
     }
   ];
 
@@ -244,7 +262,7 @@ export default function ToolsScreen() {
             <KenyanToolCard
               key={idx}
               {...tool}
-              onPress={() => handleAlert(tool.title)}
+              onPress={() => tool.route ? router.safePush(tool.route as any) : handleAlert(tool.title)}
             />
           ))}
         </View>

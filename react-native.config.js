@@ -28,5 +28,13 @@ module.exports = {
     package: "@react-native-community/cli",
   },
 
+  dependencies: {
+    'expo': {
+      platforms: {
+        android: null, // Disable Android autolinking for expo package
+      },
+    },
+  },
+
   // Custom SMS package configuration removed - using direct package registration
 };

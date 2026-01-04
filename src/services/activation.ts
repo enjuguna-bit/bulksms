@@ -30,7 +30,7 @@ const ACTIVATION_PUBLIC_KEY_PEM = CONFIG.ACTIVATION_PUBLIC_KEY_PEM;
 // Types
 // -----------------------------------------------------
 
-export type PlanType = "trial" | "monthly" | "quarterly" | "yearly";
+export type PlanType = "trial" | "daily" | "weekly" | "monthly" | "monthly_premium" | "quarterly" | "yearly";
 
 export type ActivationResult =
   | {

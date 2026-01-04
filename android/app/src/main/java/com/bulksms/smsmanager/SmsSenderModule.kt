@@ -4,11 +4,14 @@ import android.Manifest
 import android.app.Activity
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Telephony
 import android.telephony.SmsManager
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
@@ -95,12 +98,16 @@ class SmsSenderModule(private val ctx: ReactApplicationContext) :
   private val smsStatusReceiver = SmsBroadcastReceiver(ctx)
 
   init {
+    // ⚡ FIX: Unregister any stale receiver before registering to prevent accumulation
+    // This handles cases where module is recreated without onCatalystInstanceDestroy() (e.g., Fast Refresh)
+    safeUnregisterReceiver()
+    
     val filter = IntentFilter().apply {
       addAction(SENT_ACTION)
       addAction(DELIVERED_ACTION)
     }
     
-    // ⚡ FIX: Register receiver with appropriate flags for Android 14+ (API 34)
+    // Register receiver with appropriate flags for Android 14+ (API 34)
     // Wrapped in try-catch for strict lifecycle safety
     try {
       if (Build.VERSION.SDK_INT >= 34) {
@@ -109,8 +116,29 @@ class SmsSenderModule(private val ctx: ReactApplicationContext) :
           ctx.registerReceiver(smsStatusReceiver, filter)
       }
       isReceiverRegistered = true
+      Log.d(TAG, "✅ SMS status receiver registered")
     } catch (e: Exception) {
       Log.e(TAG, "❌ Failed to register SMS status receiver", e)
+      isReceiverRegistered = false
+    }
+  }
+  
+  /**
+   * ⚡ Safely unregister receiver to prevent memory leaks from accumulation.
+   * Called both in init (for recreation scenarios) and onCatalystInstanceDestroy.
+   */
+  private fun safeUnregisterReceiver() {
+    if (!isReceiverRegistered) return
+    
+    try {
+      ctx.unregisterReceiver(smsStatusReceiver)
+      Log.d(TAG, "✅ SMS status receiver unregistered safely")
+    } catch (e: IllegalArgumentException) {
+      // Receiver was not registered or already unregistered - benign
+      Log.d(TAG, "⚠️ Receiver not registered (benign)")
+    } catch (e: Exception) {
+      Log.e(TAG, "❌ Error unregistering receiver", e)
+    } finally {
       isReceiverRegistered = false
     }
   }
@@ -169,6 +197,9 @@ class SmsSenderModule(private val ctx: ReactApplicationContext) :
       } else {
         smsManager.sendTextMessage(phoneNumber, null, message, sentIntent, deliveredIntent)
       }
+
+      // Save sent message to content provider so it appears in inbox
+      saveSentMessage(phoneNumber, message)
 
       if (BuildConfig.DEBUG) {
         val redacted = if (phoneNumber.length > 4) "***${phoneNumber.takeLast(4)}" else "***"
@@ -315,29 +346,41 @@ class SmsSenderModule(private val ctx: ReactApplicationContext) :
   }
 
   /**
-   * ⚡ FIX: Cleanup receiver when module is destroyed to prevent leaks
+   * 📥 Save sent message to Android SMS content provider
+   * This makes sent messages appear in the device's SMS inbox/thread
    */
+  private fun saveSentMessage(phoneNumber: String, message: String) {
+    try {
+      val values = ContentValues().apply {
+        put(Telephony.Sms.ADDRESS, phoneNumber)
+        put(Telephony.Sms.BODY, message)
+        put(Telephony.Sms.DATE, System.currentTimeMillis())
+        put(Telephony.Sms.DATE_SENT, System.currentTimeMillis())
+        put(Telephony.Sms.TYPE, Telephony.Sms.MESSAGE_TYPE_SENT)
+        put(Telephony.Sms.READ, 1)
+        put(Telephony.Sms.SEEN, 1)
+      }
+      
+      val uri = ctx.contentResolver.insert(Telephony.Sms.Sent.CONTENT_URI, values)
+      if (uri != null) {
+        Log.d(TAG, "📥 Saved sent SMS to content provider: $uri")
+      } else {
+        Log.w(TAG, "⚠️ Failed to save sent SMS (uri null) - app may not be default SMS app")
+      }
+    } catch (e: SecurityException) {
+      // App is not default SMS handler - cannot write to SMS content provider
+      Log.w(TAG, "⚠️ Cannot save sent SMS - not default SMS app: ${e.message}")
+    } catch (e: Exception) {
+      Log.e(TAG, "❌ Error saving sent SMS to content provider", e)
+    }
+  }
+
   /**
-   * ⚡ FIX: Cleanup receiver when module is destroyed to prevent leaks
+   * ⚡ Cleanup receiver when module is destroyed to prevent leaks
    */
   override fun onCatalystInstanceDestroy() {
     super.onCatalystInstanceDestroy()
-    
-    // Strict unregistration with catch-all for safety
-    if (isReceiverRegistered) {
-      try {
-        ctx.unregisterReceiver(smsStatusReceiver)
-        Log.d(TAG, "✅ SMS status receiver unregistered safely")
-      } catch (e: IllegalArgumentException) {
-        // Common: Receiver was already unregistered or not found
-        Log.d(TAG, "⚠️ Receiver already unregistered (benign)")
-      } catch (e: Exception) {
-        // Catch generic exceptions to prevent app crash during destruction
-        Log.e(TAG, "❌ Error unregistering receiver during destroy", e)
-      } finally {
-        isReceiverRegistered = false
-      }
-    }
+    safeUnregisterReceiver()
   }
 
   companion object {

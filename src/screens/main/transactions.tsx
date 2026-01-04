@@ -14,13 +14,13 @@ import {
 } from "react-native";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { usePaymentCapture } from "@/hooks/usePaymentCapture";
+import { usePaymentCapture, type ScanProgress } from "@/hooks/usePaymentCapture";
 import Toast from "react-native-toast-message";
 import { useThemeSettings } from "@/theme/ThemeProvider";
 import type { ThemePalette } from "@/theme/ThemeProvider";
 
 // Unified core record type
-import type { CustomerRecord } from "@/types/CustomerRecord";
+import type { CustomerRecord } from "@/db/repositories/paymentRecords";
 
 // ---------------------------------------------------------
 // LocalRecordItem (STRICT + SAFE)
@@ -59,6 +59,7 @@ function SupermarketCaptureContent(): JSX.Element {
     scanInbox,
     openMpesaInbox,
     totalAmount,
+    scanProgress, // ✅ NEW
   } = usePaymentCapture();
 
   const { theme, colors } = useThemeSettings();
@@ -87,7 +88,7 @@ function SupermarketCaptureContent(): JSX.Element {
   // ✅ FIXED: Defensive Key Extractor with fallback
   // -----------------------------------------------------
   const keyExtractor = useCallback(
-    (i: LocalRecordItem, index: number) =>
+    (i: LocalRecordItem, index: number): string =>
       i.id ? i.id.toString() : `record-${i.phone}-${index}-${Date.now()}`,
     []
   );
@@ -116,6 +117,7 @@ function SupermarketCaptureContent(): JSX.Element {
         setSample={setSample}
         handleParseAndSave={handleParseAndSave}
         filteredCount={filteredRecords.length}
+        scanProgress={scanProgress}
       />
     ),
     [
@@ -131,11 +133,13 @@ function SupermarketCaptureContent(): JSX.Element {
       toggleListener,
       scanInbox,
       handleExportCSV,
+      handleExportExcel,
       handleManualRefresh,
       sample,
       setSample,
       handleParseAndSave,
       filteredRecords.length,
+      scanProgress,
     ]
   );
 
@@ -185,6 +189,7 @@ interface HeaderProps {
   setSample: (v: string) => void;
   handleParseAndSave: () => void;
   filteredCount: number;
+  scanProgress: ScanProgress | null; // ✅ NEW
 }
 
 const Header = memo(function Header({
@@ -206,6 +211,7 @@ const Header = memo(function Header({
   setSample,
   handleParseAndSave,
   filteredCount,
+  scanProgress,
 }: HeaderProps) {
   return (
     <View>
@@ -286,6 +292,33 @@ const Header = memo(function Header({
           <Text style={styles.actionText}>📊 Excel</Text>
         </TouchableOpacity>
       </View>
+
+      {/* ✅ NEW: Scan Progress Bar */}
+      {scanProgress && (
+        <View style={styles.progressContainer}>
+          <View style={styles.progressHeader}>
+            <Text style={[styles.progressText, { color: t.text }]}>
+              {scanProgress.phase === 'reading' ? '📖 Reading Inbox...' :
+                scanProgress.phase === 'parsing' ? '⚡ Analyzing...' :
+                  '💾 Saving...'}
+            </Text>
+            <Text style={[styles.progressPercent, { color: t.subText }]}>
+              {Math.round((scanProgress.current / scanProgress.total) * 100)}%
+            </Text>
+          </View>
+          <View style={[styles.progressBarBg, { backgroundColor: t.border }]}>
+            <View
+              style={[
+                styles.progressBarFill,
+                {
+                  backgroundColor: t.btn.scan,
+                  width: `${(scanProgress.current / scanProgress.total) * 100}%`
+                }
+              ]}
+            />
+          </View>
+        </View>
+      )}
 
       <TouchableOpacity
         onPress={handleManualRefresh}
@@ -387,7 +420,7 @@ const RecordCard = memo(function RecordCard({
 /* -------------------------------------------------------------------------- */
 /*                           THEME TOKEN BUILDER                              */
 /* -------------------------------------------------------------------------- */
-function buildThemeTokens(theme: "dark" | "light", palette: ThemePalette) {
+function buildThemeTokens(theme: string, palette: ThemePalette) {
   const isDark = theme === "dark";
   return {
     bg: palette.background,
@@ -488,5 +521,11 @@ function createStyles() {
       alignItems: "center",
     },
     emptyText: { fontSize: 14 },
+    progressContainer: { marginVertical: 15 },
+    progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
+    progressText: { fontSize: 13, fontWeight: '600' },
+    progressPercent: { fontSize: 13 },
+    progressBarBg: { height: 6, borderRadius: 3, overflow: 'hidden' },
+    progressBarFill: { height: '100%', borderRadius: 3 },
   });
 }

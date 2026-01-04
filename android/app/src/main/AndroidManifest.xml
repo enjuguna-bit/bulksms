@@ -2,10 +2,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.bulksms.smsmanager">
 
+  <!-- Android 11+ package visibility for opening URLs in browser -->
+  <queries>
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="https" />
+    </intent>
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="http" />
+    </intent>
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="tel" />
+    </intent>
+  </queries>
+
+  <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-
+  <uses-permission android:name="android.permission.CALL_PHONE" />
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.WAKE_LOCK" />
   <uses-permission android:name="android.permission.READ_CONTACTS" />
@@ -23,6 +40,15 @@
 
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
   <uses-permission android:name="android.permission.VIBRATE" />
+  <uses-permission android:name="android.permission.READ_CALENDAR" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+  <!-- Overlay permission for heads-up notifications over other apps -->
+  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
   <application
       android:name=".MainApplication"
@@ -70,9 +96,26 @@
     <receiver android:name=".SmsReceiver" 
               android:exported="true" 
               android:permission="android.permission.BROADCAST_SMS">
-      <intent-filter>
+      <intent-filter android:priority="999">
         <action android:name="android.provider.Telephony.SMS_DELIVER" />
       </intent-filter>
+    </receiver>
+    
+    <!-- SMS_RECEIVED allows receiving SMS when NOT the default app -->
+    <!-- Must be separate receiver WITHOUT permission restriction -->
+    <receiver android:name=".SmsReceivedReceiver" 
+              android:exported="true">
+      <intent-filter android:priority="999">
+        <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+      </intent-filter>
+    </receiver>
+
+    <receiver android:name=".IncomingSmsReceiver" 
+              android:exported="true"
+              android:permission="android.permission.BROADCAST_SMS">
+        <intent-filter>
+            <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+        </intent-filter>
     </receiver>
 
     <!-- WAP_PUSH_DELIVER is required for default SMS app to receive MMS -->
@@ -84,6 +127,8 @@
         <data android:mimeType="application/vnd.wap.mms-message" />
       </intent-filter>
     </receiver>
+
+    <receiver android:name=".SMSStatusReceiver" android:exported="true"/>
 
     <receiver android:name=".BootReceiver" android:enabled="true" android:exported="true">
       <intent-filter>
@@ -111,6 +156,10 @@
         android:name=".BackgroundSmsSenderService"
         android:exported="false"
         android:foregroundServiceType="dataSync" />
+
+    <service android:name=".SMSRelayService" 
+             android:foregroundServiceType="dataSync"
+             android:exported="false"/>
 
     <!-- Required for WorkManager foreground service with DATA_SYNC type -->
     <service

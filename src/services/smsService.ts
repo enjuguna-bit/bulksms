@@ -1,5 +1,6 @@
 import { Platform, PermissionsAndroid } from 'react-native';
 import { smsSender } from '../native'; // Importing from the Central Bridge
+import { isDefaultSmsApp } from './defaultSmsRole';
 
 // Error codes for UI handling
 export enum SmsError {
@@ -95,14 +96,40 @@ export const sendSingleSms = async (
 
 
 /**
- * Check if the device is capable of sending SMS
+ * Check if the device is capable of full SMS functionality (sending + inbox access)
+ * On Android 4.4+, this requires:
+ * - SEND_SMS permission for sending messages
+ * - RECEIVE_SMS permission for receiving delivery reports
+ * - READ_SMS permission for reading inbox/conversations
+ * - Default SMS handler status for reliable SMS operations
  */
 export const canSendSms = async (): Promise<boolean> => {
   if (Platform.OS !== 'android') return false;
   try {
-    return await smsSender.canSend();
+    // Check all required SMS permissions
+    const sendSmsPerm = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.SEND_SMS);
+    const receiveSmsPerm = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECEIVE_SMS);
+    const readSmsPerm = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_SMS);
+
+    if (!sendSmsPerm || !receiveSmsPerm || !readSmsPerm) {
+      console.warn("[SmsService] Missing SMS permissions:", {
+        sendSms: sendSmsPerm,
+        receiveSms: receiveSmsPerm,
+        readSms: readSmsPerm
+      });
+      return false;
+    }
+
+    // Check if app is default SMS handler (required on Android 4.4+)
+    const isDefault = await isDefaultSmsApp();
+    if (!isDefault) {
+      console.warn("[SmsService] App is not default SMS handler");
+      return false;
+    }
+
+    return true;
   } catch (e) {
-    console.warn("[SmsService] Failed to check capability", e);
+    console.warn("[SmsService] Failed to check SMS capability", e);
     return false;
   }
 };

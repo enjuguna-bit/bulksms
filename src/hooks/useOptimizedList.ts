@@ -223,7 +223,7 @@ export function useInfiniteList<T extends ListItem>(
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const loadMore = useCallback(() => load(true), [load]);
   const refresh = useCallback(() => load(false), [load]);

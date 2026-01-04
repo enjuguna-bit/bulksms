@@ -1,12 +1,16 @@
-// -----------------------------------------------------
-// src/services/__tests__/lipanaPayment.test.ts
-// Test file for Lipana payment service
-// -----------------------------------------------------
-
 import { createLipanaPaymentLink } from '../lipanaPayment';
 
-// Mock fetch for testing
-global.fetch = jest.fn();
+// Mock the SDK
+const mockCreate = jest.fn();
+jest.mock('@lipana/sdk', () => {
+  return {
+    Lipana: jest.fn().mockImplementation(() => ({
+      paymentLinks: {
+        create: mockCreate,
+      },
+    })),
+  };
+});
 
 describe('Lipana Payment Service', () => {
   beforeEach(() => {
@@ -14,14 +18,9 @@ describe('Lipana Payment Service', () => {
   });
 
   test('should create payment link successfully', async () => {
-    const mockResponse = {
+    mockCreate.mockResolvedValueOnce({
       payment_url: 'https://lipana.dev/pay/test-123',
       id: 'test-123',
-    };
-
-    (fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockResponse,
     });
 
     const result = await createLipanaPaymentLink({
@@ -36,10 +35,7 @@ describe('Lipana Payment Service', () => {
   });
 
   test('should handle API errors', async () => {
-    (fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: 'Invalid API key' }),
-    });
+    mockCreate.mockRejectedValueOnce(new Error('Invalid API key'));
 
     const result = await createLipanaPaymentLink({
       title: 'Test Payment',

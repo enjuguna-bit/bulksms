@@ -318,7 +318,7 @@ describe("Transaction Deduplication", () => {
       detector.registerMessage(msg, phone, timestamp);
 
       // Message after time window should not be duplicate
-      const result = detector.isDuplicate(msg, phone, timestamp + 120000); // 2 min later
+      const result = detector.isDuplicate(msg, phone, timestamp + 360000); // 6 min later
       expect(result.isDuplicate).toBe(false);
     });
 

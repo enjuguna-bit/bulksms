@@ -9,8 +9,8 @@ import {
   getAllMessages,
   getMessagesByAddress,
   updateMessageStatus,
-  MessageRow,
-} from "@/db/database";
+} from "@/db/repositories/messages";
+import type { MessageRow } from "@/db/database/types";
 
 export function useMessages(address?: string) {
   const [messages, setMessages] = useState<MessageRow[]>([]);
@@ -37,16 +37,19 @@ export function useMessages(address?: string) {
   // 📨 Listen for incoming messages from native bridge
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(
-      "onIncomingSms",
+      "onSmsReceived",
       async (evt: any) => {
         if (!evt) return;
         await addMessage(
-          evt.from ?? "Unknown",
+          evt.phone ?? evt.from ?? "Unknown",
           evt.body ?? "",
-          (evt.type ?? "incoming") as any,
-          "sent",
-          Date.now(),
-          evt.simSlot ? String(evt.simSlot) : null // ✅ cast simSlot to string|null
+          "incoming",
+          "delivered",
+          evt.timestamp ?? Date.now(),
+          evt.phone ?? evt.from ?? "Unknown", // threadId
+          evt.simSlot ?? null,
+          null, // bulkId
+          "delivered" // deliveryStatus
         );
         await reload();
       }

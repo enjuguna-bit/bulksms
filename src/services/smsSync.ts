@@ -17,9 +17,7 @@ export async function checkSmsSyncPermissions(): Promise<boolean> {
 
   try {
     const hasReadSms = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_SMS);
-    const hasReadContacts = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_CONTACTS);
-
-    return hasReadSms && hasReadContacts;
+    return hasReadSms;
   } catch (error) {
     Logger.error('SmsSync', 'Permission check failed', error);
     return false;
@@ -33,18 +31,11 @@ export async function requestSmsSyncPermissions(): Promise<boolean> {
   if (Platform.OS !== 'android') return false;
 
   try {
-    const permissions = [
-      PermissionsAndroid.PERMISSIONS.READ_SMS,
-      PermissionsAndroid.PERMISSIONS.READ_CONTACTS
-    ];
-
-    const results = await PermissionsAndroid.requestMultiple(permissions);
-
-    const allGranted = Object.values(results).every(
-      result => result === PermissionsAndroid.RESULTS.GRANTED
+    const result = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.READ_SMS
     );
 
-    return allGranted;
+    return result === PermissionsAndroid.RESULTS.GRANTED;
   } catch (error) {
     Logger.error('SmsSync', 'Permission request failed', error);
     return false;
@@ -71,10 +62,20 @@ export async function importExistingMessages(): Promise<{ success: boolean; impo
 
     // Import messages using native module
     const { smsReader } = require('@/native');
-    const messages = await smsReader.importExistingMessages();
+    const response = await smsReader.importExistingMessages();
 
-    if (!Array.isArray(messages)) {
+    // Handle both old array format and new paginated object format
+    let messages: any[];
+    if (Array.isArray(response)) {
+      messages = response;
+    } else if (response && Array.isArray(response.messages)) {
+      messages = response.messages;
+    } else {
       return { success: false, imported: 0, error: 'Invalid response from native module' };
+    }
+
+    if (messages.length === 0) {
+      return { success: true, imported: 0 };
     }
 
     let importedCount = 0;

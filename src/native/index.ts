@@ -50,6 +50,13 @@ export type MpesaMessageRecord = {
   messageType?: string;
 };
 
+export type SmsPermissionStatus = {
+  readSms: boolean;
+  receiveSms: boolean;
+  isDefaultHandler: boolean;
+  defaultPackage: string;
+};
+
 export type IncomingSmsEventPayload = {
   phone: string;
   body: string;
@@ -60,12 +67,21 @@ export type IncomingSmsEventPayload = {
 // Native module typings
 // -------------------------------------------------------------------
 
+type ImportExistingMessagesResponse = SmsMessageRecord[] | {
+  messages: SmsMessageRecord[];
+  limit: number;
+  offset: number;
+  count: number;
+  hasMore: boolean;
+};
+
 type NativeSmsReaderModule = {
   getAll(limit: number): Promise<SmsMessageRecord[]>;
   getThreadByAddress(address: string, limit: number): Promise<SmsMessageRecord[]>;
   getMpesaMessages(limit: number): Promise<MpesaMessageRecord[]>;
   getMessageCount(): Promise<number>;
-  importExistingMessages(): Promise<SmsMessageRecord[]>;
+  importExistingMessages(): Promise<ImportExistingMessagesResponse>;
+  checkPermissions(): Promise<SmsPermissionStatus>;
 };
 
 type NativeSmsSenderModule = {
@@ -245,15 +261,38 @@ export const smsReader = {
   /**
    * Import all existing messages from device SMS content provider.
    * Used for initial sync when app is first installed.
+   * Returns messages array (handles both old array and new paginated response formats)
    */
   async importExistingMessages(): Promise<SmsMessageRecord[]> {
     if (Platform.OS !== "android" || !SmsReaderModule) return [];
     try {
-      const messages = await SmsReaderModule.importExistingMessages();
-      return Array.isArray(messages) ? messages : [];
+      const response = await SmsReaderModule.importExistingMessages();
+      // Handle both old array format and new paginated object format
+      if (Array.isArray(response)) {
+        return response;
+      } else if (response && Array.isArray(response.messages)) {
+        return response.messages;
+      }
+      return [];
     } catch (err) {
       console.warn("[smsReader.importExistingMessages] error:", err);
       return [];
+    }
+  },
+
+  /**
+   * Check SMS permissions and default handler status.
+   * Useful to verify permissions before attempting to scan inbox.
+   */
+  async checkPermissions(): Promise<SmsPermissionStatus> {
+    if (Platform.OS !== "android" || !SmsReaderModule) {
+      return { readSms: false, receiveSms: false, isDefaultHandler: false, defaultPackage: '' };
+    }
+    try {
+      return await SmsReaderModule.checkPermissions();
+    } catch (err) {
+      console.warn("[smsReader.checkPermissions] error:", err);
+      return { readSms: false, receiveSms: false, isDefaultHandler: false, defaultPackage: '' };
     }
   },
 };

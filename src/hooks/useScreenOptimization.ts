@@ -173,7 +173,7 @@ export function useMemoCallback<T extends (...args: any[]) => any>(
   callback: T,
   dependencies: React.DependencyList
 ): T {
-  return useCallback(callback, dependencies) as T;
+  return useCallback(callback, [callback, ...dependencies]) as T;
 }
 
 // ============================================================

@@ -25,8 +25,14 @@ export async function requestSmsPermissions(): Promise<boolean> {
   if (Platform.OS !== "android") return true;
 
   try {
+    const permsToRequest = PERMISSIONS
+      .map((perm) => PermissionsAndroid.PERMISSIONS[perm])
+      .filter(Boolean) as string[];
+
+    if (permsToRequest.length === 0) return true;
+
     const results = (await PermissionsAndroid.requestMultiple(
-      PERMISSIONS.map((perm) => PermissionsAndroid.PERMISSIONS[perm])
+      permsToRequest as any
     )) as Record<string, string>;
 
     return PERMISSIONS.every(
@@ -46,7 +52,10 @@ export async function checkSmsPermissions(): Promise<boolean> {
 
   try {
     const checks = await Promise.all(
-      PERMISSIONS.map((perm) => PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS[perm]))
+      PERMISSIONS.map((perm) => {
+        const p = PermissionsAndroid.PERMISSIONS[perm];
+        return p ? PermissionsAndroid.check(p) : Promise.resolve(false);
+      })
     );
     return checks.every(Boolean);
   } catch (e: unknown) {

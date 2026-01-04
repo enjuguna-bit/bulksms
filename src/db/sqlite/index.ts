@@ -34,6 +34,7 @@ export type SQLiteDatabase = {
   readTransaction?: (cb: (tx: SQLiteTransaction) => void) => void;
   exec?: (sql: string) => void;
   executeSql: (sql: string, params?: any[]) => Promise<[ResultSet]>;
+  close?: () => Promise<void> | void;
 };
 
 // ------------------------------------------------------------
@@ -64,9 +65,9 @@ export function openDatabaseSync(name: string = CONFIG.DB_SMS): SQLiteDatabase {
         db.execute('BEGIN TRANSACTION');
 
         const tx: SQLiteTransaction = {
-          executeSql: (sql, params = [], success, error) => {
+          executeSql: async (sql, params = [], success, error) => {
             try {
-              const result = db.execute(sql, params ?? []);
+              const result = await db.execute(sql, params ?? []);
               const resultSet = convertToResultSet(result ?? { rowsAffected: 0, rows: [], insertId: undefined });
               success?.(tx, resultSet);
             } catch (err) {
@@ -93,7 +94,7 @@ export function openDatabaseSync(name: string = CONFIG.DB_SMS): SQLiteDatabase {
 
     executeSql: async (sql: string, params: any[] = []) => {
       try {
-        const result = db.execute(sql, params);
+        const result = await db.execute(sql, params);
         return [convertToResultSet(result)];
       } catch (error) {
         console.error('executeSql error:', error);
@@ -114,6 +115,14 @@ export function openDatabaseSync(name: string = CONFIG.DB_SMS): SQLiteDatabase {
         tx.executeSql(stmt);
       });
     });
+  };
+
+  wrapped.close = async () => {
+    try {
+      db.close();
+    } catch (e) {
+      console.error('Error closing database:', e);
+    }
   };
 
   return wrapped;

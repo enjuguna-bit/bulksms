@@ -1,17 +1,34 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { DeviceEventEmitter } from "react-native";
 import { Alert, InteractionManager } from "react-native";
 import SecureStorage from "@/utils/SecureStorage";
 import DocumentPicker, { types as DocumentTypes, isCancel } from "react-native-document-picker";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import { parseCSV, autoSuggestMapping } from "@/utils/csvParser";
-import { parseExcelSmart, isFileTypeSupported, getFileTypeDisplayName } from "@/utils/excelParser";
+import { parseExcelSmart, parseImportFile, isFileTypeSupported, getFileTypeDisplayName } from "@/utils/excelParser";
 import { normalizePhone } from "@/utils/dataParsers";
 import { ensureContactsPermission, getAllContacts, type SimpleContact } from "@/services/contacts";
 import { saveSendLog } from "@/services/storage";
-import { enqueueSMS, runQueueNow } from "@/background/smsWatcher";
+import { enqueueSMS, runQueueNow, getCircuitBreakerStatus } from "@/background/smsWatcher";
 import { sendSingleSms, canSendSms } from "@/services/smsService";
+import { subscriptionManager } from "@/services/billing/SubscriptionManager";
 import { isDuplicateSend } from "@/db/repositories/sendLogs";
-import type { Recipient } from "@/components/bulk-pro/EditModal";
+import { getQueueStats, clearExhaustedMessages } from "@/db/repositories/smsQueue";
+import type { Recipient, ExcelRow } from "@/types/bulkSms";
+
+// New messaging schema imports for write-ahead pattern
+import {
+    getOrCreateConversation,
+    insertMessage,
+    updateMessageStatus,
+} from "@/db/messaging";
+
+// Session persistence imports
+import uploadPersistence from "@/services/uploadPersistence";
+import { cleanupExpiredSessions } from "@/services/sessionCleanup";
+import { processContacts, contactRecordToRecipient } from "@/services/excelProcessor";
+import type { ExcelUploadData, ContactRecord } from "@/types/bulkSms";
+import { ensureDefaultSmsApp } from "@/services/defaultSmsRole";
 
 const STORAGE_KEYS = {
     LAST_TEMPLATE: "bulkPro:lastMessageTemplate",
@@ -27,7 +44,8 @@ export function useBulkPro() {
     const [excelRows, setExcelRows] = useState<Recipient[]>([]);
     const [importLoading, setImportLoading] = useState(false);
     const [headers, setHeaders] = useState<string[]>([]);
-    const [sampleRows, setSampleRows] = useState<Record<string, unknown>[]>([]);
+    const [sampleRows, setSampleRows] = useState<ExcelRow[]>([]);
+    const [allRawRows, setAllRawRows] = useState<ExcelRow[]>([]);
     const [amountCandidates, setAmountCandidates] = useState<string[]>([]);
     const [showMappingModal, setShowMappingModal] = useState(false);
     const [contacts, setContacts] = useState<SimpleContact[]>([]);
@@ -40,7 +58,27 @@ export function useBulkPro() {
     const [queued, setQueued] = useState(0);
     const [paused, setPaused] = useState(false);
     const [sendSpeed, setSendSpeed] = useState(400);
+    const [delivered, setDelivered] = useState(0);
+    const [currentBulkId, setCurrentBulkId] = useState<string | null>(null);
     const [smsStatus, setSmsStatus] = useState<"checking" | "ok" | "fail" | "unknown">("checking");
+
+    // SIM slot selection state
+    const [simSlot, setSimSlot] = useState(0);
+
+    // Session persistence state
+    const [activeSession, setActiveSession] = useState<ExcelUploadData | null>(null);
+    const [showResumePrompt, setShowResumePrompt] = useState(false);
+    const [sessionLoading, setSessionLoading] = useState(true);
+
+    // Queue status state for diagnostics UI
+    const [queueStatus, setQueueStatus] = useState<{
+        pending: number;
+        failed: number;
+        exhausted: number;
+        circuitBreakerActive: boolean;
+        cooldownRemainingMs: number | null;
+    }>({ pending: 0, failed: 0, exhausted: 0, circuitBreakerActive: false, cooldownRemainingMs: null });
+
     const cancelledRef = useRef(false);
     const pausedRef = useRef(false);
     const sendingGateRef = useRef(false);
@@ -51,10 +89,24 @@ export function useBulkPro() {
     const lastFlushRef = useRef(0);
     const lastFlushedCountRef = useRef(0);
 
+    // Load persisted session on mount
     useEffect(() => {
         let mounted = true;
         (async () => {
             try {
+                // Run cleanup for expired sessions first
+                await cleanupExpiredSessions();
+
+                // Check for active session
+                const session = await uploadPersistence.loadCurrentUpload();
+                if (session && mounted) {
+                    setActiveSession(session);
+                    setShowResumePrompt(true);
+                    // Pre-populate excelRows for backward compatibility
+                    const recipients = session.parsedData.map(contactRecordToRecipient);
+                    setExcelRows(recipients);
+                }
+
                 const storedTemplate = await SecureStorage.getItem(STORAGE_KEYS.LAST_TEMPLATE);
                 if (storedTemplate && mounted) setTemplate(storedTemplate);
 
@@ -64,10 +116,13 @@ export function useBulkPro() {
                     if (Array.isArray(parsed)) setRecents(parsed.map((x) => String(x)));
                 }
 
-                const excelRowsJson = await SecureStorage.getItem(STORAGE_KEYS.EXCEL_ROWS);
-                if (excelRowsJson && mounted) {
-                    const parsed = JSON.parse(excelRowsJson);
-                    if (Array.isArray(parsed)) setExcelRows(parsed);
+                // Only load excelRows from legacy storage if no active session
+                if (!session) {
+                    const excelRowsJson = await SecureStorage.getItem(STORAGE_KEYS.EXCEL_ROWS);
+                    if (excelRowsJson && mounted) {
+                        const parsed = JSON.parse(excelRowsJson);
+                        if (Array.isArray(parsed)) setExcelRows(parsed);
+                    }
                 }
 
                 const lastMode = await SecureStorage.getItem(STORAGE_KEYS.LAST_MODE);
@@ -80,6 +135,8 @@ export function useBulkPro() {
             } catch (e) {
                 console.warn("BulkPro: init error", e);
                 if (mounted) setSmsStatus("unknown");
+            } finally {
+                if (mounted) setSessionLoading(false);
             }
         })();
         return () => { mounted = false; };
@@ -108,6 +165,69 @@ export function useBulkPro() {
             }
         };
     }, []);
+
+    // Refresh queue status for UI diagnostics
+    const refreshQueueStatus = useCallback(async () => {
+        try {
+            const stats = await getQueueStats();
+            const circuitBreaker = getCircuitBreakerStatus();
+            setQueueStatus({
+                pending: stats.pending,
+                failed: stats.failed,
+                exhausted: stats.exhausted,
+                circuitBreakerActive: circuitBreaker.isActive,
+                cooldownRemainingMs: circuitBreaker.cooldownRemainingMs,
+            });
+        } catch (err) {
+            console.warn('[BulkPro] Failed to refresh queue status:', err);
+        }
+    }, []);
+
+    // Clear exhausted messages
+    const clearExhausted = useCallback(async () => {
+        try {
+            await clearExhaustedMessages();
+            await refreshQueueStatus();
+        } catch (err) {
+            console.warn('[BulkPro] Failed to clear exhausted:', err);
+        }
+    }, [refreshQueueStatus]);
+
+    // Listen for delivery reports to update delivered count
+    useEffect(() => {
+        const subscription = DeviceEventEmitter.addListener(
+            "SmsDeliveredResult",
+            (event: any) => {
+                if (event?.id) {
+                    setDelivered(prev => prev + 1);
+                }
+            }
+        );
+
+        return () => subscription.remove();
+    }, []);
+
+    // Periodic queue status refresh and auto-processing
+    useEffect(() => {
+        // Initial refresh
+        refreshQueueStatus();
+
+        // Refresh queue status every 10 seconds
+        const statusInterval = setInterval(refreshQueueStatus, 10000);
+
+        // Auto-process queue every 30 seconds when not actively sending
+        const processInterval = setInterval(async () => {
+            if (!sending) {
+                await runQueueNow();
+                await refreshQueueStatus();
+            }
+        }, 30000);
+
+        return () => {
+            clearInterval(statusInterval);
+            clearInterval(processInterval);
+        };
+    }, [sending, refreshQueueStatus]);
 
     const loadContacts = useCallback(async () => {
         try {
@@ -168,29 +288,70 @@ export function useBulkPro() {
                 console.warn('Could not verify file existence, attempting parse:', fsError);
             }
 
-            const result = await parseExcelSmart(path, name);
+            // P0: Enhanced processing with validation
+            // Get raw data FIRST to ensure we have all custom columns for dynamic placeholders
+            const rawData = await parseImportFile(path, name);
+            const rawRows = rawData as unknown as ExcelRow[];
 
-            if (!result.rows.length) {
+            // Validate that we have data
+            if (!rawRows.length) {
                 Alert.alert("Import Error", `File is empty or has no valid data rows.\n\nDetected format: ${fileTypeDisplayName}`);
+                setImportLoading(false);
                 return;
             }
 
-            const json = result.rows.map(row => ({
-                'FullNames': row.name,
-                'PhoneNumber': row.phone,
-                'Arrears Amount': row.amount
-            }));
+            // For smart mapping detection, we can still use parseExcelSmart's logic OR rely on processContacts' auto-detect
+            // Let's rely on processContacts since it covers the basics and we can map manually if needed.
+            // But to preserve 'smart' aliasing from parseExcelSmart (e.g. 'Arrears Amount' -> 'amount'), 
+            // we might want its mapping. However, let's stick to the raw data pipe for integrity.
 
-            const hdrs = Object.keys(json[0] || {});
-            const { amountCandidates: cands } = autoSuggestMapping(hdrs);
-            setHeaders(hdrs);
-            setSampleRows(json);
+            const processed = await processContacts(rawRows);
+
+            // Sanity check: if processContacts found nothing valid, try falling back or alerting?
+            // (It already separates valid/invalid).
+
+            // Create session data
+            const sessionData: ExcelUploadData = {
+                fileId: `upload_${Date.now()}`,
+                fileName: name,
+                uploadTimestamp: Date.now(),
+                lastAccessed: Date.now(),
+                parsedData: processed.validContacts,
+                totalRecords: rawRows.length,
+                validRecords: processed.validContacts.length,
+                invalidRecords: processed.invalidContacts.length,
+                processingStatus: processed.invalidContacts.length > 0 ? 'processing' : 'processed',
+                columnMapping: processed.columnMapping,
+                previewData: (rawRows.slice(0, 5) as unknown as ExcelRow[]),
+                isActive: true
+            };
+
+            // Save session
+            await uploadPersistence.saveCurrentUpload(sessionData);
+            setActiveSession(sessionData);
+
+            // Legacy support: Convert to simple Recipients
+            const recipients = processed.validContacts.map(contactRecordToRecipient);
+            setExcelRows(recipients);
+
+            // We already have rawData from above
+            const actualHeaders = rawData.length > 0 ? Object.keys(rawData[0]) : [];
+
+            // Setup UI for mapping with actual file headers
+            setHeaders(actualHeaders);
+            setSampleRows(rawRows.slice(0, 10)); // Use first 10 rows for preview
+            setAllRawRows(rawRows); // Store ALL rows for mapping confirmation
+
+            // Mapping modal logic - detect amount candidates from actual headers
+            const { amountCandidates: cands } = autoSuggestMapping(actualHeaders);
             setAmountCandidates(cands || []);
+
+            // Show mapping modal with detected headers
             setShowMappingModal(true);
 
             Alert.alert(
                 "Import Successful",
-                `Successfully imported ${result.rows.length} records from ${fileTypeDisplayName} file.\n\nReady to map columns.`
+                `Imported ${processed.validContacts.length} valid contacts.\n${processed.invalidContacts.length} invalid records skipped.`
             );
         } catch (e: unknown) {
             if (!isCancel(e)) {
@@ -213,6 +374,29 @@ export function useBulkPro() {
             setImportLoading(false);
         }
     }
+
+    // Session Management Methods
+    const handleSessionResume = () => {
+        setShowResumePrompt(false);
+        if (activeSession) {
+            // Ensure data is loaded into operational state
+            const recipients = activeSession.parsedData.map(contactRecordToRecipient);
+            setExcelRows(recipients);
+            setMode("excel");
+        }
+    };
+
+    const handleSessionDiscard = async () => {
+        try {
+            await uploadPersistence.clearCurrentUpload();
+            setActiveSession(null);
+            setShowResumePrompt(false);
+            setExcelRows([]);
+            Alert.alert("Session Discarded", "Upload session has been cleared.");
+        } catch (e) {
+            console.error("Failed to discard session", e);
+        }
+    };
 
     const contactsMap = useMemo(() => {
         const map = new Map<string, SimpleContact>();
@@ -248,13 +432,41 @@ export function useBulkPro() {
         setMergedRecipients(out);
     }, [mode, excelRows, pickedFromContacts]);
 
+    /**
+     * ⚡ Dynamic placeholder replacement - supports ANY Excel column as {column_name}
+     * Built-in placeholders: {name}, {phone}, {amount}
+     * Dynamic placeholders: {any_excel_header} from recipient.fields
+     */
     function formatMessage(tpl: string, r: Recipient) {
         try {
-            return tpl
-                .replace(/{name}/g, r.name ?? "")
-                .replace(/{amount}/g, String(r.amount ?? "").replace(/\B(?=(\d{3})+(?!\d))/g, ","))
-                .replace(/{phone}/g, r.phone ?? "");
-        } catch (_) { return ""; }
+            let result = tpl;
+
+            // Built-in placeholders (backward compatible)
+            result = result
+                .replace(/{name}/gi, r.name ?? "")
+                .replace(/{phone}/gi, r.phone ?? "")
+                .replace(/{amount}/gi, String(r.amount ?? "").replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+
+            // Dynamic placeholders from Excel fields
+            if (r.fields) {
+                for (const [key, value] of Object.entries(r.fields)) {
+                    const regex = new RegExp(`\\{${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\}`, 'gi');
+                    let displayValue = '';
+
+                    if (value !== null && value !== undefined) {
+                        if (typeof value === 'number') {
+                            displayValue = String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                        } else {
+                            displayValue = String(value);
+                        }
+                    }
+
+                    result = result.replace(regex, displayValue);
+                }
+            }
+
+            return result;
+        } catch (_) { return tpl; }
     }
 
     async function saveTemplate() {
@@ -284,27 +496,25 @@ export function useBulkPro() {
         SecureStorage.removeItem(STORAGE_KEYS.EXCEL_ROWS);
     }
 
-    async function handleSend() {
+    async function handleSend(): Promise<{ success: boolean; blocked?: boolean; reason?: string } | undefined> {
+        // Prevent multiple concurrent sends
         if (sendingGateRef.current) return;
         sendingGateRef.current = true;
 
-        if (!mergedRecipients.length) {
-            Alert.alert("Error", "No recipients selected.");
+        if (mergedRecipients.length === 0) {
+            Alert.alert("Error", "No recipients to send to.");
             sendingGateRef.current = false;
-            return;
+            return { success: false };
         }
 
-        const available = await canSendSms();
-        if (!available) {
-            Alert.alert("SMS Not Ready", "Queueing messages instead.");
-            for (const r of mergedRecipients) {
-                const body = formatMessage(template, r);
-                const phone = normalizePhone(r.phone);
-                if (phone) await enqueueSMS(phone, body);
-            }
-            sendingGateRef.current = false;
-            return;
-        }
+        // Generate unique bulkId for this campaign
+        const bulkId = `blk_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        setCurrentBulkId(bulkId);
+        console.log(`[BulkPro] Starting bulk send with bulkId: ${bulkId}, simSlot: ${simSlot}`);
+
+        // ⚡ NEW: Create AbortController for proper cancellation
+        const controller = new AbortController();
+        const abortControllerRef = { current: controller };
 
         // Reset state
         cancelledRef.current = false;
@@ -324,71 +534,97 @@ export function useBulkPro() {
         setFailed(0);
         setQueued(0);
 
-        let index = 0;
+        // ⚡ NEW: Timeout configuration with progressive backoff
+        const timeoutConfig = {
+            base: 10000,        // 10s base (reduced from 15s)
+            retries: [15000, 20000, 25000], // Progressive backoff for retries
+        };
 
-        // Recursive processor to avoid blocking UI
-        const processNext = async () => {
-            // 1. Check Cancellation & Completion
-            if (cancelledRef.current || index >= mergedRecipients.length) {
-                // Final flush to ensure UI reflects final state
-                setSent(sentRef.current);
-                setFailed(failedRef.current);
-                setQueued(queuedRef.current);
+        try {
+            // ⚡ NEW: Async generator pattern instead of recursive setTimeout
+            let index = 0;
+            const totalRecipients = mergedRecipients.length;
 
-                setSending(false);
-                sendingGateRef.current = false;
-                return;
+            // For large batches (>1000), show streaming mode message
+            if (totalRecipients > 1000) {
+                console.log(`[BulkPro] Large batch detected (${totalRecipients}), using optimized streaming mode`);
             }
 
-            // 2. Pause Logic
-            if (pausedRef.current) {
-                await new Promise<void>((resolve) => {
-                    resumeResolverRef.current = resolve;
-                    if (cancelledRef.current) resolve();
-                });
-                // Re-check cancel after resume
-                if (cancelledRef.current) {
-                    setSent(sentRef.current);
-                    setFailed(failedRef.current);
-                    setQueued(queuedRef.current);
-                    setSending(false);
-                    sendingGateRef.current = false;
-                    return;
+            // Process messages with async iteration
+            for (const recipient of mergedRecipients) {
+                // 1. Check Cancellation
+                if (controller.signal.aborted || cancelledRef.current) {
+                    console.log('[BulkPro] Send cancelled by user');
+                    break;
                 }
-            }
 
-            // 3. Process Message
-            const r = mergedRecipients[index];
-            const body = formatMessage(template, r);
-            const phone = normalizePhone(r.phone);
+                // 2. Pause Logic
+                if (pausedRef.current) {
+                    await new Promise<void>((resolve) => {
+                        resumeResolverRef.current = resolve;
+                        if (controller.signal.aborted || cancelledRef.current) resolve();
+                    });
+                    // Re-check cancel after resume
+                    if (controller.signal.aborted || cancelledRef.current) {
+                        break;
+                    }
+                }
 
-            if (!phone) {
-                failedRef.current += 1;
-            } else {
+                // 3. Process Message with Write-Ahead Pattern
+                const body = formatMessage(template, recipient);
+                const phone = normalizePhone(recipient.phone);
+
+                if (!phone) {
+                    failedRef.current += 1;
+                    index++;
+                    continue;
+                }
+
+                let dbMessageId: number | null = null;
                 try {
                     // P0 FIX: Check for duplicate sends (same message to same number within 5 minutes)
                     const isDuplicate = await isDuplicateSend(phone, body, 5 * 60 * 1000);
                     if (isDuplicate) {
                         console.log(`[BulkPro] Skipping duplicate: ${phone}`);
-                        // Don't count as failed, just skip
                         index++;
-                        setTimeout(() => processNext(), sendSpeed);
-                        return;
+                        // Small delay before next iteration
+                        await new Promise((r) => setTimeout(r, sendSpeed));
+                        continue;
                     }
 
-                    // Refactored to use service layer with Timeout Protection
-                    const sendPromise = sendSingleSms(phone, body);
+                    // ⚡ WRITE-AHEAD: Insert message to DB as 'pending' BEFORE sending
+                    const conversation = await getOrCreateConversation(phone, recipient.name);
+                    const dbMessage = await insertMessage(
+                        conversation.id,
+                        phone,
+                        body,
+                        'outgoing',
+                        'pending'
+                    );
+                    dbMessageId = dbMessage.id;
+
+                    // ⚡ NEW: Send with reduced timeout (10s) and AbortController
+                    const sendPromise = sendSingleSms(phone, body, simSlot);
                     const timeoutPromise = new Promise<any>((_, reject) =>
-                        setTimeout(() => reject(new Error("Timeout")), 15000)
+                        setTimeout(() => reject(new Error("Timeout")), timeoutConfig.base)
                     );
 
-                    const result = await Promise.race([sendPromise, timeoutPromise]);
+                    // Race with abort signal
+                    const abortPromise = new Promise<any>((_, reject) => {
+                        controller.signal.addEventListener('abort', () => reject(new Error("Aborted")));
+                    });
+
+                    const result = await Promise.race([sendPromise, timeoutPromise, abortPromise]);
 
                     if (result.success) {
                         sentRef.current += 1;
+                        // Update DB status to 'sent'
+                        await updateMessageStatus(dbMessageId, 'sent');
                     } else {
                         failedRef.current += 1;
-                        await enqueueSMS(phone, body);
+                        // Update DB status to 'failed' and enqueue for retry
+                        await updateMessageStatus(dbMessageId, 'failed');
+                        await enqueueSMS(phone, body, simSlot, dbMessageId);
                         queuedRef.current += 1;
                     }
 
@@ -399,40 +635,58 @@ export function useBulkPro() {
                         error: result.error ? String(result.error) : undefined
                     });
                 } catch (err) {
+                    const errMsg = err instanceof Error ? err.message : String(err);
+
+                    // Don't count abort as failure
+                    if (errMsg === "Aborted") {
+                        break;
+                    }
+
                     failedRef.current += 1;
-                    await enqueueSMS(phone, body);
+                    // Update DB status if we have a message ID
+                    if (dbMessageId) {
+                        await updateMessageStatus(dbMessageId, 'failed').catch(() => { });
+                    }
+                    await enqueueSMS(phone, body, simSlot, dbMessageId || undefined);
                     queuedRef.current += 1;
                     console.warn(`[BulkPro] Send failed or timed out: ${phone}`, err);
                 }
+
+                index++;
+
+                // Intelligent Flushing (every 20 messages or 1000ms for large batches)
+                const now = Date.now();
+                const totalProcessed = sentRef.current + failedRef.current;
+                const diff = totalProcessed - lastFlushedCountRef.current;
+                const timeDiff = now - lastFlushRef.current;
+                const flushThreshold = totalRecipients > 1000 ? 1000 : 500; // Increased for large batches
+
+                // Flush every 20 messages or based on time threshold
+                if (diff >= 20 || timeDiff >= flushThreshold) {
+                    setSent(sentRef.current);
+                    setFailed(failedRef.current);
+                    setQueued(queuedRef.current);
+                    lastFlushRef.current = now;
+                    lastFlushedCountRef.current = totalProcessed;
+                }
+
+                // Delay before next message to prevent carrier rate limiting
+                await new Promise((r) => setTimeout(r, sendSpeed));
             }
+        } catch (err) {
+            console.error('[BulkPro] Unexpected error in send loop', err);
+        } finally {
+            // Final flush to ensure UI reflects final state
+            setSent(sentRef.current);
+            setFailed(failedRef.current);
+            setQueued(queuedRef.current);
 
-            index++;
+            setSending(false);
+            sendingGateRef.current = false;
 
-            // Intelligent Flushing
-            const now = Date.now();
-            const totalProcessed = sentRef.current + failedRef.current;
-            const diff = totalProcessed - lastFlushedCountRef.current;
-            const timeDiff = now - lastFlushRef.current;
-
-            // Flush every 20 messages or 500ms
-            if (diff >= 20 || timeDiff >= 500) {
-                setSent(sentRef.current);
-                setFailed(failedRef.current);
-                setQueued(queuedRef.current);
-                lastFlushRef.current = now;
-                lastFlushedCountRef.current = totalProcessed;
-            }
-
-            // 4. Schedule next chunk
-            // Using setTimeout ensures we yield to event loop. 
-            // InteractionManager.runAfterInteractions ensures we don't block checks.
-            setTimeout(() => {
-                processNext();
-            }, sendSpeed);
-        };
-
-        // Kickoff
-        processNext();
+            console.log(`[BulkPro] Send complete. Sent: ${sentRef.current}, Failed: ${failedRef.current}, Queued: ${queuedRef.current}`);
+            return { success: true };
+        }
     }
 
     function togglePause() {
@@ -462,14 +716,26 @@ export function useBulkPro() {
         recents, saveTemplate, clearRecents,
         excelRows, setExcelRows, clearExcelRows,
         importLoading, handlePickCsv,
-        headers, sampleRows, amountCandidates, showMappingModal, setShowMappingModal,
+        headers, sampleRows, allRawRows, amountCandidates, showMappingModal, setShowMappingModal,
         contacts, contactsLoading, selectedIds, setSelectedIds, query, setQuery,
         mergedRecipients,
-        sending, sent, failed, queued, paused, sendSpeed, setSendSpeed,
+        sending, sent, failed, queued, delivered, paused, sendSpeed, setSendSpeed,
+        simSlot, setSimSlot,
+        currentBulkId,
         handleSend, togglePause, stopSending,
         smsStatus,
         runQueueNow,
         formatMessage,
-        normalizePhone
+        normalizePhone,
+        // Session exports
+        activeSession,
+        showResumePrompt,
+        handleSessionResume,
+        handleSessionDiscard,
+        sessionLoading,
+        // Queue status exports for UI diagnostics
+        queueStatus,
+        refreshQueueStatus,
+        clearExhausted,
     };
 }

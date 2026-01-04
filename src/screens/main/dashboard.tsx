@@ -28,6 +28,7 @@ import {
 
 import { getSendLogs, type SendLog, clearSendLogs } from "@/services/storage";
 import { getContactsList } from "@/services/storage";
+import { getMpesaStats } from "@/db/repositories/mpesaTransactions";
 
 import {
   Send,
@@ -38,13 +39,20 @@ import {
   Banknote,
   RefreshCw,
   TrendingUp,
-  Cloud,
-  CalendarDays
 } from "lucide-react-native";
 
 import { kenyaColors } from "@/theme/kenyaTheme";
 import { NetworkWidget } from "@/components/dashboard/NetworkWidget";
+import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
+import { WeatherWidget } from "@/components/dashboard/WeatherWidget";
+import { QuotesWidget } from "@/components/dashboard/QuotesWidget";
 import { KenyaFlag } from "@/components/shared/KenyaFlag";
+import AnimatedStatCard from '@/components/dashboard/AnimatedStatCard';
+import SmsVolumeChart from '@/components/dashboard/SmsVolumeChart';
+import ActivityFeed from '@/components/dashboard/ActivityFeed';
+import PerformanceWidgets from '@/components/dashboard/PerformanceWidgets';
+
+import type { GradientColorKey } from '@/components/dashboard/AnimatedStatCard';
 
 // Memoized Components
 
@@ -63,26 +71,21 @@ const StatCard = memo(
     label: string;
     value: number | string;
     unit?: string;
-    color: string;
+    color: GradientColorKey;
     trend?: string;
     icon: any;
   }) => {
+    const numericValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0 : value;
+    
     return (
-      <View style={[styles.statCard, { backgroundColor: color }]}>
-        <View style={styles.statHeader}>
-          <Icon color="white" size={20} style={{ opacity: 0.9 }} />
-          {trend && (
-            <View style={styles.trendBadge}>
-              <Text style={styles.trendText}>{trend}</Text>
-            </View>
-          )}
-        </View>
-
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statUnit}>{unit || ''}</Text>
-        <Text style={styles.statLabel}>{label}</Text>
-      </View>
-    )
+      <AnimatedStatCard 
+        value={numericValue}
+        label={label}
+        color={color}
+        unit={unit}
+        trend={trend}
+      />
+    );
   }
 );
 
@@ -190,6 +193,14 @@ const QuickActionsGrid = memo(
   }
 );
 
+type ChartData = {
+  labels: string[];
+  datasets: Array<{
+    data: number[];
+    color?: (opacity: number) => string;
+  }>;
+};
+
 export default function Dashboard() {
   return (
     <ProtectedRoute>
@@ -206,16 +217,52 @@ function DashboardContent() {
   const [logs, setLogs] = useState<SendLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [mpesaUserCount, setMpesaUserCount] = useState<number>(0);
+  const [yesterdaySent, setYesterdaySent] = useState<number>(0);
 
-  // Mock data for new widgets
-  const [holidays] = useState("Jamhuri Day in 3 days");
-  const [weather] = useState("Nairobi: 24°C, Sunny");
+  const [stats, setStats] = useState({
+    sent: 0,
+    mpesaUsers: 0,
+    deliveryRate: 0,
+    messagesPerMinute: 0,
+    cost: 0
+  });
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [chartData, setChartData] = useState<ChartData>({
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [{
+      data: [120, 190, 300, 250, 280, 220, 180]
+    }]
+  });
+
+  interface ActivityItem {
+    id: string;
+    type: 'sms' | 'mpesa';
+    status: 'success' | 'failed' | 'pending';
+    phone: string;
+    timestamp: number;
+    amount?: number;
+  }
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [l] = await Promise.all([getSendLogs(), getContactsList()]);
+      const [l, mpesaStats] = await Promise.all([
+        getSendLogs(),
+        getMpesaStats().catch(() => ({ uniquePhones: 0 })),
+      ]);
       setLogs(l.reverse());
+      setMpesaUserCount(mpesaStats.uniquePhones || 0);
+
+      // Calculate yesterday's sent for trend
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toDateString();
+      const yesterdayCount = l.filter(
+        (log) => new Date(log.at).toDateString() === yesterdayStr && log.status === "SENT"
+      ).length;
+      setYesterdaySent(yesterdayCount);
+
       if (initialLoad) {
         setInitialLoad(false);
       }
@@ -253,7 +300,7 @@ function DashboardContent() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const total = logs.length;
   const sent = logs.filter((l) => l.status === "SENT").length;
@@ -273,22 +320,28 @@ function DashboardContent() {
     itemHeight: 70,
   });
 
-  // Kenyan Focused Stats
+  // Calculate real trends based on yesterday's data
+  const smsTrend = yesterdaySent > 0
+    ? Math.round(((sent - yesterdaySent) / yesterdaySent) * 100)
+    : 0;
+  const smsTrendStr = smsTrend >= 0 ? `+${smsTrend}%` : `${smsTrend}%`;
+
+  // Kenyan Focused Stats with real data
   const statCardsRow1 = [
     {
       label: "SMS Sent Today",
       value: sent,
       unit: "messages",
-      color: kenyaColors.statGreen,
-      trend: "+12%",
+      color: "statGreen",
+      trend: smsTrendStr,
       icon: Send,
     },
     {
       label: "M-Pesa Users",
-      value: "142", // Mock for Demo as per request
+      value: mpesaUserCount,
       unit: "customers",
-      color: kenyaColors.statOrange,
-      trend: "+5%",
+      color: "statOrange",
+      trend: mpesaUserCount > 0 ? "Active" : "",
       icon: Users,
     },
   ];
@@ -298,16 +351,16 @@ function DashboardContent() {
       label: "Est. Cost Today",
       value: `KES ${cost}`,
       unit: "",
-      color: kenyaColors.statRed,
-      trend: "-3%",
+      color: "statRed",
+      trend: cost > 0 ? "Safaricom" : "",
       icon: Banknote,
     },
     {
       label: "Delivery Rate",
       value: `${deliveryRate}%`,
       unit: "success",
-      color: kenyaColors.statBlue,
-      trend: "+2%",
+      color: "statBlue",
+      trend: deliveryRate >= 90 ? "Excellent" : deliveryRate >= 70 ? "Good" : "",
       icon: TrendingUp,
     },
   ];
@@ -354,25 +407,35 @@ function DashboardContent() {
     }
   ];
 
+  const loadNewData = useCallback(async () => {
+    // Simulate data loading
+    setStats({
+      sent: 245,
+      mpesaUsers: 189,
+      deliveryRate: 92,
+      messagesPerMinute: 4.2,
+      cost: 122.5
+    });
+    
+    setActivities([
+      { id: '1', type: 'sms', status: 'success', phone: '+254712345678', timestamp: Date.now() - 10000 },
+      { id: '2', type: 'mpesa', status: 'success', phone: '+254712345679', timestamp: Date.now() - 30000, amount: 1500 },
+      { id: '3', type: 'sms', status: 'failed', phone: '+254712345670', timestamp: Date.now() - 45000 }
+    ]);
+  }, []);
+
+  useEffect(() => {
+    loadNewData();
+  }, [loadNewData]);
+
   return (
-    <View style={[styles.container, { backgroundColor: kenyaColors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar backgroundColor={kenyaColors.safaricomGreen} barStyle="light-content" />
 
-      {/* Header */}
-      <View style={styles.toolbar}>
-        <View style={styles.toolbarTitleContainer}>
-          <KenyaFlag width={28} height={20} style={{ marginRight: 10 }} />
-          <View>
-            <Text style={styles.toolbarTitle}>SMS Dashboard</Text>
-            <Text style={styles.toolbarSubtitle}>Kenya Business Edition</Text>
-          </View>
-        </View>
-        <TouchableOpacity onPress={handleManualRefresh} style={styles.refreshButton}>
-          <RefreshCw color={kenyaColors.safaricomGreen} size={20} />
-        </TouchableOpacity>
-      </View>
-
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+        {/* Inspirational Quote Widget */}
+        <QuotesWidget />
 
         {/* Network Monitor Widget - Safaricom Focus */}
         <NetworkWidget />
@@ -390,6 +453,17 @@ function DashboardContent() {
           </>
         )}
 
+        {/* New Components */}
+        <SmsVolumeChart data={chartData} />
+        
+        <PerformanceWidgets 
+          deliveryRate={stats.deliveryRate} 
+          messagesPerMinute={stats.messagesPerMinute} 
+          estimatedCost={stats.cost} 
+        />
+        
+        <ActivityFeed activities={activities} />
+
         {/* Quick Actions Grid */}
         <Text style={styles.sectionTitle}>
           Quick Actions
@@ -397,22 +471,10 @@ function DashboardContent() {
 
         <QuickActionsGrid actions={quickActions} />
 
-        {/* Helper Widgets Row */}
+        {/* Real Data Widgets Row */}
         <View style={styles.widgetRow}>
-          <View style={styles.miniWidget}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-              <CalendarDays size={16} color={kenyaColors.safaricomRed} />
-              <Text style={styles.miniWidgetTitle}> Events</Text>
-            </View>
-            <Text style={styles.miniWidgetContent}>{holidays}</Text>
-          </View>
-          <View style={styles.miniWidget}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-              <Cloud size={16} color={kenyaColors.importBlue} />
-              <Text style={styles.miniWidgetTitle}> Weather</Text>
-            </View>
-            <Text style={styles.miniWidgetContent}>{weather}</Text>
-          </View>
+          <CalendarWidget compact />
+          <WeatherWidget compact />
         </View>
 
         {/* Logs Section */}

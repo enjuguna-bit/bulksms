@@ -20,6 +20,12 @@ async function ensureInitialized() {
   try {
     const db = await openDatabase(DB_NAME);
     
+    // Add SQLite optimizations for concurrent access
+    await db.executeSql('PRAGMA journal_mode = WAL;');
+    await db.executeSql('PRAGMA synchronous = NORMAL;');
+    await db.executeSql('PRAGMA busy_timeout = 3000;');
+    await db.executeSql('PRAGMA cache_size = -2000;'); // 2MB cache
+    
     // Create key-value table if it doesn't exist
     await db.executeSql(`
       CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
@@ -30,7 +36,7 @@ async function ensureInitialized() {
     `);
 
     initialized = true;
-    Logger.debug("SecureStorage", "Initialized successfully");
+    Logger.debug("SecureStorage", "Initialized successfully with WAL mode");
   } catch (error) {
     Logger.error("SecureStorage", "Initialization failed", error);
     throw error;

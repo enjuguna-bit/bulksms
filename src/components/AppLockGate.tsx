@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useAppLock } from "../hooks/useAppLock";
 import { useThemeSettings } from "../theme/ThemeProvider";
@@ -8,17 +8,17 @@ export default function AppLockGate({ children }: { children: React.ReactNode })
     const { colors } = useThemeSettings();
     const [isAuthenticating, setIsAuthenticating] = useState(false);
 
+    const handleUnlock = useCallback(async () => {
+        setIsAuthenticating(true);
+        await unlock();
+        setIsAuthenticating(false);
+    }, [unlock]);
+
     useEffect(() => {
         if (isReady && isEnabled && isLocked && !isAuthenticating) {
             handleUnlock();
         }
-    }, [isReady, isEnabled, isLocked]);
-
-    const handleUnlock = async () => {
-        setIsAuthenticating(true);
-        await unlock();
-        setIsAuthenticating(false);
-    };
+    }, [isReady, isEnabled, isLocked, handleUnlock, isAuthenticating]);
 
     if (!isReady) {
         return (

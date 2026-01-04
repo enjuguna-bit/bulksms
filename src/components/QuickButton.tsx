@@ -121,47 +121,24 @@ export const QuickButton = memo(function QuickButton({
         },
     };
 
-    if (gradient) {
-        try {
-            // Try to import LinearGradient dynamically
-            const LinearGradient = require("expo-linear-gradient").LinearGradient;
-            
-            return (
-                <Animated.View style={[styles.buttonContainer, animatedStyle, style]}>
-                    <TouchableOpacity
-                        onPress={onPress}
-                        onPressIn={handlePressIn}
-                        onPressOut={handlePressOut}
-                        activeOpacity={0.9}
-                        style={styles.touchable}
-                    >
-                        <LinearGradient
-                            colors={gradient as [string, string, ...string[]]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.quickButton}
-                        >
-                            {buttonContent}
-                        </LinearGradient>
-                    </TouchableOpacity>
-                </Animated.View>
-            );
-        } catch (error) {
-            // Fallback to solid background if LinearGradient is not available
-            return (
-                <Animated.View style={[styles.buttonContainer, animatedStyle, style]}>
-                    <TouchableOpacity
-                        style={[styles.quickButton, { backgroundColor: gradient[0] || color }]}
-                        onPress={onPress}
-                        onPressIn={handlePressIn}
-                        onPressOut={handlePressOut}
-                        activeOpacity={0.9}
-                    >
-                        {buttonContent}
-                    </TouchableOpacity>
-                </Animated.View>
-            );
-        }
+    // Gradient support - use fallback color if gradient provided but LinearGradient unavailable
+    if (gradient && gradient.length >= 2) {
+        // Always use solid color fallback - dynamic require can cause runtime errors
+        // LinearGradient should be imported statically if needed
+        const fallbackColor = gradient[0] || color;
+        return (
+            <Animated.View style={[styles.buttonContainer, animatedStyle, style]}>
+                <TouchableOpacity
+                    style={[styles.quickButton, { backgroundColor: fallbackColor }]}
+                    onPress={onPress}
+                    onPressIn={handlePressIn}
+                    onPressOut={handlePressOut}
+                    activeOpacity={0.9}
+                >
+                    {buttonContent}
+                </TouchableOpacity>
+            </Animated.View>
+        );
     }
 
     return (

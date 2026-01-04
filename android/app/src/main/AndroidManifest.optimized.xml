@@ -1,0 +1,186 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.bulksms.smsmanager">
+
+  <!-- Android 11+ package visibility for opening URLs in browser -->
+  <queries>
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="https" />
+    </intent>
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="http" />
+    </intent>
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="tel" />
+    </intent>
+  </queries>
+
+  <!-- INTERNET: Required for any network operations, analytics, and external services -->
+  <uses-permission android:name="android.permission.INTERNET" />
+
+  <!-- FOREGROUND SERVICE: Required for background SMS processing -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+  <!-- WAKE LOCK: Required to keep device awake during SMS sending operations -->
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+  <!-- POST NOTIFICATIONS: Required for Android 13+ notification permission -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+  <!-- SMS PERMISSIONS: Core functionality - sending and receiving SMS -->
+  <uses-permission android:name="android.permission.SEND_SMS" />
+  <uses-permission android:name="android.permission.RECEIVE_SMS" />
+  <uses-permission android:name="android.permission.READ_SMS" />
+
+  <!-- CELL BROADCAST: Optional - for emergency alerts (can be removed if not needed) -->
+  <uses-permission android:name="android.permission.READ_CELL_BROADCASTS" />
+  <uses-permission android:name="android.permission.RECEIVE_CELL_BROADCASTS" />
+
+  <!-- MMS SUPPORT: Required if app handles MMS messages -->
+  <uses-permission android:name="android.permission.RECEIVE_WAP_PUSH" />
+  <uses-permission android:name="android.permission.BROADCAST_WAP_PUSH" />
+
+  <!-- RESPOND VIA MESSAGE: Required for default SMS app functionality -->
+  <uses-permission android:name="android.permission.SEND_RESPOND_VIA_MESSAGE" />
+  <uses-permission android:name="android.permission.BROADCAST_SMS" />
+
+  <!-- CONTACTS: Required for contact picker and name resolution -->
+  <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+  <!-- PHONE STATE: Required for SIM slot detection and phone number validation -->
+  <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+  <!-- BOOT COMPLETED: Required for background services after device restart -->
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+  <!-- VIBRATE: Required for haptic feedback in notifications -->
+  <uses-permission android:name="android.permission.VIBRATE" />
+
+  <!-- REMOVED PERMISSIONS (Unnecessary for SMS functionality):
+       - READ_EXTERNAL_STORAGE/WRITE_EXTERNAL_STORAGE: Only needed for file uploads, should be requested at runtime
+       - READ_CALENDAR/WRITE_CALENDAR: Not needed for SMS functionality
+       - ACCESS_COARSE_LOCATION/ACCESS_FINE_LOCATION: Not needed for SMS functionality
+       - CALL_PHONE: Not needed for SMS functionality (app doesn't make calls)
+  -->
+
+  <!-- OVERLAY PERMISSION: Optional - only for heads-up notifications over other apps -->
+  <!-- Should be requested at runtime when needed, not declared here -->
+  <!-- <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> -->
+
+  <application
+      android:name=".MainApplication"
+      android:allowBackup="false"
+      android:icon="@mipmap/ic_launcher"
+      android:label="BulkSMS"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:supportsRtl="true"
+      android:usesCleartextTraffic="false"
+      android:networkSecurityConfig="@xml/network_security_config"
+      tools:replace="android:usesCleartextTraffic"
+      android:theme="@style/AppTheme">
+
+    <!-- Disable Firebase Analytics and Crashlytics data collection -->
+    <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" tools:replace="android:value" />
+    <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" tools:replace="android:value" />
+
+    <activity
+        android:name=".MainActivity"
+        android:exported="true"
+        android:windowSoftInputMode="adjustResize"
+        android:launchMode="singleTask">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="bulksms" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.SEND" />
+        <action android:name="android.intent.action.SENDTO" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="sms" />
+        <data android:scheme="smsto" />
+        <data android:scheme="mms" />
+        <data android:scheme="mmsto" />
+      </intent-filter>
+    </activity>
+
+    <!-- SMS RECEIVER: Required for receiving SMS messages when not default app -->
+    <receiver android:name=".SmsReceiver"
+              android:exported="true"
+              android:permission="android.permission.BROADCAST_SMS">
+      <intent-filter android:priority="999">
+        <action android:name="android.provider.Telephony.SMS_DELIVER" />
+      </intent-filter>
+    </receiver>
+
+    <!-- SMS RECEIVED: Allows receiving SMS when NOT the default app -->
+    <receiver android:name=".SmsReceivedReceiver"
+              android:exported="true">
+      <intent-filter android:priority="999">
+        <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+      </intent-filter>
+    </receiver>
+
+    <!-- MMS RECEIVER: Required for default SMS app to receive MMS -->
+    <receiver android:name=".MmsReceiver"
+              android:exported="true"
+              android:permission="android.permission.BROADCAST_WAP_PUSH">
+      <intent-filter>
+        <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
+        <data android:mimeType="application/vnd.wap.mms-message" />
+      </intent-filter>
+    </receiver>
+
+    <!-- BOOT RECEIVER: Restart background services after device reboot -->
+    <receiver android:name=".BootReceiver"
+              android:enabled="true"
+              android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+      </intent-filter>
+    </receiver>
+
+    <!-- SMS LISTENER SERVICE: Background SMS monitoring -->
+    <service android:name=".SmsListenerService"
+             android:exported="false"
+             android:foregroundServiceType="dataSync" />
+
+    <!-- RESPOND VIA MESSAGE SERVICE: Handle respond-via-message intents -->
+    <service android:name=".HeadlessSmsSendService"
+             android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE"
+             android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:scheme="sms" />
+        <data android:scheme="smsto" />
+        <data android:scheme="mms" />
+        <data android:scheme="mmsto" />
+      </intent-filter>
+    </service>
+
+    <!-- BACKGROUND SMS SENDER: Handles bulk SMS sending in background -->
+    <service android:name=".BackgroundSmsSenderService"
+             android:exported="false"
+             android:foregroundServiceType="dataSync" />
+
+    <!-- WorkManager foreground service -->
+    <service
+        android:name="androidx.work.impl.foreground.SystemForegroundService"
+        android:exported="false"
+        android:foregroundServiceType="dataSync"
+        tools:node="merge" />
+
+  </application>
+</manifest>

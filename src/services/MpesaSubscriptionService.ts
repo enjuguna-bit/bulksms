@@ -1,5 +1,7 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SecureStorageService } from "@/services/SecureStorageService";
 import { Platform } from "react-native";
+import { subscriptionManager } from "@/services/billing/SubscriptionManager";
+import { getPlanByAmount } from "@/services/billing/SubscriptionPlans";
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -25,7 +27,7 @@ interface UsedCodeEntry {
  */
 async function getUsedCodes(): Promise<UsedCodeEntry[]> {
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEYS.usedCodes);
+    const raw = await SecureStorageService.getItem(STORAGE_KEYS.usedCodes);
     if (!raw) return [];
     const codes = JSON.parse(raw) as UsedCodeEntry[];
     // Filter out expired entries
@@ -39,10 +41,19 @@ async function getUsedCodes(): Promise<UsedCodeEntry[]> {
 /**
  * Check if a transaction code has already been processed
  */
-async function isCodeAlreadyUsed(code: string, amount: number): Promise<boolean> {
+export async function isCodeAlreadyUsed(code: string, amount: number): Promise<boolean> {
   const usedCodes = await getUsedCodes();
   // Match on both code and amount to handle edge cases
   return usedCodes.some(c => c.code === code && c.amount === amount);
+}
+
+/**
+ * Check if a transaction code has already been processed (ignoring amount)
+ * Useful for checking status where amount might not be known yet
+ */
+export async function isTransactionIdUsed(code: string): Promise<boolean> {
+  const usedCodes = await getUsedCodes();
+  return usedCodes.some(c => c.code === code);
 }
 
 /**
@@ -56,7 +67,7 @@ async function markCodeAsUsed(code: string, amount: number): Promise<void> {
       amount,
       processedAt: Date.now(),
     });
-    await AsyncStorage.setItem(STORAGE_KEYS.usedCodes, JSON.stringify(usedCodes));
+    await SecureStorageService.setItem(STORAGE_KEYS.usedCodes, JSON.stringify(usedCodes));
     console.log(`[MpesaSubscriptionService] ✅ Marked code as used: ${code}`);
   } catch (e) {
     console.warn(`[MpesaSubscriptionService] Failed to mark code as used:`, e);
@@ -67,11 +78,12 @@ async function markCodeAsUsed(code: string, amount: number): Promise<void> {
 const now = () => Date.now();
 
 // Plan pricing - must match frontend MPESA_PLANS in constants/mpesa.ts
-// Frontend displays: 1 day = KES 200, 7 days = KES 900, 30 days = KES 3900
+// Frontend displays: 1 day = KES 200, 7 days = KES 900, 30 days = KES 1000 (special) or 3900
 const PLANS: Record<number, { name: string; days: number }> = {
   // Current production pricing (sync with frontend)
   200: { name: "daily", days: 1 },
   900: { name: "weekly", days: 7 },
+  1000: { name: "monthly_special", days: 30 }, // ⭐ Special 30-day offer at KES 1000
   3900: { name: "monthly", days: 30 },
   // Legacy pricing (for backwards compatibility with older transactions)
   1: { name: "daily", days: 1 },
@@ -81,8 +93,34 @@ const PLANS: Record<number, { name: string; days: number }> = {
 };
 
 
-function planForAmount(amount: number) {
-  return PLANS[amount as keyof typeof PLANS] || { name: "unknown", days: 0 };
+/**
+ * Get plan for amount paid - supports overpayment tolerance
+ * If user pays more than required, it finds the best matching plan
+ * Examples: Pay 209 → daily (200), Pay 950 → weekly (900)
+ */
+function planForAmount(amount: number): { name: string; days: number } {
+  // Check for exact match first
+  const exactMatch = PLANS[amount as keyof typeof PLANS];
+  if (exactMatch) return exactMatch;
+
+  // Get production plan amounts (>= 200) sorted descending
+  const planAmounts = Object.keys(PLANS)
+    .map(Number)
+    .filter(a => a >= 200)
+    .sort((a, b) => b - a);
+
+  // Find the highest plan amount that is <= the paid amount
+  for (const planAmount of planAmounts) {
+    if (amount >= planAmount) {
+      const plan = PLANS[planAmount as keyof typeof PLANS];
+      if (plan) {
+        console.log(`[MpesaSubscription] Amount KES ${amount} matched to ${plan.name} plan (requires KES ${planAmount})`);
+        return plan;
+      }
+    }
+  }
+
+  return { name: "unknown", days: 0 };
 }
 
 function parseSmsBody(body: string) {
@@ -100,17 +138,36 @@ function parseSmsBody(body: string) {
 }
 
 // ----------------------
-// 🔐 Security Config (P0 FIX - Upgraded from weak DJB2 to HMAC-SHA256)
+// 🔐 Security Config (P0 FIX - Device-Specific Integrity Key)
 // ----------------------
-// NOTE: In production, this key should come from a native secure enclave or server.
-// This is significantly stronger than the previous 32-bit hash but still client-side.
-const INTEGRITY_KEY = "BulkSMS_SecureKey_v2_" + "xK9#mL2$vP7@nQ4!";
+const INTEGRITY_KEY_STORAGE = "device_integrity_key_v2";
+
+/**
+ * Get or generate a unique device-specific integrity key.
+ * This ensures subscriptions are bound to this specific device installation.
+ */
+async function getIntegrityKey(): Promise<string> {
+  let key = await SecureStorageService.getItem(INTEGRITY_KEY_STORAGE);
+
+  if (!key) {
+    // Generate a strong random key (64 chars)
+    const array = new Uint32Array(8);
+    // Simple fallback random generation if crypto not available globally
+    const randomPart = () => Math.random().toString(36).substring(2);
+    key = Array(6).fill(0).map(randomPart).join(''); // ~60-70 chars
+
+    // Persist securely
+    await SecureStorageService.setItem(INTEGRITY_KEY_STORAGE, key);
+  }
+
+  return key;
+}
 
 /**
  * Generate HMAC-SHA256 hash of subscription data.
  * Falls back to enhanced hash if crypto is unavailable.
  */
-function generateHash(data: SubscriptionData): string {
+async function generateHash(data: SubscriptionData): Promise<string> {
   try {
     // Create deterministic string of critical fields
     const payload = JSON.stringify({
@@ -124,12 +181,14 @@ function generateHash(data: SubscriptionData): string {
 
     // Use a more robust hash algorithm (SHA-256 via simple implementation)
     // This is much stronger than the previous 32-bit DJB2 hash
-    const hash = sha256(payload + INTEGRITY_KEY);
+    const integrityKey = await getIntegrityKey();
+    const hash = sha256(payload + integrityKey);
     return hash;
   } catch (e) {
     console.warn('[MpesaSubscriptionService] Hash generation failed, using fallback:', e);
     // Fallback to enhanced version of original (still better than before)
-    const raw = `${data.code}|${data.amount}|${data.expiryAt}|${data.activatedAt}|${INTEGRITY_KEY}`;
+    const k = await getIntegrityKey();
+    const raw = `${data.code}|${data.amount}|${data.expiryAt}|${data.activatedAt}|${k}`;
     return enhancedHash(raw);
   }
 }
@@ -267,20 +326,43 @@ export type SubscriptionData = {
 // ----------------------
 // 🛡️ Secure Storage
 // ----------------------
+
+/**
+ * Atomic write for Code Usage + Subscription
+ * Prevents race conditions where code is marked used but subscription isn't saved.
+ */
+async function activateSubscriptionAtomic(sub: SubscriptionData, usedCodeEntry: UsedCodeEntry) {
+  // 1. Prepare Data
+  sub._hash = await generateHash(sub);
+  const subJson = JSON.stringify(sub);
+
+  // 2. Load current Used Codes to append
+  const currentUsedCodes = await getUsedCodes(); // This uses getItem internally
+  // Add new (but don't save yet)
+  currentUsedCodes.push(usedCodeEntry);
+  const usedCodesJson = JSON.stringify(currentUsedCodes);
+
+  // 3. ATOMIC WRITE
+  await SecureStorageService.multiSet([
+    [STORAGE_KEYS.subscription, subJson],
+    [STORAGE_KEYS.usedCodes, usedCodesJson]
+  ]);
+}
+
 async function saveSubscription(sub: SubscriptionData) {
   // 1. Generate hash before saving
-  sub._hash = generateHash(sub);
-  await AsyncStorage.setItem(STORAGE_KEYS.subscription, JSON.stringify(sub));
+  sub._hash = await generateHash(sub);
+  await SecureStorageService.setItem(STORAGE_KEYS.subscription, JSON.stringify(sub));
 }
 
 export async function getSubscriptionInfo(): Promise<SubscriptionData | null> {
-  const raw = await AsyncStorage.getItem(STORAGE_KEYS.subscription);
+  const raw = await SecureStorageService.getItem(STORAGE_KEYS.subscription);
   if (!raw) return null;
   try {
     const data = JSON.parse(raw) as SubscriptionData;
 
     // 2. Verify hash on read
-    const computed = generateHash(data);
+    const computed = await generateHash(data);
     if (data._hash !== computed) {
       console.warn("⚠️ Subscription data tampered! Invalidating.");
       await resetSubscription(); // Nuke the fake data
@@ -295,7 +377,7 @@ export async function getSubscriptionInfo(): Promise<SubscriptionData | null> {
 // ... (Keep SMS Parsing & Pending Logic intact) ...
 
 // ----------------------
-// 🚀 Activation Logic (Updated)
+// 🚀 Activation Logic (Updated with SubscriptionManager)
 // ----------------------
 export async function activateSubscriptionFromSms(body: string, arrivalTime?: number) {
   // Parse SMS body
@@ -314,7 +396,9 @@ export async function activateSubscriptionFromSms(body: string, arrivalTime?: nu
     };
   }
 
-  const plan = planForAmount(parsed.amount);
+  // Use new plan lookup
+  const planInfo = getPlanByAmount(parsed.amount);
+  const plan = planInfo ? { name: planInfo.name, days: planInfo.days } : planForAmount(parsed.amount);
 
   // Validate plan mapping
   if (plan.days === 0) {
@@ -325,35 +409,61 @@ export async function activateSubscriptionFromSms(body: string, arrivalTime?: nu
     };
   }
 
-  const nowTs = arrivalTime || now();
-  const newExpiry = nowTs + (plan.days * 24 * 60 * 60 * 1000);
-  const reason = `Activated ${plan.name} plan for KES ${parsed.amount}`;
+  // ✅ Use new SubscriptionManager for activation (handles extension logic)
+  try {
+    const result = await subscriptionManager.activateFromPayment(
+      parsed.amount,
+      parsed.code,
+      'mpesa'
+    );
 
-  const sub: SubscriptionData = {
-    code: parsed.code,
-    amount: parsed.amount,
-    planDays: plan.days,
-    payee: parsed.payee ?? null,
-    activatedAt: nowTs,
-    expiryAt: newExpiry,
-    source: "mpesa",
-  };
+    if (result.success && result.subscription) {
+      const reason = result.subscription.extendedFrom
+        ? `Extended subscription with ${plan.name} plan for KES ${parsed.amount}`
+        : `Activated ${plan.name} plan for KES ${parsed.amount}`;
 
-  // ✅ Mark transaction as processed BEFORE granting access (prevents race conditions)
-  await markCodeAsUsed(parsed.code, parsed.amount);
+      console.log(`[MpesaSubscriptionService] ✅ ${reason}`);
 
-  // Use secure save
-  await saveSubscription(sub);
+      // Also save to legacy storage for backwards compatibility
+      const legacySub: SubscriptionData = {
+        code: parsed.code,
+        amount: parsed.amount,
+        planDays: plan.days,
+        payee: parsed.payee ?? null,
+        activatedAt: result.subscription.activatedAt,
+        expiryAt: result.subscription.expiryAt,
+        source: "mpesa",
+      };
 
-  console.log(`[MpesaSubscriptionService] ✅ Subscription activated: ${reason}`);
-  return { ok: true, reason, sub };
+      const usedEntry: UsedCodeEntry = {
+        code: parsed.code,
+        amount: parsed.amount,
+        processedAt: Date.now()
+      };
+
+      await activateSubscriptionAtomic(legacySub, usedEntry);
+
+      return { ok: true, reason, sub: legacySub };
+    } else {
+      return {
+        ok: false,
+        reason: result.error || "Activation failed"
+      };
+    }
+  } catch (error) {
+    console.error("[Mpesa] Activation failed:", error);
+    return {
+      ok: false,
+      reason: "System error during activation. Please try again or contact support."
+    };
+  }
 }
 
 // ----------------------
 // 🧪 Dev Helpers (Secured)
 // ----------------------
 export async function resetSubscription() {
-  await AsyncStorage.multiRemove([
+  await SecureStorageService.multiRemove([
     STORAGE_KEYS.subscription,
     STORAGE_KEYS.usedCodes,
     STORAGE_KEYS.pending,

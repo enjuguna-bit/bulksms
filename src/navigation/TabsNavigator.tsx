@@ -14,7 +14,7 @@ import { Card } from '@/components/ui';
 
 // Screens
 import DashboardScreen from '../screens/main/dashboard';
-import InboxScreen from '../screens/main/inbox';
+import { InboxScreen } from '../screens/messaging';
 import CustomerDatabaseScreen from '../screens/main/customer-database';
 import ToolsScreen from '../screens/main/tools';
 import SettingsScreen from '../screens/main/settings';
@@ -55,9 +55,9 @@ export default function TabsNavigator() {
           options={{
             title: 'Dashboard',
             tabBarIcon: ({ color, size, focused }) => (
-              <LayoutGrid 
-                color={color} 
-                size={focused ? size + 2 : size} 
+              <LayoutGrid
+                color={color}
+                size={focused ? size + 2 : size}
                 strokeWidth={focused ? 2.5 : 2}
               />
             ),
@@ -70,8 +70,8 @@ export default function TabsNavigator() {
           options={{
             title: 'Inbox',
             tabBarIcon: ({ color, size, focused }) => (
-              <MessageSquare 
-                color={color} 
+              <MessageSquare
+                color={color}
                 size={focused ? size + 2 : size}
                 strokeWidth={focused ? 2.5 : 2}
               />
@@ -85,8 +85,8 @@ export default function TabsNavigator() {
           options={{
             title: 'Contacts',
             tabBarIcon: ({ color, size, focused }) => (
-              <Users 
-                color={color} 
+              <Users
+                color={color}
                 size={focused ? size + 2 : size}
                 strokeWidth={focused ? 2.5 : 2}
               />
@@ -100,8 +100,8 @@ export default function TabsNavigator() {
           options={{
             title: 'Tools',
             tabBarIcon: ({ color, size, focused }) => (
-              <Briefcase 
-                color={color} 
+              <Briefcase
+                color={color}
                 size={focused ? size + 2 : size}
                 strokeWidth={focused ? 2.5 : 2}
               />
@@ -115,8 +115,8 @@ export default function TabsNavigator() {
           options={{
             title: 'Settings',
             tabBarIcon: ({ color, size, focused }) => (
-              <Settings 
-                color={color} 
+              <Settings
+                color={color}
                 size={focused ? size + 2 : size}
                 strokeWidth={focused ? 2.5 : 2}
               />

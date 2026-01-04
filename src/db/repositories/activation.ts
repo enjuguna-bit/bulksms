@@ -45,7 +45,7 @@ export async function loadActivation(): Promise<{ token: string | null; trialEnd
     const database = getDB();
     const result = await database.execute('SELECT token, trialEnd FROM activation WHERE id=1;');
 
-    if (result.rows && result.rows.length > 0) {
+    if (result && result.rows && result.rows.length > 0) {
       const row = result.rows[0];
       return {
         token: (row.token as string) ?? null,

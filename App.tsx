@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { ActivityIndicator, View, StyleSheet, Text } from "react-native";
 
+// Initialize polyfills first (required for Node modules like @lipana/sdk)
+import "./src/polyfills";
+
 // Database initialization
 // DB init removed (handled in UnifiedStartupGate)
 
@@ -15,7 +18,6 @@ import { StatsProvider } from "./src/providers/StatsProvider";
 import { TransactionsProvider } from "./src/providers/TransactionsProvider";
 
 // NEW: Global message store (SQLite-backed)
-import { MessageProvider } from "./src/providers/MessageProvider";
 
 // NEW: Premium UI components
 import { ToastProvider } from "./src/components/ui/ToastProvider";
@@ -40,10 +42,7 @@ export default function App() {
           <BillingProvider>
             <TransactionsProvider>
               <StatsProvider>
-                {/* 👇 NEW: Wrap entire app in MessageProvider */}
-                <MessageProvider>
-                  <UnifiedStartupGate />
-                </MessageProvider>
+                <UnifiedStartupGate />
               </StatsProvider>
             </TransactionsProvider>
           </BillingProvider>

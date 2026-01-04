@@ -3,9 +3,9 @@
 // Enhanced auto-activation system for M-PESA & Lipana payments
 // -----------------------------------------------------
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SecureStorageService } from "@/services/SecureStorageService";
 import { Platform } from "react-native";
-import { activateSubscriptionFromSms, getSubscriptionInfo } from "./MpesaSubscriptionService";
+import { activateSubscriptionFromSms, getSubscriptionInfo, isTransactionIdUsed } from "./MpesaSubscriptionService";
 import { checkLipanaTransactionStatus } from "./lipanaPayment";
 
 // Storage keys for enhanced tracking
@@ -47,48 +47,92 @@ function parseEnhancedSmsBody(body: string): {
   time: string;
   source: string;
 } | null {
-  // Standard M-PESA format
-  const standardRegex = /confirmed\.you have sent ksh([\d,]+)\.\d+ to ([\d]+) ([\s\S]+?) on (\d{1,2}\/\d{1,2}\/\d{2}) at (\d{1,2}:\d{2} [AP]M)/i;
-  const standardMatch = body.match(standardRegex);
-  
-  if (standardMatch) {
+  // 🚫 Security: Reject common failure patterns immediately
+  const lowerBody = body.toLowerCase();
+  if (
+    lowerBody.includes("failed") ||
+    lowerBody.includes("insufficient funds") ||
+    lowerBody.includes("cancelled") ||
+    lowerBody.includes("reversed") ||
+    lowerBody.includes("error") ||
+    lowerBody.includes("declined")
+  ) {
+    return null; // Don't parse failure messages as success
+  }
+
+  // Standard M-PESA format (Received)
+  // Strict Start Anchor ^ (or close to it) prevents embedded message attacks
+  const receivedRegex = /^(?:[A-Z]{2})?([A-Z0-9]{10})\s*Confirmed\.?\s*You\s*have\s*received\s*Ksh([\d,]+(?:\.\d{2})?)\s*from\s*(.+?)\s*on\s*(\d{1,2}\/\d{1,2}\/\d{2,4})\s*at\s*(\d{1,2}:\d{2}\s*[AP]M)/i;
+  const receivedMatch = body.trim().match(receivedRegex);
+
+  if (receivedMatch) {
     return {
-      amount: parseInt(standardMatch[1].replace(/,/g, "")),
-      code: standardMatch[2],
-      payee: standardMatch[3].trim(),
-      date: standardMatch[4],
-      time: standardMatch[5],
-      source: "mpesa_standard",
+      amount: parseInt(receivedMatch[2].replace(/,/g, "")),
+      code: receivedMatch[1],
+      payee: receivedMatch[3].trim(),
+      date: receivedMatch[4],
+      time: receivedMatch[5],
+      source: "mpesa_received",
     };
   }
 
-  // Lipana payment confirmation format
-  const lipanaRegex = /lipana.*?payment.*?ksh([\d,]+).*?confirmed/i;
-  const lipanaMatch = body.match(lipanaRegex);
-  
+  // Lipana/Paybill payment confirmation (Paid)
+  // Example: TLMOY1MF53 Confirmed. Ksh1,000.00 sent to LIPANA TECHNOLOGIES  LIMITED for account TXN17664324821442A3K0F on 22/12/25 at 10:41 PM
+  // 1. Capture ID (flexible length)
+  // 2. Capture Amount
+  // 3. Capture Payee (and validate later)
+  // 4. Capture Account (flexible)
+  const paidRegex = /^([A-Z0-9]+)\s+Confirmed\.\s+Ksh([\d,.]+)\s+sent\s+to\s+(.+?)\s+for\s+account\s+(.+?)\s+on\s+(\d{1,2}\/\d{1,2}\/\d{2,4})\s+at\s+(\d{1,2}:\d{2}\s*[AP]M)/i;
+  const paidMatch = body.trim().match(paidRegex);
+
+  if (paidMatch) {
+    const rawPayee = paidMatch[3].trim();
+
+    // ✅ VALIDATION: Ensure payee is accurate (LIPANA)
+    if (!rawPayee.toUpperCase().includes("LIPANA")) {
+      console.log("[EnhancedPayment] Rejected non-Lipana payee:", rawPayee);
+      return null;
+    }
+
+    return {
+      amount: parseInt(paidMatch[2].replace(/,/g, "")),
+      code: paidMatch[1], // Transaction ID
+      payee: rawPayee,
+      date: paidMatch[5],
+      time: paidMatch[6],
+      source: "mpesa_paid",
+    };
+  }
+
+  // Lipana specific pattern (fallback for other variations)
+  // Example: QBL0000000 Confirmed. Ksh1,000.00 sent to ...
+  const genericPaidRegex = /^([A-Z0-9]{10})\s*Confirmed\.?\s*Ksh([\d,]+(?:\.\d{2})?)\s*sent\s*to\s*(.+?)\s*on\s*(\d{1,2}\/\d{1,2}\/\d{2,4})\s*at\s*(\d{1,2}:\d{2}\s*[AP]M)/i;
+  const genericPaidMatch = body.trim().match(genericPaidRegex);
+
+  if (genericPaidMatch) {
+    return {
+      amount: parseInt(genericPaidMatch[2].replace(/,/g, "")),
+      code: genericPaidMatch[1],
+      payee: genericPaidMatch[3].trim(),
+      date: genericPaidMatch[4],
+      time: genericPaidMatch[5],
+      source: "mpesa_paid",
+    };
+  }
+
+  // Lipana specific pattern (fallback) - TIGHTENED
+  // Must start with "Lipana payment" and end with "confirmed" (or close)
+  const lipanaRegex = /^Lipana payment of KES ([\d,]+) confirmed\. Transaction ID: ([A-Z0-9]+)$/i;
+  const lipanaMatch = body.trim().match(lipanaRegex);
+
   if (lipanaMatch) {
     return {
       amount: parseInt(lipanaMatch[1].replace(/,/g, "")),
-      code: "LIPANA",
+      code: lipanaMatch[2] || "LIPANA_DETECTED",
       payee: "Lipana Payment",
       date: new Date().toLocaleDateString(),
       time: new Date().toLocaleTimeString(),
-      source: "lipana",
-    };
-  }
-
-  // Generic M-PESA format
-  const genericRegex = /ksh([\d,]+).*?sent.*?([a-zA-Z0-9]{6,})/i;
-  const genericMatch = body.match(genericRegex);
-  
-  if (genericMatch) {
-    return {
-      amount: parseInt(genericMatch[1].replace(/,/g, "")),
-      code: genericMatch[2],
-      payee: "Unknown",
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString(),
-      source: "mpesa_generic",
+      source: "lipana_fallback",
     };
   }
 
@@ -107,11 +151,11 @@ export async function trackPendingPayment(payment: Omit<PendingPayment, "id" | "
     expiresAt: Date.now() + (15 * 60 * 1000), // 15 minutes expiry
   };
 
-  const existing = await AsyncStorage.getItem(STORAGE_KEYS.pendingPayments);
+  const existing = await SecureStorageService.getItem(STORAGE_KEYS.pendingPayments);
   const pending = existing ? JSON.parse(existing) : [];
   pending.push(pendingPayment);
-  
-  await AsyncStorage.setItem(STORAGE_KEYS.pendingPayments, JSON.stringify(pending));
+
+  await SecureStorageService.setItem(STORAGE_KEYS.pendingPayments, JSON.stringify(pending));
   return id;
 }
 
@@ -140,11 +184,11 @@ export async function activateFromEnhancedSms(body: string, arrivalTime?: number
 
     // Activate subscription using existing logic
     const activationResult = await activateSubscriptionFromSms(body, arrivalTime);
-    
+
     if (activationResult.ok) {
       // Update payment status
       await updatePaymentStatus(paymentId, "completed");
-      
+
       // Log successful activation
       await logActivation({
         id: `log_${Date.now()}`,
@@ -165,7 +209,7 @@ export async function activateFromEnhancedSms(body: string, arrivalTime?: number
     } else {
       // Update payment status to failed
       await updatePaymentStatus(paymentId, "failed");
-      
+
       // Log failed activation
       await logActivation({
         id: `log_${Date.now()}`,
@@ -199,6 +243,16 @@ export async function checkAndActivateLipanaPayment(transactionId: string): Prom
   reason: string;
 }> {
   try {
+    // 🛡️ IDEMPOTENCY CHECK
+    const alreadyProcessed = await isTransactionIdUsed(transactionId);
+    if (alreadyProcessed) {
+      console.log(`[EnhancedPayment] Transaction ${transactionId} already processed.`);
+      return {
+        success: true,
+        reason: "Transaction already processed",
+      };
+    }
+
     // Track the payment check
     const paymentId = await trackPendingPayment({
       type: "lipana",
@@ -209,12 +263,12 @@ export async function checkAndActivateLipanaPayment(transactionId: string): Prom
 
     // Check transaction status
     const statusResult = await checkLipanaTransactionStatus(transactionId);
-    
+
     if (statusResult.success && statusResult.status === "completed") {
       // Create a simulated SMS activation for Lipana
       const simulatedSmsBody = `Lipana payment of KES 3,900 confirmed. Transaction ID: ${transactionId}`;
       const activationResult = await activateFromEnhancedSms(simulatedSmsBody);
-      
+
       if (activationResult.success) {
         return {
           success: true,
@@ -242,13 +296,13 @@ export async function checkAndActivateLipanaPayment(transactionId: string): Prom
  */
 async function updatePaymentStatus(paymentId: string, status: "completed" | "failed"): Promise<void> {
   try {
-    const existing = await AsyncStorage.getItem(STORAGE_KEYS.pendingPayments);
+    const existing = await SecureStorageService.getItem(STORAGE_KEYS.pendingPayments);
     const pending = existing ? JSON.parse(existing) : [];
-    
+
     const index = pending.findIndex((p: PendingPayment) => p.id === paymentId);
     if (index !== -1) {
       pending[index].status = status;
-      await AsyncStorage.setItem(STORAGE_KEYS.pendingPayments, JSON.stringify(pending));
+      await SecureStorageService.setItem(STORAGE_KEYS.pendingPayments, JSON.stringify(pending));
     }
   } catch (error) {
     console.error("[EnhancedPaymentService] Failed to update payment status:", error);
@@ -260,16 +314,16 @@ async function updatePaymentStatus(paymentId: string, status: "completed" | "fai
  */
 async function logActivation(entry: ActivationLogEntry): Promise<void> {
   try {
-    const existing = await AsyncStorage.getItem(STORAGE_KEYS.activationLog);
+    const existing = await SecureStorageService.getItem(STORAGE_KEYS.activationLog);
     const logs = existing ? JSON.parse(existing) : [];
     logs.push(entry);
-    
+
     // Keep only last 50 logs
     if (logs.length > 50) {
       logs.splice(0, logs.length - 50);
     }
-    
-    await AsyncStorage.setItem(STORAGE_KEYS.activationLog, JSON.stringify(logs));
+
+    await SecureStorageService.setItem(STORAGE_KEYS.activationLog, JSON.stringify(logs));
   } catch (error) {
     console.error("[EnhancedPaymentService] Failed to log activation:", error);
   }
@@ -280,13 +334,13 @@ async function logActivation(entry: ActivationLogEntry): Promise<void> {
  */
 export async function cleanupExpiredPayments(): Promise<void> {
   try {
-    const existing = await AsyncStorage.getItem(STORAGE_KEYS.pendingPayments);
+    const existing = await SecureStorageService.getItem(STORAGE_KEYS.pendingPayments);
     const pending = existing ? JSON.parse(existing) : [];
-    
+
     const now = Date.now();
     const active = pending.filter((p: PendingPayment) => p.expiresAt > now);
-    
-    await AsyncStorage.setItem(STORAGE_KEYS.pendingPayments, JSON.stringify(active));
+
+    await SecureStorageService.setItem(STORAGE_KEYS.pendingPayments, JSON.stringify(active));
   } catch (error) {
     console.error("[EnhancedPaymentService] Failed to cleanup expired payments:", error);
   }
@@ -297,7 +351,7 @@ export async function cleanupExpiredPayments(): Promise<void> {
  */
 export async function getActivationLogs(): Promise<ActivationLogEntry[]> {
   try {
-    const existing = await AsyncStorage.getItem(STORAGE_KEYS.activationLog);
+    const existing = await SecureStorageService.getItem(STORAGE_KEYS.activationLog);
     return existing ? JSON.parse(existing) : [];
   } catch (error) {
     console.error("[EnhancedPaymentService] Failed to get activation logs:", error);
@@ -310,7 +364,7 @@ export async function getActivationLogs(): Promise<ActivationLogEntry[]> {
  */
 export async function getPendingPayments(): Promise<PendingPayment[]> {
   try {
-    const existing = await AsyncStorage.getItem(STORAGE_KEYS.pendingPayments);
+    const existing = await SecureStorageService.getItem(STORAGE_KEYS.pendingPayments);
     return existing ? JSON.parse(existing) : [];
   } catch (error) {
     console.error("[EnhancedPaymentService] Failed to get pending payments:", error);

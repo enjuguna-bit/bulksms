@@ -4,11 +4,13 @@
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { Check, CheckCheck, Clock } from "lucide-react-native";
 import { formatTimestamp } from "@/utils/messageFormatters";
-import type { MessageRow } from "@/db/database";
+import type { Message } from "@/db/messaging";
+import { useThemeSettings } from "@/theme/ThemeProvider";
 
 export interface MessageBubbleProps {
-  msg: MessageRow;
+  msg: Message;
   isMe: boolean;
   highlight?: boolean;
   searchTerm?: string;
@@ -28,27 +30,32 @@ export default function MessageBubble({
   highlight,
   searchTerm = "",
 }: MessageBubbleProps) {
-  const statusIcon =
-    msg.status === "sent"
-      ? "✓"
-      : msg.status === "delivered"
-        ? "✓✓"
-        : msg.status === "failed"
-          ? "⚠️"
-          : "";
+  const { colors } = useThemeSettings();
 
-  const parts = splitAndHighlight(msg.body, searchTerm);
+  const renderStatus = () => {
+    if (!isMe) return null;
+
+    if (msg.status === "pending") return <Clock size={12} color="rgba(255,255,255,0.7)" />;
+    if (msg.status === "sent") return <Check size={14} color="rgba(255,255,255,0.7)" />;
+    if (msg.status === "delivered") return <CheckCheck size={14} color="rgba(255,255,255,0.7)" />; // delivered
+    if (msg.status === "failed") return <Text style={{ fontSize: 10 }}>⚠️</Text>;
+
+    // Read status (Blue ticks) would be conditional color
+    return <CheckCheck size={14} color="#53bdeb" />;
+  };
+
+  const parts = splitAndHighlight(msg.body || "", searchTerm);
 
   return (
     <View
       style={[
         styles.bubble,
-        isMe ? styles.myBubble : styles.theirBubble,
+        isMe ? { backgroundColor: '#005c4b', alignSelf: 'flex-end' } : { backgroundColor: colors.card, alignSelf: 'flex-start' },
         highlight ? styles.highlight : null,
       ]}
     >
       {/* Highlighted message text */}
-      <Text style={[styles.text, isMe && styles.myText]}>
+      <Text style={[styles.text, { color: isMe ? '#fff' : colors.text }]}>
         {parts.map((p, idx) => {
           const isMatch =
             searchTerm &&
@@ -67,8 +74,12 @@ export default function MessageBubble({
 
       {/* Footer: time + status */}
       <View style={styles.footer}>
-        <Text style={styles.time}>{formatTimestamp(msg.timestamp)}</Text>
-        {isMe && <Text style={styles.status}>{statusIcon}</Text>}
+        <Text style={[styles.time, { color: isMe ? 'rgba(255,255,255,0.6)' : colors.subText }]}>
+          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </Text>
+        <View style={{ marginLeft: 4 }}>
+          {renderStatus()}
+        </View>
       </View>
     </View>
   );
@@ -80,49 +91,37 @@ export default function MessageBubble({
 const styles = StyleSheet.create({
   bubble: {
     maxWidth: "80%",
-    padding: 10,
-    borderRadius: 14,
-    marginBottom: 10,
-  },
-  myBubble: {
-    alignSelf: "flex-end",
-    backgroundColor: "#4f46e5",
-  },
-  myText: {
-    color: "#fff",
-  },
-  theirBubble: {
-    alignSelf: "flex-start",
-    backgroundColor: "#e5e7eb",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    marginBottom: 4,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
   },
   text: {
-    color: "#111",
-    fontSize: 16,
+    fontSize: 15,
+    lineHeight: 20,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 4,
+    alignItems: "center",
+    marginTop: 2,
+    gap: 2,
   },
   time: {
     fontSize: 11,
-    color: "#444",
   },
-  status: {
-    fontSize: 11,
-    color: "#fff",
-    marginLeft: 4,
-  },
-
-  // 🔍 Highlight bubble border
   highlight: {
     borderWidth: 2,
     borderColor: "#fde047", // yellow ring
   },
-
-  // 🔍 Highlight matched text inside bubble
   highlightText: {
     backgroundColor: "#fef08a",
     fontWeight: "700",
+    color: "#000",
   },
 });

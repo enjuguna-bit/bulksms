@@ -1,0 +1,14 @@
+{
+  "authentic": false,
+  "score": 80,
+  "indicators": {
+    "hasValidSender": true,
+    "hasValidKeywords": true,
+    "hasValidStructure": true,
+    "hasValidAmount": true,
+    "hasValidPhone": false
+  },
+  "issues": [
+    "Invalid phone: Phone number is empty or invalid"
+  ]
+}

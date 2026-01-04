@@ -52,10 +52,23 @@ export async function getThreadsList(limit = 50, offset = 0): Promise<MessageThr
 export async function getThreadDetails(threadId: string | number): Promise<MessageThread> {
     // Normalize the thread ID
     const normalizedId = normalizeThreadId(threadId);
-    
+
+    // Early return if no valid thread ID
+    if (!normalizedId) {
+        console.warn("[getThreadDetails] No valid threadId provided");
+        return {
+            threadId: "",
+            address: "",
+            lastMessage: "",
+            lastTimestamp: 0,
+            unread: 0,
+            messages: [],
+        };
+    }
+
     // Try to get messages by thread ID first
     let messages = await getMessagesByThreadId(normalizedId, 1000);
-    
+
     // If no messages found by threadId, try by address (for phone number lookups)
     if (messages.length === 0 && isValidThreadId(threadId)) {
         messages = await getMessagesByAddressComplete(normalizedId, 1000);

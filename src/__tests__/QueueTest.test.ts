@@ -14,7 +14,8 @@ jest.mock('@/db/repositories/smsQueue', () => ({
     getPendingMessages: jest.fn(),
     removeMessage: jest.fn(),
     markMessageFailed: jest.fn(),
-    enqueueMessage: jest.fn()
+    enqueueMessage: jest.fn(),
+    getQueueStats: jest.fn(() => Promise.resolve({ pending: 0, failed: 0, exhausted: 0, total: 0 })),
 }));
 
 describe('SMS Queue Logic', () => {
@@ -56,7 +57,7 @@ describe('SMS Queue Logic', () => {
         // Verify
         expect(count).toBe(0);
         expect(require('@/db/repositories/smsQueue').removeMessage).not.toHaveBeenCalled();
-        expect(require('@/db/repositories/smsQueue').markMessageFailed).toHaveBeenCalledWith(102);
+        expect(require('@/db/repositories/smsQueue').markMessageFailed).toHaveBeenCalledWith(102, expect.any(Number));
     });
 });
 

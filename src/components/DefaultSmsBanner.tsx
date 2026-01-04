@@ -10,7 +10,7 @@ import {
   AppState,
   ActivityIndicator,
 } from "react-native";
-import { isDefaultSmsApp, requestDefaultSmsApp } from "@/native/smsRole";
+import { isDefaultSmsApp, promptDefaultSmsApp } from "@/services/defaultSmsRole";
 
 export default function DefaultSmsBanner() {
   const [isDefault, setIsDefault] = useState(true);
@@ -49,7 +49,7 @@ export default function DefaultSmsBanner() {
     if (loading) return;
     setLoading(true);
     try {
-      await requestDefaultSmsApp();
+      await promptDefaultSmsApp();
       setTimeout(async () => {
         safeCheck();
         setLoading(false);

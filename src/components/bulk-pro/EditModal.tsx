@@ -9,12 +9,7 @@ import {
 } from "react-native";
 import { useThemeSettings } from "@/theme/ThemeProvider";
 
-export type Recipient = {
-    name: string;
-    phone: string;
-    amount?: number | null;
-    edited?: boolean;
-};
+import { Recipient } from "@/types/bulkSms";
 
 type FieldProps = React.ComponentProps<typeof TextInput> & {
     label?: string;

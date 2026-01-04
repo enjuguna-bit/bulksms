@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useThemeSettings } from '@/theme/ThemeProvider';
@@ -34,6 +34,23 @@ export const Toast: React.FC<ToastProps> = ({
   const [progressAnim] = useState(new Animated.Value(1));
   const [translateX] = useState(new Animated.Value(0));
 
+  const hideToast = useCallback(() => {
+    const slideOutValue = position === 'bottom' ? 100 : (position === 'center' ? 0 : -100);
+    
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: slideOutValue,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => onHide());
+  }, [fadeAnim, slideAnim, position, onHide]);
+
   useEffect(() => {
     // Calculate initial position based on toast position
     const initialSlideValue = position === 'bottom' ? 100 : (position === 'center' ? 0 : -100);
@@ -68,24 +85,7 @@ export const Toast: React.FC<ToastProps> = ({
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [position, showProgress, duration]);
-
-  const hideToast = () => {
-    const slideOutValue = position === 'bottom' ? 100 : (position === 'center' ? 0 : -100);
-    
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: slideOutValue,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start(() => onHide());
-  };
+  }, [position, showProgress, duration, fadeAnim, slideAnim, progressAnim, hideToast]);
 
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationX: translateX } }],

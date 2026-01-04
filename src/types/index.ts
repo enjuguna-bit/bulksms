@@ -5,6 +5,11 @@
 // ------------------------------------------------------
 
 // ======================================================
+// 📤 Bulk SMS Upload Persistence Types
+// ======================================================
+export * from "./bulkSms";
+
+// ======================================================
 // 📱 Phonebook Contact
 // ======================================================
 
@@ -89,9 +94,11 @@ export interface SendResult {
 // ======================================================
 
 export type ChatRouteParams = {
-  threadId: number;
+  threadId?: number;
+  conversationId?: number;
   address: string;
   name?: string;
+  initialMessage?: any;
 };
 
 export type RootStackParamList = {
@@ -99,6 +106,7 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Expired: undefined;
   Paywall: undefined;
+  Subscription: undefined;
   PaymentDashboard: undefined;
   ThreadsScreen: undefined;
   ChatScreen: ChatRouteParams;
@@ -107,6 +115,20 @@ export type RootStackParamList = {
   Transactions: undefined;
   Inbox: undefined;
   CustomerDatabase: undefined;
+  ContactPicker: { mode: 'single' | 'multiple'; onSelect?: any };
+  TransactionCleaner: undefined;
+  DataExport: undefined;
+  SystemHealth: undefined;
+  MpesaParserTool: undefined;
+  SmsScheduler: undefined;
   Debug: undefined;
+  LipanaSettings: undefined;
+  Billing: undefined;
   Tabs: undefined;
+  SplitContacts: undefined;
+  CampaignList: undefined;
+  CampaignDetail: { campaignId: number };
+  CreateCampaign: undefined;
+  Blacklist: undefined;
+  InboxScanner: undefined;
 };

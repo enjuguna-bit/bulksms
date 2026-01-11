@@ -51,3 +51,13 @@
 # PDFBox library keep rules (fixes R8 compilation errors)
 -dontwarn com.gemalto.jp2.JP2Decoder
 -keep class com.tom_roush.pdfbox.** { *; }
+
+# Reanimated
+-keep class com.swmansion.reanimated.** { *; }
+-keep class com.facebook.react.turbo.** { *; }
+
+# Gesture Handler
+-keep class com.swmansion.gesturehandler.** { *; }
+
+# If you use React Native Screens (likely used by your navigation)
+-keep class com.swmansion.rnscreens.** { *; }

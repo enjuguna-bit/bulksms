@@ -9,16 +9,20 @@ import type { ContactRecord, ProcessContactsResult, ExcelRow } from "@/types/bul
 /**
  * Phone number validation pattern for Kenyan numbers
  * Supports: 07XXXXXXXX, 01XXXXXXXX, +254XXXXXXXXX, 254XXXXXXXXX
+ * Kenyan mobile numbers: +254 + 9 digits (total 12 digits)
+ * Local format: 0 + 9 digits (total 10 digits)
  */
-const PHONE_PATTERN = /^(?:\+?254|0)[17]\d{8}$/;
+const PHONE_PATTERN = /^(?:\+?254|0)(10|11|7[0-9])\d{7}$/;
 
 /**
  * Validate a phone number
+ * Uses normalizePhone to check if the number can be properly normalized
  */
 export function validatePhoneNumber(phone: string): boolean {
     if (!phone) return false;
     const normalized = normalizePhone(phone);
-    return PHONE_PATTERN.test(normalized);
+    // If normalizePhone returns a non-empty string, consider it valid
+    return normalized.length > 0 && normalized.startsWith('+');
 }
 
 /**

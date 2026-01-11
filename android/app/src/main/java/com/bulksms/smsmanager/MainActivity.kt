@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultReactActivityDelegate
+// Expo ReactActivityDelegateWrapper removed - using standard React Native
 
 class MainActivity : ReactActivity() {
 
@@ -46,17 +47,24 @@ class MainActivity : ReactActivity() {
       promptDefaultSmsRole()
     }
 
-    // Start server
-    try {
-      server = LocalSmsServer(this)
-      server?.start()
-      
-      val wifiManager = getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
-      val ipAddress = android.text.format.Formatter.formatIpAddress(wifiManager.connectionInfo.ipAddress)
-      Toast.makeText(this, "Server running at http://$ipAddress:8080", Toast.LENGTH_LONG).show()
-    } catch (e: Exception) {
-      Toast.makeText(this, "Failed to start server: ${e.message}", Toast.LENGTH_SHORT).show()
-    }
+    // Start server in background thread to avoid blocking UI
+    Thread {
+      try {
+        server = LocalSmsServer(this)
+        server?.start()
+        
+        val wifiManager = getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+        val ipAddress = android.text.format.Formatter.formatIpAddress(wifiManager.connectionInfo.ipAddress)
+        
+        runOnUiThread {
+          Toast.makeText(this, "Server running at http://$ipAddress:8080", Toast.LENGTH_LONG).show()
+        }
+      } catch (e: Exception) {
+        runOnUiThread {
+          Toast.makeText(this, "Failed to start server: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+      }
+    }.start()
   }
 
   override fun onDestroy() {
@@ -117,7 +125,6 @@ class MainActivity : ReactActivity() {
       this,
       mainComponentName,
       // Fabric disabled for now to keep Old Architecture stable
-      false,
       false
     )
   }

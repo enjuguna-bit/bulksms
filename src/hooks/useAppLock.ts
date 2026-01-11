@@ -20,6 +20,15 @@ export function useAppLock() {
     // 1. Check Support & Load State
     useEffect(() => {
         let mounted = true;
+
+        // 🛡️ Safety Timeout: Force ready if storage/native hangs
+        const safetyTimeout = setTimeout(() => {
+            if (mounted) {
+                console.warn("[AppLock] Init timed out, forcing ready state");
+                setIsReady(true);
+            }
+        }, 2000);
+
         (async () => {
             try {
                 // Check Hardware
@@ -42,10 +51,14 @@ export function useAppLock() {
                 console.warn("[AppLock] Init failed", e);
             } finally {
                 if (mounted) setIsReady(true);
+                clearTimeout(safetyTimeout);
             }
         })();
 
-        return () => { mounted = false; };
+        return () => {
+            mounted = false;
+            clearTimeout(safetyTimeout);
+        };
     }, []);
 
     // 2. Handle App State (Auto-Lock)

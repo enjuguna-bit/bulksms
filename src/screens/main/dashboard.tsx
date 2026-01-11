@@ -12,7 +12,8 @@ import {
   Alert,
   ListRenderItem,
   ScrollView,
-  StatusBar
+  StatusBar,
+  RefreshControl,
 } from "react-native";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -76,9 +77,9 @@ const StatCard = memo(
     icon: any;
   }) => {
     const numericValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0 : value;
-    
+
     return (
-      <AnimatedStatCard 
+      <AnimatedStatCard
         value={numericValue}
         label={label}
         color={color}
@@ -416,7 +417,7 @@ function DashboardContent() {
       messagesPerMinute: 4.2,
       cost: 122.5
     });
-    
+
     setActivities([
       { id: '1', type: 'sms', status: 'success', phone: '+254712345678', timestamp: Date.now() - 10000 },
       { id: '2', type: 'mpesa', status: 'success', phone: '+254712345679', timestamp: Date.now() - 30000, amount: 1500 },
@@ -432,7 +433,52 @@ function DashboardContent() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar backgroundColor={kenyaColors.safaricomGreen} barStyle="light-content" />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      {/* Modern Header Section */}
+      <View style={[styles.headerSection, { backgroundColor: 'rgba(67,176,42,0.08)' }]}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerTop}>
+            <View style={styles.headerTextContainer}>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>
+                Dashboard
+              </Text>
+              <Text style={[styles.headerSubtitle, { color: colors.subText }]}>
+                Business Overview
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleManualRefresh}
+              style={[styles.refreshButton, { backgroundColor: kenyaColors.safaricomGreen }]}
+              disabled={loading}
+            >
+              <RefreshCw
+                size={20}
+                color="#fff"
+                style={loading ? styles.spinningIcon : undefined}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Welcome Message */}
+          <View style={styles.welcomeSection}>
+            <Text style={[styles.welcomeText, { color: colors.text }]}>
+              Welcome back! Here's your business at a glance.
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={handleManualRefresh}
+            colors={[kenyaColors.safaricomGreen]}
+            tintColor={kenyaColors.safaricomGreen}
+          />
+        }
+      >
 
         {/* Inspirational Quote Widget */}
         <QuotesWidget />
@@ -440,65 +486,84 @@ function DashboardContent() {
         {/* Network Monitor Widget - Safaricom Focus */}
         <NetworkWidget />
 
-        {/* Statistics Cards */}
+        {/* Statistics Cards with Modern Layout */}
         {loading && initialLoad ? (
-          <>
+          <View style={styles.statsSkeleton}>
             <SkeletonStatCard />
             <SkeletonStatCard />
-          </>
+          </View>
         ) : (
-          <>
+          <View style={styles.statsContainer}>
             <StatisticsRow cards={statCardsRow1} />
             <StatisticsRow cards={statCardsRow2} />
-          </>
+          </View>
         )}
 
-        {/* New Components */}
-        <SmsVolumeChart data={chartData} />
-        
-        <PerformanceWidgets 
-          deliveryRate={stats.deliveryRate} 
-          messagesPerMinute={stats.messagesPerMinute} 
-          estimatedCost={stats.cost} 
-        />
-        
-        <ActivityFeed activities={activities} />
-
-        {/* Quick Actions Grid */}
-        <Text style={styles.sectionTitle}>
-          Quick Actions
-        </Text>
-
-        <QuickActionsGrid actions={quickActions} />
-
-        {/* Real Data Widgets Row */}
-        <View style={styles.widgetRow}>
-          <CalendarWidget compact />
-          <WeatherWidget compact />
+        {/* Analytics Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text, fontWeight: '900' }]}>
+            📊 Analytics
+          </Text>
+          <SmsVolumeChart data={chartData} />
         </View>
 
-        {/* Logs Section */}
-        <Card variant="elevated" style={styles.logsCard}>
-          <View style={styles.cardHeader}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>
-              Recent Logs
-            </Text>
-            <TouchableOpacity onPress={handleClearLogs} disabled={loading}>
-              <Text style={{ color: kenyaColors.reportRed, fontWeight: '600' }}>Clear All</Text>
-            </TouchableOpacity>
+        {/* Performance & Activity Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text, fontWeight: '900' }]}>
+            ⚡ Performance
+          </Text>
+          <PerformanceWidgets
+            deliveryRate={stats.deliveryRate}
+            messagesPerMinute={stats.messagesPerMinute}
+            estimatedCost={stats.cost}
+          />
+
+          <ActivityFeed activities={activities} />
+        </View>
+
+        {/* Quick Actions Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            🚀 Quick Actions
+          </Text>
+          <QuickActionsGrid actions={quickActions} />
+        </View>
+
+        {/* Widgets Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            📱 Widgets
+          </Text>
+          <View style={styles.widgetRow}>
+            <CalendarWidget compact />
+            <WeatherWidget compact />
           </View>
+        </View>
 
-          {loading && initialLoad ? (
-            <SkeletonListLoader count={3} cardType="simple" />
-          ) : logs.length === 0 ? (
-            <EmptyState type="logs" />
-          ) : (
-            <FlatList {...optimizedListProps} scrollEnabled={false} />
-          )}
-        </Card>
+        {/* Recent Activity Section */}
+        <View style={styles.section}>
+          <Card variant="elevated" style={styles.logsCard}>
+            <View style={styles.cardHeader}>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>
+                📋 Recent Activity
+              </Text>
+              <TouchableOpacity onPress={handleClearLogs} disabled={loading}>
+                <Text style={{ color: kenyaColors.reportRed, fontWeight: '600' }}>Clear All</Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Bottom padding for ScrollView */}
-        <View style={{ height: 20 }} />
+            {loading && initialLoad ? (
+              <SkeletonListLoader count={3} cardType="simple" />
+            ) : logs.length === 0 ? (
+              <EmptyState type="logs" />
+            ) : (
+              <FlatList {...optimizedListProps} scrollEnabled={false} />
+            )}
+          </Card>
+        </View>
+
+        {/* Bottom spacing */}
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -509,8 +574,191 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    padding: 20,
+    paddingTop: 0,
   },
+
+  // Modern Header Section
+  headerSection: {
+    paddingTop: 60,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  headerContent: {
+    paddingHorizontal: 20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  welcomeSection: {
+    marginTop: 8,
+  },
+  welcomeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    opacity: 0.8,
+  },
+  refreshButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  spinningIcon: {
+    transform: [{ rotate: '45deg' }],
+  },
+
+  // Modern Sections
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 16,
+    marginTop: 8,
+  },
+
+  // Statistics
+  statsContainer: {
+    marginBottom: 24,
+  },
+  statsSkeleton: {
+    marginBottom: 24,
+  },
+  row: {
+    flexDirection: "row",
+    gap: 16,
+    marginBottom: 16,
+  },
+
+  // Quick Actions
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    marginBottom: 8,
+  },
+  gridItem: {
+    width: '31%',
+    marginBottom: 8,
+  },
+  quickButton: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  buttonIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+  buttonLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: 'center',
+    color: '#333',
+    lineHeight: 14,
+  },
+
+  // Widgets
+  widgetRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 8,
+  },
+
+  // Activity Logs
+  logsCard: {
+    marginTop: 8,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+  },
+
+  // Log Items
+  logItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
+  },
+  logPhone: {
+    fontSize: 16,
+    fontWeight: "600",
+    flex: 1,
+  },
+  logTime: {
+    fontSize: 13,
+    marginTop: 4,
+    opacity: 0.7,
+  },
+  logStatus: {
+    fontSize: 14,
+    fontWeight: "700",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+
+  // Legacy styles (keeping for compatibility)
   toolbar: {
     backgroundColor: 'white',
     paddingHorizontal: 16,
@@ -539,38 +787,11 @@ const styles = StyleSheet.create({
     color: '#666',
     fontWeight: '600',
   },
-  refreshButton: {
-    padding: 8,
-    backgroundColor: '#F0F9F0',
-    borderRadius: 20,
-  },
-  row: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 12,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 16,
-  },
-  gridItem: {
-    width: '31%', // 3 items per row approx
-    marginBottom: 4,
-  },
-  sectionTitle: {
-    fontWeight: "800",
-    fontSize: 18,
-    marginBottom: 12,
-    color: '#333',
-    marginTop: 8,
-  },
   statCard: {
     flex: 1,
     borderRadius: 16,
     padding: 16,
-    elevation: 8, // High elevation for Kenyan sun visibility logic
+    elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -611,40 +832,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: 'rgba(255,255,255,0.9)',
   },
-  quickButton: {
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  buttonIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-    elevation: 4, // Inner pop
-  },
-  buttonLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    textAlign: 'center',
-    color: '#333',
-  },
-  widgetRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
   miniWidget: {
     flex: 1,
     backgroundColor: 'white',
@@ -663,37 +850,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#000',
-  },
-  logsCard: {
-    marginTop: 8,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  cardTitle: {
-    fontWeight: "800",
-    fontSize: 18,
-  },
-  logItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    paddingVertical: 12,
-    borderColor: "transparent",
-  },
-  logPhone: {
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  logTime: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  logStatus: {
-    fontWeight: "700",
-    fontSize: 13,
   },
 });

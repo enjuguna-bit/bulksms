@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Network security configuration for BulkSMS -->
+<network-security-config>
+
+    <!-- Base config: enforce HTTPS for all external domains -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Allow cleartext only for local development and offline activation -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+
+        <!-- Optional LAN ranges (adjust if required) -->
+        <domain includeSubdomains="true">192.168.0.0</domain>
+        <domain includeSubdomains="true">192.168.1.0</domain>
+    </domain-config>
+
+    <!-- Optional internal company domains -->
+    <!--
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">cemes.local</domain>
+        <domain includeSubdomains="true">activation.cemes.net</domain>
+    </domain-config>
+    -->
+
+</network-security-config>

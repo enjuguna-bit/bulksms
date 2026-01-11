@@ -119,13 +119,10 @@ export class OpenAiProvider implements AiProvider {
     /**
      * Estimate cost for a prompt
      */
-    estimateCost(prompt: string): number {
-        // Rough estimation: ~4 characters per token
-        const estimatedTokens = Math.ceil(prompt.length / 4);
-
+    estimateCost(tokens: number): number {
         // Assume output is similar length to input
-        const inputCost = (estimatedTokens / 1000) * this.INPUT_COST_PER_1K;
-        const outputCost = (estimatedTokens / 1000) * this.OUTPUT_COST_PER_1K;
+        const inputCost = (tokens / 1000) * this.INPUT_COST_PER_1K;
+        const outputCost = (tokens / 1000) * this.OUTPUT_COST_PER_1K;
 
         return inputCost + outputCost;
     }

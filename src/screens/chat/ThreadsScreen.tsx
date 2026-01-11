@@ -101,8 +101,8 @@ export default function ThreadsScreen() {
           activeOpacity={0.7}
           onPress={() =>
             navigation.navigate("ChatScreen", {
-              threadId: item.id, // Use numeric ID for new schema
               address: item.recipientNumber,
+              name: item.recipientName
             })
           }
         >

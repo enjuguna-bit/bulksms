@@ -99,7 +99,11 @@ export function ErrorScreen({ error, onRecover }: Props) {
             <Text style={styles.title}>{visuals.title}</Text>
 
             {/* Message */}
-            <Text style={styles.message}>{error.message}</Text>
+            <Text style={styles.message}>
+                {typeof error.message === 'string'
+                    ? error.message
+                    : JSON.stringify(error.message, null, 2)}
+            </Text>
 
             {/* Strategy description */}
             <Text style={styles.description}>{strategy.description}</Text>

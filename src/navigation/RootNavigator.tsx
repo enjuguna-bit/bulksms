@@ -19,7 +19,6 @@ import PaymentDashboardScreen from '../screens/paywall/payment-dashboard';
 
 // NEW — Messaging System
 import ThreadsScreen from "../screens/chat/ThreadsScreen";
-import ChatScreen from "../screens/chat/ChatScreen";
 import { ChatScreenNew } from "../screens/messaging";
 
 // Tabs
@@ -41,6 +40,7 @@ import CreateCampaignScreen from '../screens/marketing/CreateCampaignScreen';
 
 // Settings
 import BlacklistScreen from '../screens/settings/BlacklistScreen';
+import { AiSettingsScreen } from '../screens/settings/AiSettingsScreen';
 
 // Debug screen
 import DebugScreen from "../screens/debug/DebugScreen";
@@ -84,12 +84,10 @@ export default function RootNavigator() {
 
       {/* NEW MESSAGING SCREENS */}
       <Stack.Screen
-        name="ThreadsScreen"
-        component={ThreadsScreen}
-        options={{ headerShown: true, title: "Messages" }}
+        name="ChatScreen"
+        component={ChatScreenNew}
+        options={{ headerShown: false }}
       />
-
-
       <Stack.Screen
         name="InboxScanner"
         component={InboxScannerScreen}
@@ -183,6 +181,12 @@ export default function RootNavigator() {
         name="Blacklist"
         component={BlacklistScreen}
         options={{ headerShown: true, title: "Blacklist / Opt-Outs" }}
+      />
+
+      <Stack.Screen
+        name="AiSettings"
+        component={AiSettingsScreen}
+        options={{ headerShown: false }}
       />
 
       {/* Debug Screen - Only accessible in dev mode */}

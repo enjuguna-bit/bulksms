@@ -29,6 +29,7 @@ import { cleanupExpiredSessions } from "@/services/sessionCleanup";
 import { processContacts, contactRecordToRecipient } from "@/services/excelProcessor";
 import type { ExcelUploadData, ContactRecord } from "@/types/bulkSms";
 import { ensureDefaultSmsApp } from "@/services/defaultSmsRole";
+import { PermissionsAndroid } from 'react-native';
 
 const STORAGE_KEYS = {
     LAST_TEMPLATE: "bulkPro:lastMessageTemplate",
@@ -59,6 +60,7 @@ export function useBulkPro() {
     const [paused, setPaused] = useState(false);
     const [sendSpeed, setSendSpeed] = useState(400);
     const [delivered, setDelivered] = useState(0);
+    const [lastError, setLastError] = useState<string | null>(null);
     const [currentBulkId, setCurrentBulkId] = useState<string | null>(null);
     const [smsStatus, setSmsStatus] = useState<"checking" | "ok" | "fail" | "unknown">("checking");
 
@@ -78,6 +80,13 @@ export function useBulkPro() {
         circuitBreakerActive: boolean;
         cooldownRemainingMs: number | null;
     }>({ pending: 0, failed: 0, exhausted: 0, circuitBreakerActive: false, cooldownRemainingMs: null });
+
+    // Delivery tracking status state
+    const [deliveryTrackingStatus, setDeliveryTrackingStatus] = useState({
+        canTrack: false,
+        missingPermission: false,
+        notDefaultApp: false
+    });
 
     const cancelledRef = useRef(false);
     const pausedRef = useRef(false);
@@ -200,6 +209,9 @@ export function useBulkPro() {
             (event: any) => {
                 if (event?.id) {
                     setDelivered(prev => prev + 1);
+                } else if (event?.error) {
+                    console.warn('Delivery report error:', event.error);
+                    setLastError(`Delivery tracking error: ${event.error}`);
                 }
             }
         );
@@ -710,6 +722,27 @@ export function useBulkPro() {
         }
     }
 
+    const checkDeliveryTracking = useCallback(async () => {
+        try {
+            const hasPermission = await PermissionsAndroid.check(
+                PermissionsAndroid.PERMISSIONS.RECEIVE_SMS
+            );
+            const isDefault = await ensureDefaultSmsApp();
+            
+            setDeliveryTrackingStatus({
+                canTrack: hasPermission && isDefault,
+                missingPermission: !hasPermission,
+                notDefaultApp: !isDefault
+            });
+        } catch (error) {
+            console.warn('Failed to check delivery tracking status:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        checkDeliveryTracking();
+    }, [checkDeliveryTracking]);
+
     return {
         mode, setMode,
         template, setTemplate,
@@ -737,5 +770,8 @@ export function useBulkPro() {
         queueStatus,
         refreshQueueStatus,
         clearExhausted,
+        lastError,
+        deliveryTrackingStatus,
+        checkDeliveryTracking
     };
 }

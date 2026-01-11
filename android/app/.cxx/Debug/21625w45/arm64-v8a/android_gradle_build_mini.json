@@ -1,0 +1,120 @@
+{
+  "buildFiles": [
+    "C:\\bulksms\\node_modules\\@react-native-async-storage\\async-storage\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\@react-native-clipboard\\clipboard\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\@react-native-picker\\picker\\android\\src\\main\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\react-native-contacts\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\react-native-document-picker\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\react-native-gesture-handler\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\react-native-mmkv\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\react-native-pager-view\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\react-native-reanimated\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\react-native-safe-area-context\\android\\src\\main\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\react-native-screens\\android\\src\\main\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\react-native-share\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\bulksms\\node_modules\\react-native\\ReactAndroid\\cmake-utils\\default-app-setup\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\ninja\\ninja.exe",
+      "-C",
+      "C:\\bulksms\\android\\app\\.cxx\\Debug\\21625w45\\arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\ninja\\ninja.exe",
+    "-C",
+    "C:\\bulksms\\android\\app\\.cxx\\Debug\\21625w45\\arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "react_codegen_safeareacontext::@7984cd80db47aa7b952a": {
+      "artifactName": "react_codegen_safeareacontext",
+      "abi": "arm64-v8a",
+      "output": "C:\\bulksms\\android\\app\\build\\intermediates\\cxx\\Debug\\21625w45\\obj\\arm64-v8a\\libreact_codegen_safeareacontext.so",
+      "runtimeFiles": [
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\c6f1667c895f3a0e736ee323cbef3ab1\\transformed\\jetified-fbjni-0.6.0\\prefab\\modules\\fbjni\\libs\\android.arm64-v8a\\libfbjni.so",
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\a17f899587cb2d41601b9c5d95d3cd38\\transformed\\jetified-react-android-0.76.9-debug\\prefab\\modules\\jsi\\libs\\android.arm64-v8a\\libjsi.so"
+      ]
+    },
+    "react_codegen_rngesturehandler_codegen::@39f233abcd2c728bc6ec": {
+      "artifactName": "react_codegen_rngesturehandler_codegen",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "appmodules::@6890427a1f51a3e7e1df": {
+      "artifactName": "appmodules",
+      "abi": "arm64-v8a",
+      "output": "C:\\bulksms\\android\\app\\build\\intermediates\\cxx\\Debug\\21625w45\\obj\\arm64-v8a\\libappmodules.so",
+      "runtimeFiles": [
+        "C:\\bulksms\\android\\app\\build\\intermediates\\cxx\\Debug\\21625w45\\obj\\arm64-v8a\\libreact_codegen_rnpicker.so",
+        "C:\\bulksms\\android\\app\\build\\intermediates\\cxx\\Debug\\21625w45\\obj\\arm64-v8a\\libreact_codegen_safeareacontext.so",
+        "C:\\bulksms\\android\\app\\build\\intermediates\\cxx\\Debug\\21625w45\\obj\\arm64-v8a\\libreact_codegen_rnscreens.so",
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\c6f1667c895f3a0e736ee323cbef3ab1\\transformed\\jetified-fbjni-0.6.0\\prefab\\modules\\fbjni\\libs\\android.arm64-v8a\\libfbjni.so",
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\a17f899587cb2d41601b9c5d95d3cd38\\transformed\\jetified-react-android-0.76.9-debug\\prefab\\modules\\jsi\\libs\\android.arm64-v8a\\libjsi.so",
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\a17f899587cb2d41601b9c5d95d3cd38\\transformed\\jetified-react-android-0.76.9-debug\\prefab\\modules\\reactnative\\libs\\android.arm64-v8a\\libreactnative.so"
+      ]
+    },
+    "react_codegen_rndocumentpicker::@1e246c1f1267e461f98b": {
+      "artifactName": "react_codegen_rndocumentpicker",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnasyncstorage::@1596841e19ec5b9eeffe": {
+      "artifactName": "react_codegen_rnasyncstorage",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnclipboard::@6385240493dfcaf22ab7": {
+      "artifactName": "react_codegen_rnclipboard",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnreanimated::@8afabad14bfffa3f8b9a": {
+      "artifactName": "react_codegen_rnreanimated",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_pagerview::@7032a8921530ec438d60": {
+      "artifactName": "react_codegen_pagerview",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_reactnativemmkv::@53a90ad335aa3dba27a5": {
+      "artifactName": "react_codegen_reactnativemmkv",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnscreens::@25bcbd507e98d3a854ad": {
+      "artifactName": "react_codegen_rnscreens",
+      "abi": "arm64-v8a",
+      "output": "C:\\bulksms\\android\\app\\build\\intermediates\\cxx\\Debug\\21625w45\\obj\\arm64-v8a\\libreact_codegen_rnscreens.so",
+      "runtimeFiles": [
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\a17f899587cb2d41601b9c5d95d3cd38\\transformed\\jetified-react-android-0.76.9-debug\\prefab\\modules\\reactnative\\libs\\android.arm64-v8a\\libreactnative.so",
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\a17f899587cb2d41601b9c5d95d3cd38\\transformed\\jetified-react-android-0.76.9-debug\\prefab\\modules\\jsi\\libs\\android.arm64-v8a\\libjsi.so",
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\c6f1667c895f3a0e736ee323cbef3ab1\\transformed\\jetified-fbjni-0.6.0\\prefab\\modules\\fbjni\\libs\\android.arm64-v8a\\libfbjni.so"
+      ]
+    },
+    "react_codegen_RNContactsSpec::@f22bb5a2f7260e3ff95a": {
+      "artifactName": "react_codegen_RNContactsSpec",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNShareSpec::@e6c4c2b5aedb2ea213b7": {
+      "artifactName": "react_codegen_RNShareSpec",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnpicker::@e8bb2e9e833f47d0d516": {
+      "artifactName": "react_codegen_rnpicker",
+      "abi": "arm64-v8a",
+      "output": "C:\\bulksms\\android\\app\\build\\intermediates\\cxx\\Debug\\21625w45\\obj\\arm64-v8a\\libreact_codegen_rnpicker.so",
+      "runtimeFiles": [
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\a17f899587cb2d41601b9c5d95d3cd38\\transformed\\jetified-react-android-0.76.9-debug\\prefab\\modules\\reactnative\\libs\\android.arm64-v8a\\libreactnative.so",
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\a17f899587cb2d41601b9c5d95d3cd38\\transformed\\jetified-react-android-0.76.9-debug\\prefab\\modules\\jsi\\libs\\android.arm64-v8a\\libjsi.so",
+        "C:\\gradle-home\\caches\\8.10.2\\transforms\\c6f1667c895f3a0e736ee323cbef3ab1\\transformed\\jetified-fbjni-0.6.0\\prefab\\modules\\fbjni\\libs\\android.arm64-v8a\\libfbjni.so"
+      ]
+    }
+  }
+}

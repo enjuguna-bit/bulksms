@@ -33,6 +33,7 @@ import { prefetchContacts } from "@/utils/contactUtils";
 import { ComposeOptionsSheet } from "@/components/inbox/ComposeOptionsSheet";
 import { PermissionStatusBanner } from "@/components/permissions/PermissionStatusBanner";
 import { checkSmsAndContactPermissionsDetailed, type DetailedPermissionResult } from "@/utils/requestPermissions";
+import { getOrCreateConversationFromAddress } from '@/db/messaging/repository';
 
 // Debounce helper
 function useDebounce(value: string, delay = 300) {
@@ -205,8 +206,8 @@ export default function InboxScreen() {
       // We only need to update the UI optimistically or reload.
 
       // 2. Update UI optimistically from buffer
-      setMessages((prev) => {
-        const existing = prev.filter((m) => m.address !== event.phone);
+      setMessages((prev: SmsMessageRecord[]) => {
+        const existing = prev.filter((m: SmsMessageRecord) => m.address !== event.phone);
         // Note: New message replaces thread
         return [
           {
@@ -231,12 +232,12 @@ export default function InboxScreen() {
   const filteredMessages = useMemo(() => {
     let result = messages;
 
-    if (filter !== "all") result = result.filter((m) => m.type === filter);
+    if (filter !== "all") result = result.filter((m: SmsMessageRecord) => m.type === filter);
 
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
-        (m) =>
+        (m: SmsMessageRecord) =>
           (m.address || "").toLowerCase().includes(q) ||
           (m.body || "").toLowerCase().includes(q)
       );
@@ -249,46 +250,15 @@ export default function InboxScreen() {
   const { refreshThreads } = useMessageContext();
 
   const handleMessagePress = useCallback(async (item: SmsMessageRecord) => {
-    DebugLogger.log('INBOX', 'Thread pressed', { address: item.address, id: item.id });
-
-    // Sync this message to the database before navigating
-    // UNBLOCK UI: Don't await this, let it run in background with robust retries
-    const syncWithRetry = async (attempt = 0) => {
-      try {
-        await addMessage(
-          item.address,
-          item.body,
-          item.type,
-          'sent',
-          item.timestamp,
-          item.address // Use address as threadId
-        );
-      } catch (err) {
-        if (attempt < 3) {
-          const delay = 1000 * Math.pow(2, attempt); // 1s, 2s, 4s
-          console.warn(`[Inbox] Background sync failed, retrying in ${delay}ms...`, err);
-          setTimeout(() => syncWithRetry(attempt + 1), delay);
-        } else {
-          console.error("[Inbox] Background import permanently failed:", err);
-          // Potential TODO: Queue for later sync or analytics
-        }
-      }
-    };
-
-    // Start background sync
-    syncWithRetry();
-
-    // Navigate IMMEDIATELY to avoid freezing
+    const conversation = await getOrCreateConversationFromAddress(item.address);
     router.safePush("ChatScreen", {
+      conversationId: conversation.id,
+      threadId: item.address,
       address: item.address,
-      initialMessage: item // Pass for immediate rendering
+      isNativeSms: true
     });
+  }, [router]);
 
-    // Refresh threads in background so the list is updated when we return
-    refreshThreads();
-  }, [router, refreshThreads]);
-
-  // Handle New Chat / Bulk Message
   const handleCompose = () => {
     setComposeVisible(true);
   };
@@ -307,7 +277,7 @@ export default function InboxScreen() {
     }, 300); // Allow modal to close
   };
 
-  const renderItem = useCallback<ListRenderItem<SmsMessageRecord>>(({ item, index }) => (
+  const renderItem = useCallback<ListRenderItem<SmsMessageRecord>>(({ item, index }: { item: SmsMessageRecord; index: number }) => (
     <View style={{ position: 'relative' }}>
       <ThreadItem
         item={item}

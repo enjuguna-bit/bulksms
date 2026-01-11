@@ -1,0 +1,980 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "C:/bulksms/android/app/build/intermediates/cxx/Debug/21625w45/obj/arm64-v8a/libappmodules.so"
+		}
+	],
+	"backtrace" : 3,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"include",
+			"target_link_libraries",
+			"target_compile_options",
+			"target_include_directories"
+		],
+		"files" : 
+		[
+			"C:/bulksms/node_modules/react-native/ReactAndroid/cmake-utils/ReactNative-application.cmake",
+			"CMakeLists.txt",
+			"C:/bulksms/node_modules/@react-native-picker/picker/android/src/main/jni/CMakeLists.txt",
+			"C:/bulksms/node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt",
+			"C:/bulksms/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 31,
+				"parent" : 0
+			},
+			{
+				"file" : 0,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 56,
+				"parent" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 101,
+				"parent" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 87,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 63,
+				"parent" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 58,
+				"parent" : 2
+			},
+			{
+				"file" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 81,
+				"parent" : 8
+			},
+			{
+				"file" : 3
+			},
+			{
+				"command" : 4,
+				"file" : 3,
+				"line" : 70,
+				"parent" : 10
+			},
+			{
+				"file" : 4
+			},
+			{
+				"command" : 4,
+				"file" : 4,
+				"line" : 81,
+				"parent" : 12
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-Werror"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-Wno-error=cpp"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-fexceptions"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-frtti"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-std=c++20"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-DLOG_TAG=\\\"ReactNative\\\""
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-DFOLLY_NO_CONFIG=1"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-DFOLLY_HAVE_CLOCK_GETTIME=1"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-DFOLLY_USE_LIBCPP=1"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-DFOLLY_CFG_NO_COROUTINES=1"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-DFOLLY_MOBILE=1"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-DFOLLY_HAVE_RECVMMSG=1"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-DFOLLY_HAVE_PTHREAD=1"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-DFOLLY_HAVE_XSI_STRERROR_R=1"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "appmodules_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 7,
+					"path" : "C:/bulksms/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "C:/bulksms/android/app/build/generated/autolinking/src/main/jni"
+				},
+				{
+					"backtrace" : 9,
+					"path" : "C:/bulksms/node_modules/@react-native-picker/picker/android/src/main/jni"
+				},
+				{
+					"backtrace" : 11,
+					"path" : "C:/bulksms/node_modules/react-native-safe-area-context/android/src/main/jni"
+				},
+				{
+					"backtrace" : 13,
+					"path" : "C:/bulksms/node_modules/react-native-screens/android/src/main/jni"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/@react-native-async-storage/async-storage/android/build/generated/source/codegen/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/@react-native-async-storage/async-storage/android/build/generated/source/codegen/jni/react/renderer/components/rnasyncstorage"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/@react-native-clipboard/clipboard/android/build/generated/source/codegen/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/@react-native-clipboard/clipboard/android/build/generated/source/codegen/jni/react/renderer/components/rnclipboard"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/@react-native-picker/picker/android/src/main/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/@react-native-picker/picker/android/src/main/jni/../../../build/generated/source/codegen/jni"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/@react-native-picker/picker/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnpicker"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-contacts/android/build/generated/source/codegen/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-contacts/android/build/generated/source/codegen/jni/react/renderer/components/RNContactsSpec"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-document-picker/android/build/generated/source/codegen/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-document-picker/android/build/generated/source/codegen/jni/react/renderer/components/rndocumentpicker"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/react/renderer/components/rngesturehandler_codegen"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-mmkv/android/build/generated/source/codegen/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-mmkv/android/build/generated/source/codegen/jni/react/renderer/components/reactnativemmkv"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-pager-view/android/build/generated/source/codegen/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-pager-view/android/build/generated/source/codegen/jni/react/renderer/components/pagerview"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-reanimated/android/build/generated/source/codegen/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-reanimated/android/build/generated/source/codegen/jni/react/renderer/components/rnreanimated"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-safe-area-context/android/src/main/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-safe-area-context/android/src/main/jni/../../../../common/cpp"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-safe-area-context/android/src/main/jni/../../../build/generated/source/codegen/jni"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-safe-area-context/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/safeareacontext"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-screens/android/src/main/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-screens/android/src/main/jni/../../../../common/cpp"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-screens/android/src/main/jni/../../../build/generated/source/codegen/jni"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-screens/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnscreens"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-share/android/build/generated/source/codegen/jni/."
+				},
+				{
+					"backtrace" : 4,
+					"path" : "C:/bulksms/node_modules/react-native-share/android/build/generated/source/codegen/jni/react/renderer/components/RNShareSpec"
+				},
+				{
+					"backtrace" : 5,
+					"isSystem" : true,
+					"path" : "C:/gradle-home/caches/8.10.2/transforms/c6f1667c895f3a0e736ee323cbef3ab1/transformed/jetified-fbjni-0.6.0/prefab/modules/fbjni/include"
+				},
+				{
+					"backtrace" : 5,
+					"isSystem" : true,
+					"path" : "C:/gradle-home/caches/8.10.2/transforms/a17f899587cb2d41601b9c5d95d3cd38/transformed/jetified-react-android-0.76.9-debug/prefab/modules/jsi/include"
+				},
+				{
+					"backtrace" : 5,
+					"isSystem" : true,
+					"path" : "C:/gradle-home/caches/8.10.2/transforms/a17f899587cb2d41601b9c5d95d3cd38/transformed/jetified-react-android-0.76.9-debug/prefab/modules/reactnative/include"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			],
+			"sysroot" : 
+			{
+				"path" : "C:/Users/DELL/AppData/Local/Android/Sdk/ndk/25.2.9519653/toolchains/llvm/prebuilt/windows-x86_64/sysroot"
+			}
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_rnasyncstorage::@1596841e19ec5b9eeffe"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_rnclipboard::@6385240493dfcaf22ab7"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_rnpicker::@e8bb2e9e833f47d0d516"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_rngesturehandler_codegen::@39f233abcd2c728bc6ec"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_RNContactsSpec::@f22bb5a2f7260e3ff95a"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_rndocumentpicker::@1e246c1f1267e461f98b"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_reactnativemmkv::@53a90ad335aa3dba27a5"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_rnreanimated::@8afabad14bfffa3f8b9a"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_pagerview::@7032a8921530ec438d60"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_RNShareSpec::@e6c4c2b5aedb2ea213b7"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_rnscreens::@25bcbd507e98d3a854ad"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "react_codegen_safeareacontext::@7984cd80db47aa7b952a"
+		}
+	],
+	"id" : "appmodules::@6890427a1f51a3e7e1df",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "C:\\bulksms\\android\\app\\build\\intermediates\\cxx\\Debug\\21625w45\\obj\\arm64-v8a\\libreact_codegen_rnpicker.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "C:\\bulksms\\android\\app\\build\\intermediates\\cxx\\Debug\\21625w45\\obj\\arm64-v8a\\libreact_codegen_safeareacontext.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "C:\\bulksms\\android\\app\\build\\intermediates\\cxx\\Debug\\21625w45\\obj\\arm64-v8a\\libreact_codegen_rnscreens.so",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lfolly_runtime",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lglog",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lreact_codegen_rncore",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lreact_debug",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lreact_nativemodule_core",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lreact_render_core",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lreact_render_debug",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lreact_render_graphics",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lreact_render_mapbuffer",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lreact_render_componentregistry",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lreact_utils",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lrrc_view",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lturbomodulejsijni",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lyoga",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "C:\\gradle-home\\caches\\8.10.2\\transforms\\c6f1667c895f3a0e736ee323cbef3ab1\\transformed\\jetified-fbjni-0.6.0\\prefab\\modules\\fbjni\\libs\\android.arm64-v8a\\libfbjni.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "C:\\gradle-home\\caches\\8.10.2\\transforms\\a17f899587cb2d41601b9c5d95d3cd38\\transformed\\jetified-react-android-0.76.9-debug\\prefab\\modules\\jsi\\libs\\android.arm64-v8a\\libjsi.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "C:\\gradle-home\\caches\\8.10.2\\transforms\\a17f899587cb2d41601b9c5d95d3cd38\\transformed\\jetified-react-android-0.76.9-debug\\prefab\\modules\\reactnative\\libs\\android.arm64-v8a\\libreactnative.so",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-latomic -lm",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX",
+		"sysroot" : 
+		{
+			"path" : "C:/Users/DELL/AppData/Local/Android/Sdk/ndk/25.2.9519653/toolchains/llvm/prebuilt/windows-x86_64/sysroot"
+		}
+	},
+	"name" : "appmodules",
+	"nameOnDisk" : "libappmodules.so",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		},
+		{
+			"name" : "Object Libraries",
+			"sourceIndexes" : 
+			[
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36,
+				37,
+				38,
+				39,
+				40,
+				41,
+				42,
+				43,
+				44,
+				45,
+				46,
+				47,
+				48,
+				49,
+				50,
+				51,
+				52,
+				53,
+				54,
+				55,
+				56,
+				57,
+				58,
+				59,
+				60,
+				61,
+				62,
+				63,
+				64
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "C:/bulksms/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "OnLoad.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/react/renderer/components/rnasyncstorage/ComponentDescriptors.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/react/renderer/components/rnasyncstorage/EventEmitters.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/react/renderer/components/rnasyncstorage/Props.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/react/renderer/components/rnasyncstorage/ShadowNodes.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/react/renderer/components/rnasyncstorage/States.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/react/renderer/components/rnasyncstorage/rnasyncstorageJSI-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/rnasyncstorage-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnclipboard_autolinked_build/CMakeFiles/react_codegen_rnclipboard.dir/react/renderer/components/rnclipboard/ComponentDescriptors.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnclipboard_autolinked_build/CMakeFiles/react_codegen_rnclipboard.dir/react/renderer/components/rnclipboard/EventEmitters.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnclipboard_autolinked_build/CMakeFiles/react_codegen_rnclipboard.dir/react/renderer/components/rnclipboard/Props.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnclipboard_autolinked_build/CMakeFiles/react_codegen_rnclipboard.dir/react/renderer/components/rnclipboard/ShadowNodes.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnclipboard_autolinked_build/CMakeFiles/react_codegen_rnclipboard.dir/react/renderer/components/rnclipboard/States.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnclipboard_autolinked_build/CMakeFiles/react_codegen_rnclipboard.dir/react/renderer/components/rnclipboard/rnclipboardJSI-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnclipboard_autolinked_build/CMakeFiles/react_codegen_rnclipboard.dir/rnclipboard-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNContactsSpec_autolinked_build/CMakeFiles/react_codegen_RNContactsSpec.dir/RNContactsSpec-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNContactsSpec_autolinked_build/CMakeFiles/react_codegen_RNContactsSpec.dir/react/renderer/components/RNContactsSpec/ComponentDescriptors.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNContactsSpec_autolinked_build/CMakeFiles/react_codegen_RNContactsSpec.dir/react/renderer/components/RNContactsSpec/EventEmitters.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNContactsSpec_autolinked_build/CMakeFiles/react_codegen_RNContactsSpec.dir/react/renderer/components/RNContactsSpec/Props.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNContactsSpec_autolinked_build/CMakeFiles/react_codegen_RNContactsSpec.dir/react/renderer/components/RNContactsSpec/RNContactsSpecJSI-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNContactsSpec_autolinked_build/CMakeFiles/react_codegen_RNContactsSpec.dir/react/renderer/components/RNContactsSpec/ShadowNodes.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNContactsSpec_autolinked_build/CMakeFiles/react_codegen_RNContactsSpec.dir/react/renderer/components/RNContactsSpec/States.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rndocumentpicker_autolinked_build/CMakeFiles/react_codegen_rndocumentpicker.dir/react/renderer/components/rndocumentpicker/ComponentDescriptors.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rndocumentpicker_autolinked_build/CMakeFiles/react_codegen_rndocumentpicker.dir/react/renderer/components/rndocumentpicker/EventEmitters.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rndocumentpicker_autolinked_build/CMakeFiles/react_codegen_rndocumentpicker.dir/react/renderer/components/rndocumentpicker/Props.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rndocumentpicker_autolinked_build/CMakeFiles/react_codegen_rndocumentpicker.dir/react/renderer/components/rndocumentpicker/ShadowNodes.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rndocumentpicker_autolinked_build/CMakeFiles/react_codegen_rndocumentpicker.dir/react/renderer/components/rndocumentpicker/States.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rndocumentpicker_autolinked_build/CMakeFiles/react_codegen_rndocumentpicker.dir/react/renderer/components/rndocumentpicker/rndocumentpickerJSI-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rndocumentpicker_autolinked_build/CMakeFiles/react_codegen_rndocumentpicker.dir/rndocumentpicker-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/react/renderer/components/rngesturehandler_codegen/ComponentDescriptors.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/react/renderer/components/rngesturehandler_codegen/EventEmitters.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/react/renderer/components/rngesturehandler_codegen/Props.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/react/renderer/components/rngesturehandler_codegen/ShadowNodes.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/react/renderer/components/rngesturehandler_codegen/States.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/react/renderer/components/rngesturehandler_codegen/rngesturehandler_codegenJSI-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/rngesturehandler_codegen-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/reactnativemmkv_autolinked_build/CMakeFiles/react_codegen_reactnativemmkv.dir/react/renderer/components/reactnativemmkv/ComponentDescriptors.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/reactnativemmkv_autolinked_build/CMakeFiles/react_codegen_reactnativemmkv.dir/react/renderer/components/reactnativemmkv/EventEmitters.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/reactnativemmkv_autolinked_build/CMakeFiles/react_codegen_reactnativemmkv.dir/react/renderer/components/reactnativemmkv/Props.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/reactnativemmkv_autolinked_build/CMakeFiles/react_codegen_reactnativemmkv.dir/react/renderer/components/reactnativemmkv/ShadowNodes.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/reactnativemmkv_autolinked_build/CMakeFiles/react_codegen_reactnativemmkv.dir/react/renderer/components/reactnativemmkv/States.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/reactnativemmkv_autolinked_build/CMakeFiles/react_codegen_reactnativemmkv.dir/react/renderer/components/reactnativemmkv/reactnativemmkvJSI-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/reactnativemmkv_autolinked_build/CMakeFiles/react_codegen_reactnativemmkv.dir/reactnativemmkv-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/pagerview_autolinked_build/CMakeFiles/react_codegen_pagerview.dir/pagerview-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/pagerview_autolinked_build/CMakeFiles/react_codegen_pagerview.dir/react/renderer/components/pagerview/ComponentDescriptors.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/pagerview_autolinked_build/CMakeFiles/react_codegen_pagerview.dir/react/renderer/components/pagerview/EventEmitters.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/pagerview_autolinked_build/CMakeFiles/react_codegen_pagerview.dir/react/renderer/components/pagerview/Props.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/pagerview_autolinked_build/CMakeFiles/react_codegen_pagerview.dir/react/renderer/components/pagerview/ShadowNodes.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/pagerview_autolinked_build/CMakeFiles/react_codegen_pagerview.dir/react/renderer/components/pagerview/States.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/pagerview_autolinked_build/CMakeFiles/react_codegen_pagerview.dir/react/renderer/components/pagerview/pagerviewJSI-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnreanimated_autolinked_build/CMakeFiles/react_codegen_rnreanimated.dir/react/renderer/components/rnreanimated/ComponentDescriptors.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnreanimated_autolinked_build/CMakeFiles/react_codegen_rnreanimated.dir/react/renderer/components/rnreanimated/EventEmitters.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnreanimated_autolinked_build/CMakeFiles/react_codegen_rnreanimated.dir/react/renderer/components/rnreanimated/Props.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnreanimated_autolinked_build/CMakeFiles/react_codegen_rnreanimated.dir/react/renderer/components/rnreanimated/ShadowNodes.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnreanimated_autolinked_build/CMakeFiles/react_codegen_rnreanimated.dir/react/renderer/components/rnreanimated/States.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnreanimated_autolinked_build/CMakeFiles/react_codegen_rnreanimated.dir/react/renderer/components/rnreanimated/rnreanimatedJSI-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/rnreanimated_autolinked_build/CMakeFiles/react_codegen_rnreanimated.dir/rnreanimated-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNShareSpec_autolinked_build/CMakeFiles/react_codegen_RNShareSpec.dir/RNShareSpec-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNShareSpec_autolinked_build/CMakeFiles/react_codegen_RNShareSpec.dir/react/renderer/components/RNShareSpec/ComponentDescriptors.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNShareSpec_autolinked_build/CMakeFiles/react_codegen_RNShareSpec.dir/react/renderer/components/RNShareSpec/EventEmitters.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNShareSpec_autolinked_build/CMakeFiles/react_codegen_RNShareSpec.dir/react/renderer/components/RNShareSpec/Props.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNShareSpec_autolinked_build/CMakeFiles/react_codegen_RNShareSpec.dir/react/renderer/components/RNShareSpec/RNShareSpecJSI-generated.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNShareSpec_autolinked_build/CMakeFiles/react_codegen_RNShareSpec.dir/react/renderer/components/RNShareSpec/ShadowNodes.cpp.o",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 4,
+			"isGenerated" : true,
+			"path" : "C:/bulksms/android/app/.cxx/Debug/21625w45/arm64-v8a/RNShareSpec_autolinked_build/CMakeFiles/react_codegen_RNShareSpec.dir/react/renderer/components/RNShareSpec/States.cpp.o",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

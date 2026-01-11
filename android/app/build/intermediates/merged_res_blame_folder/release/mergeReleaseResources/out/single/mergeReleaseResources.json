@@ -1,0 +1,294 @@
+[
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_backiconmask.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_backiconmask.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable_bg_bubble_received.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable/bg_bubble_received.xml"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable_bg_bubble_sent.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable/bg_bubble_sent.xml"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/mipmap-xxxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/layout_activity_main.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/xml_data_extraction_rules.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/xml/data_extraction_rules.xml"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_elements_lib_module_assets_backiconmask.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_elements_lib_module_assets_backiconmask.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/layout_item_sms_received.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/layout/item_sms_received.xml"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/xml_network_security_config.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/xml/network_security_config.xml"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/layout_item_sms_sent.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/layout/item_sms_sent.xml"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/xml_backup_rules.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/xml/backup_rules.xml"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_backiconmask.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_backiconmask.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable_rn_edit_text_material.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable/rn_edit_text_material.xml"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/layout_item_message.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/layout/item_message.xml"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxhdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxhdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_clearicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnative_libraries_newappscreen_components_logo.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnative_libraries_newappscreen_components_logo.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_backicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_nativestack_node_modules_reactnavigation_elements_lib_module_assets_backicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-mdpi_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-mdpi/node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xxxhdpi_node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xxxhdpi/node_modules_reactnavigation_bottomtabs_node_modules_reactnavigation_elements_lib_module_assets_closeicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/drawable-xhdpi_node_modules_reactnavigation_elements_lib_module_assets_searchicon.png.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/drawable-xhdpi/node_modules_reactnavigation_elements_lib_module_assets_searchicon.png"
+    },
+    {
+        "merged": "com.bulksms.smsmanager.app-release-73:/xml_sms_app_info.xml.flat",
+        "source": "com.bulksms.smsmanager.app-main-74:/xml/sms_app_info.xml"
+    }
+]

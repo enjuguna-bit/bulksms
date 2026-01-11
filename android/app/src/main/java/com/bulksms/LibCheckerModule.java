@@ -26,10 +26,10 @@ public class LibCheckerModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public boolean hasLibrary(String libName) {
         try {
-            System.loadLibrary(libName.replace(".so", ""));
+            System.loadLibrary(libName);
             return true;
         } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "Library not found: " + libName);
+            Log.e(TAG, "Library not found or failed to load: " + libName, e);
             return false;
         }
     }

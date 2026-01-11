@@ -1,0 +1,78 @@
+-keep class j$.time.Duration {
+  public static j$.time.Duration between(j$.time.temporal.Temporal,j$.time.temporal.Temporal);
+  public int compareTo(j$.time.Duration);
+  public int getNano();
+  public long getSeconds();
+  public boolean isNegative();
+  public boolean isZero();
+  public static j$.time.Duration of(long,j$.time.temporal.TemporalUnit);
+  public static j$.time.Duration ofMillis(long);
+  public static j$.time.Duration ofNanos(long);
+  public static j$.time.Duration ofSeconds(long);
+  public static j$.time.Duration ofSeconds(long,long);
+  public long toMillis();
+  public long toNanos();
+  j$.time.Duration ZERO;
+}
+-keep class j$.time.Instant {
+  public j$.time.ZonedDateTime atZone(j$.time.ZoneId);
+  public static j$.time.Instant now();
+  public static j$.time.Instant ofEpochMilli(long);
+  public long toEpochMilli();
+}
+-keep class j$.time.LocalDate {
+  public static j$.time.LocalDate parse(java.lang.CharSequence,j$.time.format.DateTimeFormatter);
+}
+-keep class j$.time.LocalDateTime {
+  public static j$.time.LocalDateTime ofInstant(j$.time.Instant,j$.time.ZoneId);
+  public j$.time.LocalDate toLocalDate();
+}
+-keep class j$.time.OffsetDateTime {
+  public static j$.time.OffsetDateTime ofInstant(j$.time.Instant,j$.time.ZoneId);
+}
+-keep class j$.time.TimeConversions {
+  public static java.time.Duration convert(j$.time.Duration);
+  public static java.time.ZoneId convert(j$.time.ZoneId);
+  public static j$.time.Duration convert(java.time.Duration);
+}
+-keep class j$.time.ZoneId {
+  public static j$.time.ZoneId systemDefault();
+  java.util.Map SHORT_IDS;
+}
+-keep class j$.time.ZonedDateTime {
+  public static j$.time.ZonedDateTime ofInstant(j$.time.Instant,j$.time.ZoneId);
+  public j$.time.LocalDate toLocalDate();
+}
+-keep class j$.time.format.DateTimeFormatter {
+  j$.time.format.DateTimeFormatter ISO_DATE_TIME;
+}
+-keep enum j$.time.temporal.ChronoUnit {
+  public j$.time.Duration getDuration();
+  j$.time.temporal.ChronoUnit DAYS;
+  j$.time.temporal.ChronoUnit HOURS;
+  j$.time.temporal.ChronoUnit MICROS;
+  j$.time.temporal.ChronoUnit MILLIS;
+  j$.time.temporal.ChronoUnit MINUTES;
+  j$.time.temporal.ChronoUnit NANOS;
+  j$.time.temporal.ChronoUnit SECONDS;
+}
+-keep interface j$.time.temporal.Temporal {
+}
+-keep interface j$.time.temporal.TemporalUnit {
+}
+-keep class j$.util.DateRetargetClass {
+  public static j$.time.Instant toInstant(java.util.Date);
+}
+-keep class j$.util.DesugarCalendar {
+  public static j$.time.Instant toInstant(java.util.Calendar);
+}
+-keep class j$.util.DesugarTimeZone {
+  public static java.util.TimeZone getTimeZone(java.lang.String);
+  public static j$.time.ZoneId toZoneId(java.util.TimeZone);
+}
+-keep class j$.util.TimeZoneRetargetClass {
+  public static j$.time.ZoneId toZoneId(java.util.TimeZone);
+}
+-keep interface j$.util.TimeZoneRetargetInterface {
+  public j$.time.ZoneId toZoneId();
+}

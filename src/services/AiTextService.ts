@@ -7,6 +7,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Logger from '@/utils/logger';
 import { OpenAiProvider } from './ai/OpenAiProvider';
 import { PuterAiProvider } from './ai/PuterAiProvider';
+import { GoogleGeminiProvider } from './ai/GoogleGeminiProvider';
+import { AnthropicClaudeProvider } from './ai/AnthropicClaudeProvider';
+import { HuggingFaceProvider } from './ai/HuggingFaceProvider';
+import { CohereProvider } from './ai/CohereProvider';
 import { AiProvider, AiGenerationResult, PromptType, UsageLogEntry } from './ai/types';
 import { runQuery } from '@/db/database';
 
@@ -23,18 +27,30 @@ const MAX_GENERATIONS_PER_WINDOW = 10;
 export enum AiProviderType {
     OPENAI = 'openai',
     PUTER = 'puter',
+    GOOGLE_GEMINI = 'google_gemini',
+    ANTHROPIC_CLAUDE = 'anthropic_claude',
+    HUGGING_FACE = 'hugging_face',
+    COHERE = 'cohere',
     AUTO = 'auto', // Auto-select based on availability
 }
 
 class AiTextService {
     private openAiProvider: OpenAiProvider;
     private puterAiProvider: PuterAiProvider;
+    private googleGeminiProvider: GoogleGeminiProvider;
+    private anthropicClaudeProvider: AnthropicClaudeProvider;
+    private huggingFaceProvider: HuggingFaceProvider;
+    private cohereProvider: CohereProvider;
     private selectedProviderType: AiProviderType = AiProviderType.AUTO;
     private recentGenerations: number[] = []; // Timestamps
 
     constructor() {
         this.openAiProvider = new OpenAiProvider();
         this.puterAiProvider = new PuterAiProvider();
+        this.googleGeminiProvider = new GoogleGeminiProvider();
+        this.anthropicClaudeProvider = new AnthropicClaudeProvider();
+        this.huggingFaceProvider = new HuggingFaceProvider();
+        this.cohereProvider = new CohereProvider();
     }
 
     /**
@@ -47,8 +63,13 @@ class AiTextService {
             this.selectedProviderType = savedProvider as AiProviderType;
         }
 
-        // Initialize OpenAI provider
+        // Initialize all providers
         await this.openAiProvider.initialize();
+        await this.puterAiProvider.initialize();
+        await this.googleGeminiProvider.initialize();
+        await this.anthropicClaudeProvider.initialize();
+        await this.huggingFaceProvider.initialize();
+        await this.cohereProvider.initialize();
 
         Logger.info('AiTextService', 'Service initialized', {
             selectedProvider: this.selectedProviderType,
@@ -68,25 +89,61 @@ class AiTextService {
      * Get current provider based on availability
      */
     private async getProvider(): Promise<AiProvider> {
+        // Specific provider selection
         if (this.selectedProviderType === AiProviderType.OPENAI) {
             const available = await this.openAiProvider.isAvailable();
             if (available) return this.openAiProvider;
-
-            Logger.warn('AiTextService', 'OpenAI not available, falling back to Puter');
-            return this.puterAiProvider;
+            Logger.warn('AiTextService', 'OpenAI not available, falling back to auto-selection');
         }
 
         if (this.selectedProviderType === AiProviderType.PUTER) {
-            return this.puterAiProvider;
+            return this.puterAiProvider; // Puter is always available
         }
 
-        // AUTO mode: try OpenAI first, fallback to Puter
-        const openAiAvailable = await this.openAiProvider.isAvailable();
-        if (openAiAvailable) {
-            return this.openAiProvider;
+        if (this.selectedProviderType === AiProviderType.GOOGLE_GEMINI) {
+            const available = await this.googleGeminiProvider.isAvailable();
+            if (available) return this.googleGeminiProvider;
+            Logger.warn('AiTextService', 'Google Gemini not available, falling back to auto-selection');
         }
 
-        Logger.info('AiTextService', 'Using Puter.ai (free tier)');
+        if (this.selectedProviderType === AiProviderType.ANTHROPIC_CLAUDE) {
+            const available = await this.anthropicClaudeProvider.isAvailable();
+            if (available) return this.anthropicClaudeProvider;
+            Logger.warn('AiTextService', 'Anthropic Claude not available, falling back to auto-selection');
+        }
+
+        if (this.selectedProviderType === AiProviderType.HUGGING_FACE) {
+            const available = await this.huggingFaceProvider.isAvailable();
+            if (available) return this.huggingFaceProvider;
+            Logger.warn('AiTextService', 'Hugging Face not available, falling back to auto-selection');
+        }
+
+        if (this.selectedProviderType === AiProviderType.COHERE) {
+            const available = await this.cohereProvider.isAvailable();
+            if (available) return this.cohereProvider;
+            Logger.warn('AiTextService', 'Cohere not available, falling back to auto-selection');
+        }
+
+        // AUTO mode: try providers in order of preference
+        const providers = [
+            { provider: this.openAiProvider, name: 'OpenAI' },
+            { provider: this.googleGeminiProvider, name: 'Google Gemini' },
+            { provider: this.anthropicClaudeProvider, name: 'Anthropic Claude' },
+            { provider: this.cohereProvider, name: 'Cohere' },
+            { provider: this.huggingFaceProvider, name: 'Hugging Face' },
+            { provider: this.puterAiProvider, name: 'Puter.ai' }, // Always last as fallback
+        ];
+
+        for (const { provider, name } of providers) {
+            const available = await provider.isAvailable();
+            if (available) {
+                Logger.info('AiTextService', `Using ${name} (auto-selected)`);
+                return provider;
+            }
+        }
+
+        // Ultimate fallback
+        Logger.info('AiTextService', 'Using Puter.ai (free tier) as final fallback');
         return this.puterAiProvider;
     }
 

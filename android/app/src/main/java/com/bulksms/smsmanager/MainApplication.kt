@@ -11,6 +11,7 @@ import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.react.shell.MainReactPackage
 import com.reactnativecommunity.asyncstorage.AsyncStoragePackage
 import com.bulksms.LibCheckerPackage
+// Expo wrappers removed - using standard React Native
 
 /**
  * ==========================================================
@@ -65,9 +66,11 @@ class MainApplication : Application(), ReactApplication {
         // Fallback - let React Native handle Hermes loading
       }
     }
+    // Expo ApplicationLifecycleDispatcher removed - not needed with autolinking
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
+    // Expo ApplicationLifecycleDispatcher removed - not needed with autolinking
   }
 }

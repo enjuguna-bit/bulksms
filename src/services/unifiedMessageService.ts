@@ -68,6 +68,14 @@ export class UnifiedMessageManager {
     // ---------------------------------------------------------------------------
 
     /**
+     * Check if app is the default SMS handler
+     */
+    static async isDefault(): Promise<boolean> {
+        return await smsRole?.isDefault?.().catch(() => false) ?? false;
+    }
+
+
+    /**
      * Perform safety checks before starting a bulk send operation.
      * Checks battery level, network status, and default SMS app status.
      */

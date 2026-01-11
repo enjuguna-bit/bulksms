@@ -11,14 +11,15 @@ import {
   MessageRow,
   ConversationFilter,
   SortOrder,
-  rowToConversation,
-  rowToMessage,
   generateThreadId,
   generateMessageId,
   generateAvatarColor,
-  normalizePhoneNumber,
   getSnippet,
+  rowToConversation,
+  rowToMessage,
+  normalizePhoneNumber,
 } from './types';
+import { getContactName } from '@/utils/contactUtils';
 
 let schemaInitialized = false;
 
@@ -240,6 +241,31 @@ export async function getOrCreateConversation(
     createdAt: now,
     updatedAt: now,
   };
+}
+
+export async function getOrCreateConversationFromAddress(address: string): Promise<Conversation> {
+  const normalized = normalizePhoneNumber(address);
+  
+  // Check for existing conversation
+  const existing = await runQuery(
+    `SELECT * FROM conversations WHERE recipient_number = ? LIMIT 1`,
+    [normalized]
+  );
+  
+  if (existing.rows.length > 0) {
+    return rowToConversation(existing.rows.item(0));
+  }
+
+  // Create new conversation if none exists
+  const contactName = await getContactName(normalized);
+  const newConv = await runQuery(
+    `INSERT INTO conversations 
+     (thread_id, recipient_number, recipient_name, last_message_timestamp)
+     VALUES (?, ?, ?, ?) RETURNING *`,
+    [normalized, normalized, contactName || normalized, Date.now()]
+  );
+  
+  return rowToConversation(newConv.rows.item(0));
 }
 
 export async function updateConversation(

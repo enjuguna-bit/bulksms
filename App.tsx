@@ -14,8 +14,6 @@ import { ThemeProvider } from "./src/theme/ThemeProvider";
 
 // Global data/state providers
 import { BillingProvider } from "./src/providers/BillingProvider";
-import { StatsProvider } from "./src/providers/StatsProvider";
-import { TransactionsProvider } from "./src/providers/TransactionsProvider";
 
 // NEW: Global message store (SQLite-backed)
 
@@ -28,6 +26,9 @@ import { ErrorBoundary } from "./src/components/ErrorBoundary";
 // Centralized startup + gating + navigation
 import UnifiedStartupGate from "./src/components/UnifiedStartupGate";
 
+// React Native Gesture Handler Root View
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 export default function App() {
   // DB init handled in UnifiedStartupGate
   // No local state needed here
@@ -36,19 +37,17 @@ export default function App() {
 
   // Database ready - render providers
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <ToastProvider>
-          <BillingProvider>
-            <TransactionsProvider>
-              <StatsProvider>
-                <UnifiedStartupGate />
-              </StatsProvider>
-            </TransactionsProvider>
-          </BillingProvider>
-        </ToastProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <ToastProvider>
+            <BillingProvider>
+              <UnifiedStartupGate />
+            </BillingProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }
 

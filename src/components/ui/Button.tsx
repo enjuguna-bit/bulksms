@@ -7,6 +7,7 @@ import {
   TextStyle,
   ActivityIndicator 
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useThemeSettings } from '@/theme/ThemeProvider';
 
 interface ButtonProps {
@@ -110,51 +111,30 @@ export const Button: React.FC<ButtonProps> = ({
   if (variant === 'gradient') {
     const gradientColors = gradient || colors.gradientPrimary;
     
-    try {
-      // Try to import LinearGradient dynamically
-      const LinearGradient = require("expo-linear-gradient").LinearGradient;
-      
-      const gradientButton = (
-        <LinearGradient
-          colors={gradientColors as [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[getButtonStyle(), style]}
-        >
-          {buttonContent}
-        </LinearGradient>
-      );
+    const gradientButton = (
+      <LinearGradient
+        colors={gradientColors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[getButtonStyle(), style]}
+      >
+        {buttonContent}
+      </LinearGradient>
+    );
 
-      return (
-        <TouchableOpacity
-          onPress={onPress}
-          disabled={disabled || loading}
-          activeOpacity={0.7}
-          accessibilityLabel={accessibilityLabel || title}
-          accessibilityHint={accessibilityHint}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: disabled || loading }}
-        >
-          {gradientButton}
-        </TouchableOpacity>
-      );
-    } catch (error) {
-      // Fallback to solid background if LinearGradient is not available
-      return (
-        <TouchableOpacity
-          style={[getButtonStyle(), { backgroundColor: gradientColors[0] }, style]}
-          onPress={onPress}
-          disabled={disabled || loading}
-          activeOpacity={0.7}
-          accessibilityLabel={accessibilityLabel || title}
-          accessibilityHint={accessibilityHint}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: disabled || loading }}
-        >
-          {buttonContent}
-        </TouchableOpacity>
-      );
-    }
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={disabled || loading}
+        activeOpacity={0.7}
+        accessibilityLabel={accessibilityLabel || title}
+        accessibilityHint={accessibilityHint}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: disabled || loading }}
+      >
+        {gradientButton}
+      </TouchableOpacity>
+    );
   }
 
   return (

@@ -38,6 +38,7 @@ import {
   Shield,
   Smartphone,
   Bug,
+  Brain,
 } from "lucide-react-native";
 
 // 🔁 NEW: React Navigation → your safe navigation wrapper
@@ -389,6 +390,20 @@ export default function SettingsScreen(): JSX.Element {
             </Text>
           </View>
           <Text style={{ color: COLORS.primary, fontWeight: '600' }}>View →</Text>
+        </Pressable>
+
+        {/* Quick access to AI Settings */}
+        <Pressable
+          style={[styles.card, getCardStyle(theme), { padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+          onPress={() => router.safePush("AiSettings")}
+        >
+          <View style={styles.rowCenter}>
+            <Text style={{ fontSize: 20 }}>🤖</Text>
+            <Text style={[styles.sectionHeaderText, { color: theme === "dark" ? "#f1f5f9" : "#1e293b" }]}>
+              AI Text Generation
+            </Text>
+          </View>
+          <Text style={{ color: COLORS.primary, fontWeight: '600' }}>Configure →</Text>
         </Pressable>
 
 

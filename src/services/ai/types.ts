@@ -21,7 +21,7 @@ export interface AiProvider {
     name: string;
     isAvailable(): Promise<boolean>;
     generateText(prompt: string, options?: AiGenerationOptions): Promise<AiGenerationResult>;
-    estimateCost(prompt: string): number;
+    estimateCost(tokens: number): number;
 }
 
 export enum PromptType {

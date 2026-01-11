@@ -29,6 +29,7 @@ export interface MpesaPdfTransaction {
   status: string;
   paidIn: number;
   rawLine: string;
+  category?: string; // Transaction category
 }
 
 export interface ParseStats {
@@ -389,6 +390,7 @@ class MpesaPdfParserService {
       status,
       paidIn,
       rawLine: lines.join(' | '),
+      category: this.categorizeTransaction(details.trim()), // Categorize transaction
     };
   }
 
@@ -424,12 +426,13 @@ class MpesaPdfParserService {
    * Export transactions to CSV
    */
   async exportToCsv(transactions: MpesaPdfTransaction[]): Promise<string> {
-    const headers = ['Date', 'Time', 'Depot No.', 'Details', 'Amount', 'Status'];
+    const headers = ['Date', 'Time', 'Depot No.', 'Details', 'Category', 'Amount', 'Status'];
     const rows = transactions.map((t) => [
       t.date,
       t.time,
       t.depotNo,
       `"${t.details.replace(/"/g, '""')}"`,
+      t.category || 'Other',
       t.paidIn.toFixed(2),
       t.status,
     ]);
@@ -450,12 +453,13 @@ class MpesaPdfParserService {
    * Export transactions to Excel (CSV format with Excel-compatible headers)
    */
   async exportToExcel(transactions: MpesaPdfTransaction[]): Promise<string> {
-    const headers = ['Date', 'Time', 'Depot No.', 'Details', 'Amount', 'Status'];
+    const headers = ['Date', 'Time', 'Depot No.', 'Details', 'Category', 'Amount', 'Status'];
     const rows = transactions.map((t) => [
       t.date,
       t.time,
       t.depotNo,
       `"${t.details.replace(/"/g, '""')}"`,
+      t.category || 'Other',
       t.paidIn.toFixed(2),
       t.status,
     ]);
@@ -532,10 +536,78 @@ class MpesaPdfParserService {
   }
 
   /**
-   * Get minimum amount threshold
+   * Categorize a transaction based on its details
    */
-  getMinAmount(): number {
-    return this.MIN_AMOUNT;
+  categorizeTransaction(details: string): string {
+    const lowerDetails = details.toLowerCase();
+
+    // Airtime & Data
+    if (lowerDetails.includes('airtime') || lowerDetails.includes('data') ||
+        lowerDetails.includes('top up') || lowerDetails.includes('bundle') ||
+        lowerDetails.includes('sambaza') || lowerDetails.includes('tuone')) {
+      return 'Airtime & Data';
+    }
+
+    // PayBill & Merchant Payments
+    if (lowerDetails.includes('paybill') || lowerDetails.includes('pay bill') ||
+        lowerDetails.includes('merchant') || lowerDetails.includes('business') ||
+        lowerDetails.includes('till') || lowerDetails.includes('lipa na m-pesa')) {
+      return 'PayBill Payments';
+    }
+
+    // Buy Goods & Till Payments
+    if (lowerDetails.includes('buy goods') || lowerDetails.includes('till payment') ||
+        lowerDetails.includes('buy goods till')) {
+      return 'Buy Goods & Till';
+    }
+
+    // Send Money & Transfers
+    if (lowerDetails.includes('sent to') || lowerDetails.includes('transfer to') ||
+        lowerDetails.includes('send money') || lowerDetails.includes('money transfer') ||
+        lowerDetails.includes('fuliza') || lowerDetails.includes('loan')) {
+      return 'Send Money';
+    }
+
+    // Withdrawals
+    if (lowerDetails.includes('withdrawal') || lowerDetails.includes('agent withdrawal') ||
+        lowerDetails.includes('cash withdrawal') || lowerDetails.includes('atm withdrawal')) {
+      return 'Withdrawals';
+    }
+
+    // Deposits & Received Money
+    if (lowerDetails.includes('received from') || lowerDetails.includes('deposit') ||
+        lowerDetails.includes('received money') || lowerDetails.includes('incoming money') ||
+        lowerDetails.includes('credited') || lowerDetails.includes('cash deposit')) {
+      return 'Deposits';
+    }
+
+    // Bill Payments
+    if (lowerDetails.includes('bill payment') || lowerDetails.includes('utility') ||
+        lowerDetails.includes('kplc') || lowerDetails.includes('nairobi water') ||
+        lowerDetails.includes('kenya power') || lowerDetails.includes('service payment')) {
+      return 'Bill Payments';
+    }
+
+    // M-Pesa Charges & Fees
+    if (lowerDetails.includes('transaction charge') || lowerDetails.includes('fee') ||
+        lowerDetails.includes('commission') || lowerDetails.includes('maintenance')) {
+      return 'Charges & Fees';
+    }
+
+    // Reversals & Refunds
+    if (lowerDetails.includes('reversal') || lowerDetails.includes('refund') ||
+        lowerDetails.includes('reversed')) {
+      return 'Reversals & Refunds';
+    }
+
+    // Balance Inquiry
+    if (lowerDetails.includes('balance') || lowerDetails.includes('check balance') ||
+        lowerDetails.includes('account balance')) {
+      return 'Balance Inquiry';
+    }
+
+    // Default category
+    return 'Other';
   }
 }
 

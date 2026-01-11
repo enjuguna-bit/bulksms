@@ -41,6 +41,8 @@ export const MESSAGING_SCHEMA = {
       locked INTEGER DEFAULT 0,
       delivery_receipt_count INTEGER DEFAULT 0,
       read_receipt_count INTEGER DEFAULT 0,
+      campaign_id TEXT,
+      variant_id TEXT,
       created_at INTEGER NOT NULL,
       FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
     );

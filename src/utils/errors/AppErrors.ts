@@ -278,6 +278,12 @@ export function classifyAppError(error: unknown, context?: Partial<ErrorContext>
                 };
             }
             if (msg.includes('DATABASE') || msg.includes('DB') || msg.includes('INIT')) {
+                // Check for fatal conditions that should NOT be retried
+                const isFatal = msg.includes('CRITICAL') ||
+                    msg.includes('MISSING') ||
+                    msg.includes('CORRUPT') ||
+                    msg.includes('MALFORMED');
+
                 return {
                     type: AppErrorType.STARTUP_DB_INIT_FAILED,
                     message: error.message,
@@ -285,7 +291,7 @@ export function classifyAppError(error: unknown, context?: Partial<ErrorContext>
                     context: context as ErrorContext,
                     timestamp,
                     severity: 'CRITICAL',
-                    retriable: true,
+                    retriable: !isFatal, // Only retry if NOT fatal
                 };
             }
         }
@@ -380,13 +386,59 @@ export function classifyAppError(error: unknown, context?: Partial<ErrorContext>
     }
 
     // Default unknown error
+    let errorMessage: string = 'Unknown Startup Error';
+
+    try {
+        if (typeof error === 'string') {
+            errorMessage = error;
+        } else if (error instanceof Error) {
+            errorMessage = error.message;
+            // Handle edge case where native module assigns object to .message
+            if (typeof errorMessage === 'object') {
+                errorMessage = JSON.stringify(errorMessage);
+            }
+        } else if (typeof error === 'object' && error !== null) {
+            // Handle object errors (e.g. from native modules)
+            const e = error as any;
+
+            // Priority 1: .message property
+            if (e.message) {
+                if (typeof e.message === 'string') {
+                    errorMessage = e.message;
+                } else {
+                    errorMessage = JSON.stringify(e.message);
+                }
+            }
+            // Priority 2: .error_message property
+            else if (e.error_message) {
+                if (typeof e.error_message === 'string') {
+                    errorMessage = e.error_message;
+                } else {
+                    errorMessage = JSON.stringify(e.error_message);
+                }
+            }
+            // Priority 3: Full object serialization
+            else {
+                errorMessage = JSON.stringify(error);
+            }
+        } else {
+            errorMessage = String(error);
+        }
+    } catch (serializationError) {
+        errorMessage = `Error serializing failure: ${String(serializationError)}`;
+    }
+
+    // Add timestamp to ensure user sees new build
+    const timeString = new Date().toLocaleTimeString();
+    errorMessage = `[${timeString}] ${errorMessage}`;
+
     return {
         type: AppErrorType.UNKNOWN,
-        message: error instanceof Error ? error.message : String(error),
+        message: errorMessage,
         stack: error instanceof Error ? error.stack : undefined,
         context: context as ErrorContext,
         timestamp,
-        severity: 'HIGH',
+        severity: 'CRITICAL',
         retriable: false,
     };
 }

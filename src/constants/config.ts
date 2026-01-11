@@ -39,6 +39,13 @@ P+dmLemO8riAyONFv1q1oKoWYnVtQwD6MMCqk0SMlXZS2wIDAQAB
 -----END PUBLIC KEY-----
 `.trim(),
 
+    // AI API Keys (Configure these environment variables for production)
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY || null,
+    GOOGLE_GEMINI_API_KEY: process.env.GOOGLE_GEMINI_API_KEY || null,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || null,
+    HUGGINGFACE_API_KEY: process.env.HUGGINGFACE_API_KEY || null,
+    COHERE_API_KEY: process.env.COHERE_API_KEY || null,
+
     // Developer
     IS_DEV_MODE: __DEV__,
     DEVELOPER_BYPASS: (__DEV__ === true) || String(process.env.DEVELOPER_BYPASS || process.env.REACT_NATIVE_DEVELOPER_BYPASS || '').trim().toLowerCase() === 'true',

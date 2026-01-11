@@ -5,6 +5,7 @@
 // ------------------------------------------------------
 
 import type { BulkSMSRecipient } from '@/types';
+import { normalizePhoneNumber } from './phoneNormalizer';
 
 /** Normalize headers for fuzzy comparison. */
 function normalizeHeader(header: string): string {
@@ -176,12 +177,13 @@ export async function parseCsvSmart(
 
             const phoneRaw =
                 mapping.phone ? row[mapping.phone] : row['PhoneNumber'] || row['Phone'];
-            const phone = cleanCellValue(phoneRaw);
+            const phone = normalizePhoneNumber(cleanCellValue(phoneRaw));
 
             const amount = mapping.amount
                 ? parseAmount(row[mapping.amount])
                 : parseAmount(row['Amount']);
 
+            // Skip rows without valid phone numbers after normalization
             if (!phone) continue;
             results.push({ name, phone, amount });
         }

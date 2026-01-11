@@ -6,6 +6,7 @@
 
 import * as XLSX from 'xlsx';
 import { parseCSV, autoSuggestMapping } from './csvParser';
+import { normalizePhoneNumber } from './phoneNormalizer';
 import type { BulkSMSRecipient } from '@/types';
 
 /**
@@ -161,12 +162,13 @@ export async function parseExcelSmart(
 
       const phoneRaw =
         mapping.phone ? row[mapping.phone] : row['PhoneNumber'] || row['Phone'];
-      const phone = cleanCellValue(phoneRaw);
+      const phone = normalizePhoneNumber(cleanCellValue(phoneRaw));
 
       const amount = mapping.amount
         ? parseAmount(row[mapping.amount])
         : parseAmount(row['Amount']);
 
+      // Skip rows without valid phone numbers after normalization
       if (!phone) continue;
       results.push({ name, phone, amount });
     }

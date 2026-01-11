@@ -101,60 +101,81 @@ const COUNTRY_CONFIGS: Record<string, { localLength: number; withZeroLength: num
 };
 
 /**
- * Normalize phone number to E.164 format.
- * 
+ * Normalize phone number to E.164 format with reasonable validation.
+ * Accepts various formats and normalizes them, rejecting only obviously invalid numbers.
+ *
  * @param phone - Phone number in various formats
  * @param countryCode - Optional country code override (default: DEFAULT_COUNTRY_CODE)
- * @returns Normalized phone in E.164 format (e.g., +254712345678)
+ * @returns Normalized phone in E.164 format, or empty string if clearly invalid
  */
 export function normalizePhone(phone: string, countryCode: string = DEFAULT_COUNTRY_CODE): string {
-  if (!phone) return "";
-  const str = phone.toString().trim();
-
-  // Preserve existing + if present at start (already international)
-  const hasPlus = str.startsWith("+");
-
-  // Strip all non-digits
-  const digits = str.replace(/\D/g, "");
-
-  // If empty after strip, return empty
-  if (!digits) return "";
-
-  // If already has plus, trust the format
-  if (hasPlus) {
-    return "+" + digits;
+  if (!phone || typeof phone !== 'string') {
+    return "";
   }
 
-  // Check if starts with country code (international format without +)
-  if (digits.startsWith(countryCode) && digits.length === countryCode.length + (COUNTRY_CONFIGS[countryCode]?.localLength || 9)) {
-    return "+" + digits;
+  // Remove all non-numeric characters except leading +
+  let cleaned = phone.trim();
+
+  // Handle international format with leading +
+  const hasLeadingPlus = cleaned.startsWith('+');
+  cleaned = cleaned.replace(/[^\d]/g, '');
+
+  if (hasLeadingPlus) {
+    cleaned = '+' + cleaned;
   }
 
-  // Handle local format starting with 0
-  if (digits.startsWith("0")) {
-    const withoutZero = digits.slice(1);
-    return "+" + countryCode + withoutZero;
+  // If empty after cleaning, return empty
+  if (!cleaned) {
+    return "";
   }
 
-  // Handle short format (just the local number)
-  const config = COUNTRY_CONFIGS[countryCode];
-  if (config && digits.length === config.localLength) {
-    return "+" + countryCode + digits;
-  }
+  // Handle different formats
+  if (cleaned.startsWith('+')) {
+    // International format: +XXXXXXXXX
+    const withoutPlus = cleaned.substring(1);
 
-  // Detect if it might be another international format
-  // Common patterns: starts with 00 (international prefix)
-  if (digits.startsWith("00") && digits.length > 10) {
-    return "+" + digits.slice(2);
-  }
+    // If it's already +254 format, validate basic length for Kenya
+    if (withoutPlus.startsWith('254')) {
+      const localNumber = withoutPlus.substring(3);
+      // Accept any 6-9 digit number for Kenya (be more permissive)
+      if (localNumber.length >= 6 && localNumber.length <= 9) {
+        return '+254' + localNumber.padStart(9, '0').slice(-9); // Pad/truncate to 9 digits
+      }
+    }
 
-  // Fallback: If long enough to be international (11+ digits), assume it has country code
-  if (digits.length >= 11) {
-    return "+" + digits;
-  }
+    // For other international numbers, accept reasonable lengths (7-15 digits)
+    if (withoutPlus.length >= 7 && withoutPlus.length <= 15) {
+      return cleaned;
+    }
 
-  // Default fallback: Prepend configured country code
-  return "+" + countryCode + digits;
+    return ""; // Invalid international format
+  } else {
+    // Local format: various possibilities
+    let digits = cleaned;
+
+    // Handle leading 254 (without +) - international format without +
+    if (digits.startsWith('254')) {
+      digits = digits.substring(3);
+    }
+
+    // Remove leading zero if present
+    if (digits.startsWith('0')) {
+      digits = digits.substring(1);
+    }
+
+    // Accept reasonable local lengths (6-10 digits, be permissive)
+    if (digits.length >= 6 && digits.length <= 10) {
+      // Pad to 9 digits for Kenyan numbers, but accept other lengths for international
+      if (digits.length <= 9) {
+        return '+254' + digits.padStart(9, '0').slice(-9);
+      } else {
+        // Assume it's already an international number
+        return '+' + digits;
+      }
+    }
+
+    return ""; // Invalid local format
+  }
 }
 
 // ------------------------------------------------------

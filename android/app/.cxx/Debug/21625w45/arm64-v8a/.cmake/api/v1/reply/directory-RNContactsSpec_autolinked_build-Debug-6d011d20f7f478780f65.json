@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "RNContactsSpec_autolinked_build",
+		"source" : "C:/bulksms/node_modules/react-native-contacts/android/build/generated/source/codegen/jni"
+	}
+}

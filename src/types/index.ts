@@ -131,4 +131,5 @@ export type RootStackParamList = {
   CreateCampaign: undefined;
   Blacklist: undefined;
   InboxScanner: undefined;
+  AiSettings: undefined;
 };

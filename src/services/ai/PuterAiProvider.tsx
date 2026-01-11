@@ -65,6 +65,10 @@ export class PuterAiProvider implements AiProvider {
     private pendingRequests = new Map<number, MessageHandler>();
     private requestId = 0;
 
+    async initialize(): Promise<void> {
+        // No initialization needed
+    }
+
     /**
      * Check if provider is available
      */
@@ -172,7 +176,7 @@ export class PuterAiProvider implements AiProvider {
     /**
      * Estimate cost (always $0 for Puter)
      */
-    estimateCost(prompt: string): number {
+    estimateCost(tokens: number): number {
         return 0; // Free service!
     }
 

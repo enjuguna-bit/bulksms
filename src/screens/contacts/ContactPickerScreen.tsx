@@ -105,8 +105,7 @@ export default function ContactPickerScreen({ route, navigation }: any) {
 
             // Navigate to Chat
             router.safeReplace("ChatScreen", {
-                address: phone,
-                threadId: undefined, // Let chat provider resolve
+                address: phone
             });
         } else {
             // Bulk Mode - Navigate to BulkSMSPro with selected contacts

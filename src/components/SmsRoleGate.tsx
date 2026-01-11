@@ -17,11 +17,23 @@ export default function SmsRoleGate({ children }: { children: React.ReactNode })
   const checkRole = useCallback(async () => {
     console.log("[SmsRoleGate] Checking SMS role...");
     try {
-      const result = await smsRole.isDefault();
-      console.log("[SmsRoleGate] isDefault result:", result);
-      setIsDefault(result);
-      if (result) {
-        setError(null);
+      // 🛡️ Add timeout to prevent hanging on splash screen
+      const timeoutPromise = new Promise<boolean | string>((resolve) =>
+        setTimeout(() => resolve('TIMEOUT'), 2000)
+      );
+
+      const rolePromise = smsRole.isDefault();
+      const result = await Promise.race([rolePromise, timeoutPromise]);
+
+      if (result === 'TIMEOUT') {
+        console.warn("[SmsRoleGate] Check timed out, defaulting to strict (false) to allow retry UI");
+        setIsDefault(false); // Show the "Set Default" UI so user can manually retry
+      } else {
+        console.log("[SmsRoleGate] isDefault result:", result);
+        setIsDefault(result as boolean);
+        if (result) {
+          setError(null);
+        }
       }
     } catch (e: any) {
       console.warn("[SmsRoleGate] Error checking SMS role", e);
@@ -57,11 +69,11 @@ export default function SmsRoleGate({ children }: { children: React.ReactNode })
     setChecking(true);
     setError(null);
     pendingRequest.current = true;
-    
+
     try {
       const granted = await smsRole.requestDefault();
       console.log("[SmsRoleGate] requestDefault result:", granted);
-      
+
       // If the native module returns true, the role was granted
       if (granted) {
         setIsDefault(true);
@@ -72,14 +84,14 @@ export default function SmsRoleGate({ children }: { children: React.ReactNode })
     } catch (e: any) {
       console.warn("[SmsRoleGate] Request role error:", e?.message || e);
       pendingRequest.current = false;
-      
+
       // Check if user cancelled
       if (e?.code === "USER_CANCELLED" || e?.message?.includes("declined")) {
         setError("You need to set this app as default SMS to continue.");
       } else {
         setError(e?.message || "Failed to request SMS role");
       }
-      
+
       // Re-check the role status anyway
       await checkRole();
       setChecking(false);
@@ -103,9 +115,9 @@ export default function SmsRoleGate({ children }: { children: React.ReactNode })
         {error && (
           <Text style={styles.errorText}>{error}</Text>
         )}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.button, checking && styles.buttonDisabled]}
-          onPress={requestRole} 
+          onPress={requestRole}
           disabled={checking}
           activeOpacity={0.7}
         >

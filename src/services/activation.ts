@@ -112,17 +112,35 @@ export async function verifyTokenLocally(
 // Server calls
 // -----------------------------------------------------
 
+// Helper for fetch with timeout
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+}
+
 export async function activatePlan(
   plan: PlanType = "trial"
 ): Promise<ActivationResult> {
   try {
     const fingerprint = await getFingerprint();
 
-    const res = await fetch(`${ACTIVATION_SERVER_URL}/activate`, {
+    // ⚡ TIMEOUT: 10s network timeout
+    const res = await fetchWithTimeout(`${ACTIVATION_SERVER_URL}/activate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fingerprint, till: MERCHANT_TILL, plan }),
-    });
+    }, 10000);
 
     const data = await res.json();
 
@@ -147,8 +165,11 @@ export async function checkStatusOnServer(): Promise<ActivationResult> {
   try {
     const fingerprint = await getFingerprint();
 
-    const res = await fetch(
-      `${ACTIVATION_SERVER_URL}/status/${encodeURIComponent(fingerprint)}`
+    // ⚡ TIMEOUT: 10s network timeout
+    const res = await fetchWithTimeout(
+      `${ACTIVATION_SERVER_URL}/status/${encodeURIComponent(fingerprint)}`,
+      {},
+      10000
     );
 
     const data = await res.json();

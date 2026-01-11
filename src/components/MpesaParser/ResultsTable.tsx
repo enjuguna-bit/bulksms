@@ -28,6 +28,8 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({
   stats,
   onExport,
 }) => {
+  const totalAmount = useMemo(() => transactions.reduce((sum, t) => sum + t.paidIn, 0), [transactions]);
+
   const formatAmount = useCallback((amount: number) => {
     return `Ksh ${amount.toLocaleString('en-KE', {
       minimumFractionDigits: 2,
@@ -35,8 +37,21 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({
     })}`;
   }, []);
 
-  const totalAmount = useMemo(() => {
-    return transactions.reduce((sum, t) => sum + t.paidIn, 0);
+  const categorySummary = useMemo(() => {
+    const summary: { [key: string]: { count: number; total: number } } = {};
+
+    transactions.forEach(t => {
+      const category = t.category || 'Other';
+      if (!summary[category]) {
+        summary[category] = { count: 0, total: 0 };
+      }
+      summary[category].count++;
+      summary[category].total += t.paidIn;
+    });
+
+    return Object.entries(summary)
+      .sort(([, a], [, b]) => b.total - a.total)
+      .slice(0, 5); // Show top 5 categories
   }, [transactions]);
 
   const handleShare = async () => {
@@ -97,6 +112,11 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({
           >
             <Text style={styles.statusText}>{item.status}</Text>
           </View>
+          {item.category && (
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{item.category}</Text>
+            </View>
+          )}
         </View>
       </View>
       <View style={styles.cellAmount}>
@@ -113,17 +133,63 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({
     </View>
   ), [formatAmount]);
 
-  // keyExtractor for FlatList
-  const keyExtractor = useCallback((item: MpesaPdfTransaction) => item.id || Math.random().toString(), []);
+  // keyExtractor for FlatList - create truly unique keys
+  const keyExtractor = useCallback((item: MpesaPdfTransaction, index: number) => {
+    // Use combination of fields that should be unique, with index as final fallback
+    return `${item.id || 'no-id'}_${item.completionTime}_${item.paidIn}_${index}`;
+  }, []);
 
   if (transactions.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <FileText size={48} color="#ccc" />
-        <Text style={styles.emptyText}>No high-value transactions found</Text>
-        <Text style={styles.emptySubtext}>
-          Only transactions above Ksh 5,000 are shown
-        </Text>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.emptyStatsRow}>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statLabel}>Transactions</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>Ksh 0</Text>
+              <Text style={styles.statLabel}>Total Value</Text>
+            </View>
+          </View>
+
+          <View style={styles.exportButtons}>
+            <TouchableOpacity
+              style={[styles.exportButton, styles.primaryExportButton, styles.disabledButton]}
+              disabled={true}
+            >
+              <Download size={18} color="#ccc" />
+              <Text style={[styles.exportButtonText, styles.primaryExportButtonText, styles.disabledText]}>No Data</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.exportButton, styles.disabledButton]}
+              disabled={true}
+            >
+              <Download size={16} color="#ccc" />
+              <Text style={[styles.exportButtonText, styles.disabledText]}>Excel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.exportButton, styles.disabledButton]}
+              disabled={true}
+            >
+              <Download size={16} color="#ccc" />
+              <Text style={[styles.exportButtonText, styles.disabledText]}>JSON</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.exportButton, styles.disabledButton]} disabled={true}>
+              <Share2 size={16} color="#ccc" />
+              <Text style={[styles.exportButtonText, styles.disabledText]}>Share</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.emptyContainer}>
+          <FileText size={48} color="#ccc" />
+          <Text style={styles.emptyText}>No high-value transactions found</Text>
+          <Text style={styles.emptySubtext}>
+            Only transactions above Ksh 5,000 are shown
+          </Text>
+        </View>
       </View>
     );
   }
@@ -148,13 +214,28 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({
           )}
         </View>
 
+        {/* Category Summary */}
+        {categorySummary.length > 0 && (
+          <View style={styles.categorySummary}>
+            <Text style={styles.categorySummaryTitle}>Top Spending Categories</Text>
+            {categorySummary.map(([category, data]) => (
+              <View key={category} style={styles.categoryRow}>
+                <Text style={styles.categoryName}>{category}</Text>
+                <Text style={styles.categoryStats}>
+                  {data.count} txns • {formatAmount(data.total)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={styles.exportButtons}>
           <TouchableOpacity
-            style={styles.exportButton}
+            style={[styles.exportButton, styles.primaryExportButton]}
             onPress={() => handleExport('csv')}
           >
-            <Download size={16} color={kenyaColors.safaricomGreen} />
-            <Text style={styles.exportButtonText}>CSV</Text>
+            <Download size={18} color="#fff" />
+            <Text style={[styles.exportButtonText, styles.primaryExportButtonText]}>Download CSV</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.exportButton}
@@ -217,7 +298,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: 20,
+  },
+  emptyStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  disabledText: {
+    color: '#ccc',
   },
   emptyText: {
     fontSize: 18,
@@ -268,6 +360,15 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     gap: 6,
+  },
+  primaryExportButton: {
+    backgroundColor: kenyaColors.safaricomGreen,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  primaryExportButtonText: {
+    color: '#fff',
+    fontWeight: '700',
   },
   exportButtonText: {
     fontSize: 14,
@@ -369,10 +470,49 @@ const styles = StyleSheet.create({
   statusFailed: {
     backgroundColor: '#ffebee',
   },
-  statusText: {
-    fontSize: 10,
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: kenyaColors.safaricomGreen + '20', // Semi-transparent green
+    marginTop: 4,
+  },
+  categorySummary: {
+    backgroundColor: '#f9fff9',
+    padding: 12,
+    marginTop: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: kenyaColors.safaricomGreen + '30',
+  },
+  categorySummaryTitle: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: kenyaColors.safaricomGreen,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    marginVertical: 2,
+  },
+  categoryName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+  },
+  categoryStats: {
+    fontSize: 11,
+    color: kenyaColors.safaricomGreen,
+    fontWeight: '500',
   },
   amountText: {
     fontSize: 14,
@@ -412,6 +552,16 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     marginTop: 4,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+  },
+  categoryText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: kenyaColors.safaricomGreen,
   },
 });
 

@@ -1,7 +1,7 @@
 // ------------------------------------------------------
 // app/bulk-pro.tsx — BulkSMS Pro (FlatList + Performance)
 // ------------------------------------------------------
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -72,6 +72,13 @@ function BulkSMSProContent(): JSX.Element {
   const [showRecipientsModal, setShowRecipientsModal] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
   const [editingRecipient, setEditingRecipient] = useState<Recipient | null>(null);
+
+  // Memoize the header mapping to prevent unnecessary re-renders
+  const headerMapping = useMemo(() => ({
+    name: headers.find(h => h.toLowerCase().replace(/\s+/g, "") === "fullnames") ?? "FullNames",
+    phone: headers.find(h => h.toLowerCase().replace(/\s+/g, "") === "phonenumber") ?? "PhoneNumber",
+    amount: amountCandidates[0] ?? "Arrears Amount",
+  }), [headers, amountCandidates]);
 
   // 💳 Wrapper to handle subscription enforcement
   const handleSendWithBillingCheck = async () => {
@@ -376,11 +383,7 @@ function BulkSMSProContent(): JSX.Element {
             headers={headers}
             amountCandidates={amountCandidates}
             sampleRows={sampleRows}
-            mapping={{
-              name: headers.find(h => h.toLowerCase().replace(/\s+/g, "") === "fullnames") ?? "FullNames",
-              phone: headers.find(h => h.toLowerCase().replace(/\s+/g, "") === "phonenumber") ?? "PhoneNumber",
-              amount: amountCandidates[0] ?? "Arrears Amount",
-            }}
+            mapping={headerMapping}
             onConfirm={(map) => {
               if (!map.name || !map.phone || !map.amount) return alert("Select all columns.");
 

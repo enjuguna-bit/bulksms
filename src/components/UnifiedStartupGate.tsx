@@ -21,6 +21,8 @@ import RootNavigator from "../navigation/RootNavigator";
 
 // Message provider (must be inside NavigationContainer)
 import { MessageProvider } from "../providers/MessageProvider";
+import { TransactionsProvider } from "../providers/TransactionsProvider";
+import { StatsProvider } from "../providers/StatsProvider";
 
 export default function UnifiedStartupGate() {
   const { ready, initError, isOffline, retryContext, prepareApp } = useStartupLoader();
@@ -51,17 +53,21 @@ export default function UnifiedStartupGate() {
   return (
     <StartupBoundary>
       <NavigationContainer>
-        <MessageProvider>
-          <TrialGate>
-            <SubscriptionGate>
-              <SmsRoleGate>
-                <AppLockGate>
-                  <RootNavigator />
-                </AppLockGate>
-              </SmsRoleGate>
-            </SubscriptionGate>
-          </TrialGate>
-        </MessageProvider>
+        <TransactionsProvider>
+          <StatsProvider>
+            <MessageProvider>
+              <TrialGate>
+                <SubscriptionGate>
+                  <SmsRoleGate>
+                    <AppLockGate>
+                      <RootNavigator />
+                    </AppLockGate>
+                  </SmsRoleGate>
+                </SubscriptionGate>
+              </TrialGate>
+            </MessageProvider>
+          </StatsProvider>
+        </TransactionsProvider>
       </NavigationContainer>
     </StartupBoundary>
   );

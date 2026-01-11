@@ -1,3 +1,4 @@
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { Platform } from 'react-native';
 
 export interface HapticFeedback {
@@ -20,12 +21,10 @@ class HapticFeedbackImpl implements HapticFeedback {
   private async checkAvailability() {
     try {
       if (Platform.OS === 'ios') {
-        // For iOS, we'll use react-native-haptic-feedback if available
-        // For now, we'll implement a basic version
+        // iOS haptic feedback is available
         this.isAvailable = true;
       } else if (Platform.OS === 'android') {
-        // For Android, we'll use react-native-haptic-feedback if available
-        // For now, we'll implement a basic version
+        // Android haptic feedback is available
         this.isAvailable = true;
       }
     } catch (error) {
@@ -36,15 +35,9 @@ class HapticFeedbackImpl implements HapticFeedback {
 
   light(): void {
     if (!this.isAvailable) return;
-    
+
     try {
-      if (Platform.OS === 'ios') {
-        // iOS light haptic - would use expo-haptics or react-native-haptic-feedback
-        // For now, this is a placeholder
-      } else if (Platform.OS === 'android') {
-        // Android light haptic
-        // For now, this is a placeholder
-      }
+      ReactNativeHapticFeedback.trigger('impactLight');
     } catch (error) {
       console.warn('Failed to trigger light haptic:', error);
     }
@@ -52,13 +45,9 @@ class HapticFeedbackImpl implements HapticFeedback {
 
   medium(): void {
     if (!this.isAvailable) return;
-    
+
     try {
-      if (Platform.OS === 'ios') {
-        // iOS medium haptic
-      } else if (Platform.OS === 'android') {
-        // Android medium haptic
-      }
+      ReactNativeHapticFeedback.trigger('impactMedium');
     } catch (error) {
       console.warn('Failed to trigger medium haptic:', error);
     }
@@ -66,13 +55,9 @@ class HapticFeedbackImpl implements HapticFeedback {
 
   heavy(): void {
     if (!this.isAvailable) return;
-    
+
     try {
-      if (Platform.OS === 'ios') {
-        // iOS heavy haptic
-      } else if (Platform.OS === 'android') {
-        // Android heavy haptic
-      }
+      ReactNativeHapticFeedback.trigger('impactHeavy');
     } catch (error) {
       console.warn('Failed to trigger heavy haptic:', error);
     }
@@ -80,13 +65,9 @@ class HapticFeedbackImpl implements HapticFeedback {
 
   success(): void {
     if (!this.isAvailable) return;
-    
+
     try {
-      if (Platform.OS === 'ios') {
-        // iOS success haptic
-      } else if (Platform.OS === 'android') {
-        // Android success haptic
-      }
+      ReactNativeHapticFeedback.trigger('notificationSuccess');
     } catch (error) {
       console.warn('Failed to trigger success haptic:', error);
     }
@@ -94,13 +75,9 @@ class HapticFeedbackImpl implements HapticFeedback {
 
   warning(): void {
     if (!this.isAvailable) return;
-    
+
     try {
-      if (Platform.OS === 'ios') {
-        // iOS warning haptic
-      } else if (Platform.OS === 'android') {
-        // Android warning haptic
-      }
+      ReactNativeHapticFeedback.trigger('notificationWarning');
     } catch (error) {
       console.warn('Failed to trigger warning haptic:', error);
     }
@@ -108,13 +85,9 @@ class HapticFeedbackImpl implements HapticFeedback {
 
   error(): void {
     if (!this.isAvailable) return;
-    
+
     try {
-      if (Platform.OS === 'ios') {
-        // iOS error haptic
-      } else if (Platform.OS === 'android') {
-        // Android error haptic
-      }
+      ReactNativeHapticFeedback.trigger('notificationError');
     } catch (error) {
       console.warn('Failed to trigger error haptic:', error);
     }
@@ -122,13 +95,9 @@ class HapticFeedbackImpl implements HapticFeedback {
 
   selection(): void {
     if (!this.isAvailable) return;
-    
+
     try {
-      if (Platform.OS === 'ios') {
-        // iOS selection haptic
-      } else if (Platform.OS === 'android') {
-        // Android selection haptic
-      }
+      ReactNativeHapticFeedback.trigger('selection');
     } catch (error) {
       console.warn('Failed to trigger selection haptic:', error);
     }

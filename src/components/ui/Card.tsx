@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, TouchableOpacity, Pressable, StyleProp } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useThemeSettings } from '@/theme/ThemeProvider';
 
 interface CardProps {
@@ -80,56 +81,30 @@ export const Card: React.FC<CardProps> = ({
   if (gradient) {
     const gradientColors = gradient;
 
-    try {
-      // Try to import LinearGradient dynamically
-      const LinearGradient = require("expo-linear-gradient").LinearGradient;
+    const gradientCard = (
+      <LinearGradient
+        colors={gradientColors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[getCardStyle(), style]}
+      >
+        {children}
+      </LinearGradient>
+    );
 
-      const gradientCard = (
-        <LinearGradient
-          colors={gradientColors as [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[getCardStyle(), style]}
+    if (onPress) {
+      return (
+        <TouchableOpacity
+          onPress={onPress}
+          onLongPress={onLongPress}
+          disabled={disabled}
+          activeOpacity={0.7}
         >
-          {children}
-        </LinearGradient>
+          {gradientCard}
+        </TouchableOpacity>
       );
-
-      if (onPress) {
-        return (
-          <TouchableOpacity
-            onPress={onPress}
-            onLongPress={onLongPress}
-            disabled={disabled}
-            activeOpacity={0.7}
-          >
-            {gradientCard}
-          </TouchableOpacity>
-        );
-      }
-      return gradientCard;
-    } catch (error) {
-      // Fallback to solid background if LinearGradient is not available
-      const fallbackCard = (
-        <View style={[getCardStyle(), { backgroundColor: gradientColors[0] }, style]}>
-          {children}
-        </View>
-      );
-
-      if (onPress) {
-        return (
-          <TouchableOpacity
-            onPress={onPress}
-            onLongPress={onLongPress}
-            disabled={disabled}
-            activeOpacity={0.7}
-          >
-            {fallbackCard}
-          </TouchableOpacity>
-        );
-      }
-      return fallbackCard;
     }
+    return gradientCard;
   }
 
   if (variant === 'pressable' || onPress) {

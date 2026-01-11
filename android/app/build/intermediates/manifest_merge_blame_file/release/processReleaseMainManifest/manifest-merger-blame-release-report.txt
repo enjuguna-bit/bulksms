@@ -1,0 +1,888 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.bulksms.smsmanager"
+4    android:versionCode="2"
+5    android:versionName="1.1.1" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="34" />
+10
+11    <!-- Android 11+ package visibility for opening URLs in browser -->
+12    <queries>
+12-->C:\bulksms\android\app\src\main\AndroidManifest.xml:6:3-19:13
+13        <intent>
+13-->C:\bulksms\android\app\src\main\AndroidManifest.xml:7:5-10:14
+14            <action android:name="android.intent.action.VIEW" />
+14-->C:\bulksms\android\app\src\main\AndroidManifest.xml:8:7-59
+14-->C:\bulksms\android\app\src\main\AndroidManifest.xml:8:15-56
+15
+16            <data android:scheme="https" />
+16-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+16-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+17        </intent>
+18        <intent>
+18-->C:\bulksms\android\app\src\main\AndroidManifest.xml:11:5-14:14
+19            <action android:name="android.intent.action.VIEW" />
+19-->C:\bulksms\android\app\src\main\AndroidManifest.xml:8:7-59
+19-->C:\bulksms\android\app\src\main\AndroidManifest.xml:8:15-56
+20
+21            <data android:scheme="http" />
+21-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+21-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+22        </intent>
+23        <intent>
+23-->C:\bulksms\android\app\src\main\AndroidManifest.xml:15:5-18:14
+24            <action android:name="android.intent.action.VIEW" />
+24-->C:\bulksms\android\app\src\main\AndroidManifest.xml:8:7-59
+24-->C:\bulksms\android\app\src\main\AndroidManifest.xml:8:15-56
+25
+26            <data android:scheme="tel" />
+26-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+26-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+27        </intent>
+28    </queries>
+29
+30    <uses-permission android:name="android.permission.INTERNET" />
+30-->C:\bulksms\android\app\src\main\AndroidManifest.xml:21:3-65
+30-->C:\bulksms\android\app\src\main\AndroidManifest.xml:21:20-62
+31    <uses-permission android:name="android.permission.INTERNET" />
+31-->C:\bulksms\android\app\src\main\AndroidManifest.xml:21:3-65
+31-->C:\bulksms\android\app\src\main\AndroidManifest.xml:21:20-62
+32    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+32-->C:\bulksms\android\app\src\main\AndroidManifest.xml:23:3-75
+32-->C:\bulksms\android\app\src\main\AndroidManifest.xml:23:20-72
+33    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+33-->C:\bulksms\android\app\src\main\AndroidManifest.xml:24:3-85
+33-->C:\bulksms\android\app\src\main\AndroidManifest.xml:24:20-82
+34    <uses-permission android:name="android.permission.CALL_PHONE" />
+34-->C:\bulksms\android\app\src\main\AndroidManifest.xml:25:3-67
+34-->C:\bulksms\android\app\src\main\AndroidManifest.xml:25:20-64
+35    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+35-->C:\bulksms\android\app\src\main\AndroidManifest.xml:26:3-75
+35-->C:\bulksms\android\app\src\main\AndroidManifest.xml:26:20-72
+36    <uses-permission android:name="android.permission.WAKE_LOCK" />
+36-->C:\bulksms\android\app\src\main\AndroidManifest.xml:27:3-66
+36-->C:\bulksms\android\app\src\main\AndroidManifest.xml:27:20-63
+37    <uses-permission android:name="android.permission.READ_CONTACTS" />
+37-->C:\bulksms\android\app\src\main\AndroidManifest.xml:28:3-70
+37-->C:\bulksms\android\app\src\main\AndroidManifest.xml:28:20-67
+38    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+38-->C:\bulksms\android\app\src\main\AndroidManifest.xml:29:3-73
+38-->C:\bulksms\android\app\src\main\AndroidManifest.xml:29:20-70
+39    <uses-permission android:name="android.permission.SEND_SMS" />
+39-->C:\bulksms\android\app\src\main\AndroidManifest.xml:30:3-65
+39-->C:\bulksms\android\app\src\main\AndroidManifest.xml:30:20-62
+40    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+40-->C:\bulksms\android\app\src\main\AndroidManifest.xml:31:3-68
+40-->C:\bulksms\android\app\src\main\AndroidManifest.xml:31:20-65
+41    <uses-permission android:name="android.permission.READ_SMS" />
+41-->C:\bulksms\android\app\src\main\AndroidManifest.xml:32:3-65
+41-->C:\bulksms\android\app\src\main\AndroidManifest.xml:32:20-62
+42    <uses-permission android:name="android.permission.READ_CELL_BROADCASTS" />
+42-->C:\bulksms\android\app\src\main\AndroidManifest.xml:33:3-77
+42-->C:\bulksms\android\app\src\main\AndroidManifest.xml:33:20-74
+43    <uses-permission android:name="android.permission.RECEIVE_CELL_BROADCASTS" />
+43-->C:\bulksms\android\app\src\main\AndroidManifest.xml:34:3-80
+43-->C:\bulksms\android\app\src\main\AndroidManifest.xml:34:20-77
+44    <uses-permission android:name="android.permission.RECEIVE_WAP_PUSH" />
+44-->C:\bulksms\android\app\src\main\AndroidManifest.xml:35:3-73
+44-->C:\bulksms\android\app\src\main\AndroidManifest.xml:35:20-70
+45    <uses-permission android:name="android.permission.BROADCAST_WAP_PUSH" />
+45-->C:\bulksms\android\app\src\main\AndroidManifest.xml:36:3-75
+45-->C:\bulksms\android\app\src\main\AndroidManifest.xml:36:20-72
+46    <uses-permission android:name="android.permission.SEND_RESPOND_VIA_MESSAGE" />
+46-->C:\bulksms\android\app\src\main\AndroidManifest.xml:38:3-81
+46-->C:\bulksms\android\app\src\main\AndroidManifest.xml:38:20-78
+47    <uses-permission android:name="android.permission.BROADCAST_SMS" />
+47-->C:\bulksms\android\app\src\main\AndroidManifest.xml:39:3-70
+47-->C:\bulksms\android\app\src\main\AndroidManifest.xml:39:20-67
+48    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+48-->C:\bulksms\android\app\src\main\AndroidManifest.xml:41:3-79
+48-->C:\bulksms\android\app\src\main\AndroidManifest.xml:41:20-76
+49    <uses-permission android:name="android.permission.VIBRATE" />
+49-->C:\bulksms\android\app\src\main\AndroidManifest.xml:42:3-64
+49-->C:\bulksms\android\app\src\main\AndroidManifest.xml:42:20-61
+50    <uses-permission android:name="android.permission.READ_CALENDAR" />
+50-->C:\bulksms\android\app\src\main\AndroidManifest.xml:43:3-70
+50-->C:\bulksms\android\app\src\main\AndroidManifest.xml:43:20-67
+51    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+51-->C:\bulksms\android\app\src\main\AndroidManifest.xml:44:3-79
+51-->C:\bulksms\android\app\src\main\AndroidManifest.xml:44:20-76
+52    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+52-->C:\bulksms\android\app\src\main\AndroidManifest.xml:45:3-77
+52-->C:\bulksms\android\app\src\main\AndroidManifest.xml:45:20-74
+53    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+53-->C:\bulksms\android\app\src\main\AndroidManifest.xml:47:3-78
+53-->C:\bulksms\android\app\src\main\AndroidManifest.xml:47:20-75
+54    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+54-->C:\bulksms\android\app\src\main\AndroidManifest.xml:48:3-79
+54-->C:\bulksms\android\app\src\main\AndroidManifest.xml:48:20-76
+55
+56    <!-- Overlay permission for heads-up notifications over other apps -->
+57    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+57-->C:\bulksms\android\app\src\main\AndroidManifest.xml:51:3-76
+57-->C:\bulksms\android\app\src\main\AndroidManifest.xml:51:20-73
+58    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+58-->[:react-native-community_netinfo] C:\bulksms\node_modules\@react-native-community\netinfo\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:5-79
+58-->[:react-native-community_netinfo] C:\bulksms\node_modules\@react-native-community\netinfo\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:22-76
+59    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- Required to to download files without a notification -->
+59-->[:react-native-community_netinfo] C:\bulksms\node_modules\@react-native-community\netinfo\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:5-76
+59-->[:react-native-community_netinfo] C:\bulksms\node_modules\@react-native-community\netinfo\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:22-73
+60    <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
+60-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:32:5-88
+60-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:32:22-85
+61    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+61-->[:react-native-calendar-events] C:\bulksms\node_modules\react-native-calendar-events\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:5-73
+61-->[:react-native-calendar-events] C:\bulksms\node_modules\react-native-calendar-events\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:22-70
+62    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+62-->[:react-native-keychain] C:\bulksms\node_modules\react-native-keychain\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:5-72
+62-->[:react-native-keychain] C:\bulksms\node_modules\react-native-keychain\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:22-69
+63    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
+63-->[:react-native-keychain] C:\bulksms\node_modules\react-native-keychain\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:5-74
+63-->[:react-native-keychain] C:\bulksms\node_modules\react-native-keychain\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:22-71
+64
+65    <permission
+65-->[androidx.core:core:1.13.1] C:\Users\DELL\.gradle\caches\transforms-4\ac490e0e2ee94e1e764ae78a7a9a1779\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+66        android:name="com.bulksms.smsmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+66-->[androidx.core:core:1.13.1] C:\Users\DELL\.gradle\caches\transforms-4\ac490e0e2ee94e1e764ae78a7a9a1779\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+67        android:protectionLevel="signature" />
+67-->[androidx.core:core:1.13.1] C:\Users\DELL\.gradle\caches\transforms-4\ac490e0e2ee94e1e764ae78a7a9a1779\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+68
+69    <uses-permission android:name="com.bulksms.smsmanager.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+69-->[androidx.core:core:1.13.1] C:\Users\DELL\.gradle\caches\transforms-4\ac490e0e2ee94e1e764ae78a7a9a1779\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+69-->[androidx.core:core:1.13.1] C:\Users\DELL\.gradle\caches\transforms-4\ac490e0e2ee94e1e764ae78a7a9a1779\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+70    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+70-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:16:5-79
+70-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:16:22-76
+71    <uses-permission
+71-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:17:5-19:38
+72        android:name="android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS"
+72-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:18:9-73
+73        android:maxSdkVersion="30" /> <!-- For Xiaomi devices to enable heads-up notifications as default (https://github.com/invertase/notifee/issues/296) -->
+73-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:19:9-35
+74    <uses-permission
+74-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:21:5-23:38
+75        android:name="android.permission.ACCESS_NOTIFICATION_POLICY"
+75-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:22:9-69
+76        android:minSdkVersion="23" />
+76-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:23:9-35
+77    <uses-permission android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE" />
+77-->[com.android.installreferrer:installreferrer:1.1.2] C:\Users\DELL\.gradle\caches\transforms-4\46b05c940f7207fd219de8f528cf03e3\transformed\jetified-installreferrer-1.1.2\AndroidManifest.xml:9:5-110
+77-->[com.android.installreferrer:installreferrer:1.1.2] C:\Users\DELL\.gradle\caches\transforms-4\46b05c940f7207fd219de8f528cf03e3\transformed\jetified-installreferrer-1.1.2\AndroidManifest.xml:9:22-107
+78
+79    <application
+79-->C:\bulksms\android\app\src\main\AndroidManifest.xml:53:3-171:17
+80        android:name="com.bulksms.smsmanager.MainApplication"
+80-->C:\bulksms\android\app\src\main\AndroidManifest.xml:54:7-38
+81        android:allowBackup="false"
+81-->C:\bulksms\android\app\src\main\AndroidManifest.xml:55:7-34
+82        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+82-->[androidx.core:core:1.13.1] C:\Users\DELL\.gradle\caches\transforms-4\ac490e0e2ee94e1e764ae78a7a9a1779\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
+83        android:extractNativeLibs="false"
+84        android:icon="@mipmap/ic_launcher"
+84-->C:\bulksms\android\app\src\main\AndroidManifest.xml:56:7-41
+85        android:label="@string/app_name"
+85-->C:\bulksms\android\app\src\main\AndroidManifest.xml:57:7-39
+86        android:networkSecurityConfig="@xml/network_security_config"
+86-->C:\bulksms\android\app\src\main\AndroidManifest.xml:61:7-67
+87        android:roundIcon="@mipmap/ic_launcher_round"
+87-->C:\bulksms\android\app\src\main\AndroidManifest.xml:58:7-52
+88        android:supportsRtl="true"
+88-->C:\bulksms\android\app\src\main\AndroidManifest.xml:59:7-33
+89        android:theme="@style/AppTheme"
+89-->C:\bulksms\android\app\src\main\AndroidManifest.xml:62:7-38
+90        android:usesCleartextTraffic="false" >
+90-->C:\bulksms\android\app\src\main\AndroidManifest.xml:60:7-43
+91        <meta-data
+91-->C:\bulksms\android\app\src\main\AndroidManifest.xml:64:5-125
+92            android:name="firebase_crashlytics_collection_enabled"
+92-->C:\bulksms\android\app\src\main\AndroidManifest.xml:64:16-70
+93            android:value="false" />
+93-->C:\bulksms\android\app\src\main\AndroidManifest.xml:64:71-92
+94        <meta-data
+94-->C:\bulksms\android\app\src\main\AndroidManifest.xml:65:5-126
+95            android:name="google_analytics_adid_collection_enabled"
+95-->C:\bulksms\android\app\src\main\AndroidManifest.xml:65:16-71
+96            android:value="false" />
+96-->C:\bulksms\android\app\src\main\AndroidManifest.xml:65:72-93
+97
+98        <activity
+98-->C:\bulksms\android\app\src\main\AndroidManifest.xml:67:5-92:16
+99            android:name="com.bulksms.smsmanager.MainActivity"
+99-->C:\bulksms\android\app\src\main\AndroidManifest.xml:68:9-37
+100            android:exported="true"
+100-->C:\bulksms\android\app\src\main\AndroidManifest.xml:69:9-32
+101            android:launchMode="singleTask"
+101-->C:\bulksms\android\app\src\main\AndroidManifest.xml:71:9-40
+102            android:windowSoftInputMode="adjustResize" >
+102-->C:\bulksms\android\app\src\main\AndroidManifest.xml:70:9-51
+103            <intent-filter>
+103-->C:\bulksms\android\app\src\main\AndroidManifest.xml:72:7-75:23
+104                <action android:name="android.intent.action.MAIN" />
+104-->C:\bulksms\android\app\src\main\AndroidManifest.xml:73:9-61
+104-->C:\bulksms\android\app\src\main\AndroidManifest.xml:73:17-58
+105
+106                <category android:name="android.intent.category.LAUNCHER" />
+106-->C:\bulksms\android\app\src\main\AndroidManifest.xml:74:9-69
+106-->C:\bulksms\android\app\src\main\AndroidManifest.xml:74:19-66
+107            </intent-filter>
+108            <intent-filter>
+108-->C:\bulksms\android\app\src\main\AndroidManifest.xml:76:7-81:23
+109                <action android:name="android.intent.action.VIEW" />
+109-->C:\bulksms\android\app\src\main\AndroidManifest.xml:8:7-59
+109-->C:\bulksms\android\app\src\main\AndroidManifest.xml:8:15-56
+110
+111                <category android:name="android.intent.category.DEFAULT" />
+111-->C:\bulksms\android\app\src\main\AndroidManifest.xml:78:9-68
+111-->C:\bulksms\android\app\src\main\AndroidManifest.xml:78:19-65
+112                <category android:name="android.intent.category.BROWSABLE" />
+112-->C:\bulksms\android\app\src\main\AndroidManifest.xml:79:9-70
+112-->C:\bulksms\android\app\src\main\AndroidManifest.xml:79:19-67
+113
+114                <data android:scheme="bulksms" />
+114-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+114-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+115            </intent-filter>
+116            <intent-filter>
+116-->C:\bulksms\android\app\src\main\AndroidManifest.xml:82:7-91:23
+117                <action android:name="android.intent.action.SEND" />
+117-->C:\bulksms\android\app\src\main\AndroidManifest.xml:83:9-61
+117-->C:\bulksms\android\app\src\main\AndroidManifest.xml:83:17-58
+118                <action android:name="android.intent.action.SENDTO" />
+118-->C:\bulksms\android\app\src\main\AndroidManifest.xml:84:9-63
+118-->C:\bulksms\android\app\src\main\AndroidManifest.xml:84:17-60
+119
+120                <category android:name="android.intent.category.DEFAULT" />
+120-->C:\bulksms\android\app\src\main\AndroidManifest.xml:78:9-68
+120-->C:\bulksms\android\app\src\main\AndroidManifest.xml:78:19-65
+121                <category android:name="android.intent.category.BROWSABLE" />
+121-->C:\bulksms\android\app\src\main\AndroidManifest.xml:79:9-70
+121-->C:\bulksms\android\app\src\main\AndroidManifest.xml:79:19-67
+122
+123                <data android:scheme="sms" />
+123-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+123-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+124                <data android:scheme="smsto" />
+124-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+124-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+125                <data android:scheme="mms" />
+125-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+125-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+126                <data android:scheme="mmsto" />
+126-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+126-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+127            </intent-filter>
+128        </activity>
+129
+130        <!-- SMS_DELIVER is required for default SMS app (Android 4.4+) -->
+131        <receiver
+131-->C:\bulksms\android\app\src\main\AndroidManifest.xml:95:5-101:16
+132            android:name="com.bulksms.smsmanager.SmsReceiver"
+132-->C:\bulksms\android\app\src\main\AndroidManifest.xml:95:15-42
+133            android:exported="true"
+133-->C:\bulksms\android\app\src\main\AndroidManifest.xml:96:15-38
+134            android:permission="android.permission.BROADCAST_SMS" >
+134-->C:\bulksms\android\app\src\main\AndroidManifest.xml:97:15-68
+135            <intent-filter android:priority="999" >
+135-->C:\bulksms\android\app\src\main\AndroidManifest.xml:98:7-100:23
+135-->C:\bulksms\android\app\src\main\AndroidManifest.xml:98:22-44
+136                <action android:name="android.provider.Telephony.SMS_DELIVER" />
+136-->C:\bulksms\android\app\src\main\AndroidManifest.xml:99:9-73
+136-->C:\bulksms\android\app\src\main\AndroidManifest.xml:99:17-70
+137            </intent-filter>
+138        </receiver>
+139
+140        <!-- SMS_RECEIVED allows receiving SMS when NOT the default app -->
+141        <!-- Must be separate receiver WITHOUT permission restriction -->
+142        <receiver
+142-->C:\bulksms\android\app\src\main\AndroidManifest.xml:105:5-110:16
+143            android:name="com.bulksms.smsmanager.SmsReceivedReceiver"
+143-->C:\bulksms\android\app\src\main\AndroidManifest.xml:105:15-50
+144            android:exported="true" >
+144-->C:\bulksms\android\app\src\main\AndroidManifest.xml:106:15-38
+145            <intent-filter android:priority="999" >
+145-->C:\bulksms\android\app\src\main\AndroidManifest.xml:107:7-109:23
+145-->C:\bulksms\android\app\src\main\AndroidManifest.xml:107:22-44
+146                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+146-->C:\bulksms\android\app\src\main\AndroidManifest.xml:108:9-74
+146-->C:\bulksms\android\app\src\main\AndroidManifest.xml:108:17-71
+147            </intent-filter>
+148        </receiver>
+149        <receiver
+149-->C:\bulksms\android\app\src\main\AndroidManifest.xml:112:5-118:16
+150            android:name="com.bulksms.smsmanager.IncomingSmsReceiver"
+150-->C:\bulksms\android\app\src\main\AndroidManifest.xml:112:15-50
+151            android:exported="true"
+151-->C:\bulksms\android\app\src\main\AndroidManifest.xml:113:15-38
+152            android:permission="android.permission.BROADCAST_SMS" >
+152-->C:\bulksms\android\app\src\main\AndroidManifest.xml:114:15-68
+153            <intent-filter>
+153-->C:\bulksms\android\app\src\main\AndroidManifest.xml:107:7-109:23
+154                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+154-->C:\bulksms\android\app\src\main\AndroidManifest.xml:108:9-74
+154-->C:\bulksms\android\app\src\main\AndroidManifest.xml:108:17-71
+155            </intent-filter>
+156        </receiver>
+157
+158        <!-- WAP_PUSH_DELIVER is required for default SMS app to receive MMS -->
+159        <receiver
+159-->C:\bulksms\android\app\src\main\AndroidManifest.xml:121:5-128:16
+160            android:name="com.bulksms.smsmanager.MmsReceiver"
+160-->C:\bulksms\android\app\src\main\AndroidManifest.xml:121:15-42
+161            android:exported="true"
+161-->C:\bulksms\android\app\src\main\AndroidManifest.xml:122:15-38
+162            android:permission="android.permission.BROADCAST_WAP_PUSH" >
+162-->C:\bulksms\android\app\src\main\AndroidManifest.xml:123:15-73
+163            <intent-filter>
+163-->C:\bulksms\android\app\src\main\AndroidManifest.xml:124:7-127:23
+164                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
+164-->C:\bulksms\android\app\src\main\AndroidManifest.xml:125:9-78
+164-->C:\bulksms\android\app\src\main\AndroidManifest.xml:125:17-75
+165
+166                <data android:mimeType="application/vnd.wap.mms-message" />
+166-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+166-->C:\bulksms\android\app\src\main\AndroidManifest.xml:126:15-65
+167            </intent-filter>
+168        </receiver>
+169        <receiver
+169-->C:\bulksms\android\app\src\main\AndroidManifest.xml:130:5-74
+170            android:name="com.bulksms.smsmanager.SMSStatusReceiver"
+170-->C:\bulksms\android\app\src\main\AndroidManifest.xml:130:15-48
+171            android:exported="true" />
+171-->C:\bulksms\android\app\src\main\AndroidManifest.xml:130:49-72
+172        <receiver
+172-->C:\bulksms\android\app\src\main\AndroidManifest.xml:132:5-137:16
+173            android:name="com.bulksms.smsmanager.BootReceiver"
+173-->C:\bulksms\android\app\src\main\AndroidManifest.xml:132:15-43
+174            android:enabled="true"
+174-->C:\bulksms\android\app\src\main\AndroidManifest.xml:132:44-66
+175            android:exported="true" >
+175-->C:\bulksms\android\app\src\main\AndroidManifest.xml:132:67-90
+176            <intent-filter>
+176-->C:\bulksms\android\app\src\main\AndroidManifest.xml:133:7-136:23
+177                <action android:name="android.intent.action.BOOT_COMPLETED" />
+177-->C:\bulksms\android\app\src\main\AndroidManifest.xml:134:9-71
+177-->C:\bulksms\android\app\src\main\AndroidManifest.xml:134:17-68
+178                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+178-->C:\bulksms\android\app\src\main\AndroidManifest.xml:135:9-78
+178-->C:\bulksms\android\app\src\main\AndroidManifest.xml:135:17-75
+179            </intent-filter>
+180        </receiver>
+181
+182        <service
+182-->C:\bulksms\android\app\src\main\AndroidManifest.xml:139:5-117
+183            android:name="com.bulksms.smsmanager.SmsListenerService"
+183-->C:\bulksms\android\app\src\main\AndroidManifest.xml:139:14-48
+184            android:exported="false"
+184-->C:\bulksms\android\app\src\main\AndroidManifest.xml:139:49-73
+185            android:foregroundServiceType="dataSync" />
+185-->C:\bulksms\android\app\src\main\AndroidManifest.xml:139:74-114
+186        <service
+186-->C:\bulksms\android\app\src\main\AndroidManifest.xml:141:5-152:15
+187            android:name="com.bulksms.smsmanager.HeadlessSmsSendService"
+187-->C:\bulksms\android\app\src\main\AndroidManifest.xml:141:14-52
+188            android:exported="true"
+188-->C:\bulksms\android\app\src\main\AndroidManifest.xml:143:14-37
+189            android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE" >
+189-->C:\bulksms\android\app\src\main\AndroidManifest.xml:142:14-78
+190            <intent-filter>
+190-->C:\bulksms\android\app\src\main\AndroidManifest.xml:144:7-151:23
+191                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
+191-->C:\bulksms\android\app\src\main\AndroidManifest.xml:145:9-76
+191-->C:\bulksms\android\app\src\main\AndroidManifest.xml:145:17-73
+192
+193                <category android:name="android.intent.category.DEFAULT" />
+193-->C:\bulksms\android\app\src\main\AndroidManifest.xml:78:9-68
+193-->C:\bulksms\android\app\src\main\AndroidManifest.xml:78:19-65
+194
+195                <data android:scheme="sms" />
+195-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+195-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+196                <data android:scheme="smsto" />
+196-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+196-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+197                <data android:scheme="mms" />
+197-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+197-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+198                <data android:scheme="mmsto" />
+198-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:7-38
+198-->C:\bulksms\android\app\src\main\AndroidManifest.xml:9:13-35
+199            </intent-filter>
+200        </service>
+201        <service
+201-->C:\bulksms\android\app\src\main\AndroidManifest.xml:154:5-158:52
+202            android:name="com.bulksms.smsmanager.BackgroundSmsSenderService"
+202-->C:\bulksms\android\app\src\main\AndroidManifest.xml:155:9-51
+203            android:enabled="false"
+203-->C:\bulksms\android\app\src\main\AndroidManifest.xml:157:9-32
+204            android:exported="false"
+204-->C:\bulksms\android\app\src\main\AndroidManifest.xml:156:9-33
+205            android:foregroundServiceType="dataSync" />
+205-->C:\bulksms\android\app\src\main\AndroidManifest.xml:158:9-49
+206        <service
+206-->C:\bulksms\android\app\src\main\AndroidManifest.xml:160:5-162:40
+207            android:name="com.bulksms.smsmanager.SMSRelayService"
+207-->C:\bulksms\android\app\src\main\AndroidManifest.xml:160:14-45
+208            android:exported="false"
+208-->C:\bulksms\android\app\src\main\AndroidManifest.xml:162:14-38
+209            android:foregroundServiceType="dataSync" />
+209-->C:\bulksms\android\app\src\main\AndroidManifest.xml:161:14-54
+210
+211        <!-- Required for WorkManager foreground service with DATA_SYNC type -->
+212        <service
+212-->C:\bulksms\android\app\src\main\AndroidManifest.xml:165:5-169:30
+213            android:name="androidx.work.impl.foreground.SystemForegroundService"
+213-->C:\bulksms\android\app\src\main\AndroidManifest.xml:166:9-77
+214            android:directBootAware="false"
+214-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:55:13-44
+215            android:enabled="@bool/enable_system_foreground_service_default"
+215-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:56:13-77
+216            android:exported="false"
+216-->C:\bulksms\android\app\src\main\AndroidManifest.xml:167:9-33
+217            android:foregroundServiceType="dataSync" />
+217-->C:\bulksms\android\app\src\main\AndroidManifest.xml:168:9-49
+218
+219        <meta-data
+219-->[:expo-modules-core] C:\bulksms\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:9-11:89
+220            android:name="org.unimodules.core.AppLoader#react-native-headless"
+220-->[:expo-modules-core] C:\bulksms\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:13-79
+221            android:value="expo.modules.adapters.react.apploader.RNHeadlessAppLoader" />
+221-->[:expo-modules-core] C:\bulksms\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:13-86
+222        <meta-data
+222-->[:expo-modules-core] C:\bulksms\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:12:9-15:45
+223            android:name="com.facebook.soloader.enabled"
+223-->[:expo-modules-core] C:\bulksms\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:13:13-57
+224            android:value="true" />
+224-->[:expo-modules-core] C:\bulksms\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:14:13-33
+225
+226        <provider
+226-->[:notifee_react-native] C:\bulksms\node_modules\@notifee\react-native\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:9-12:40
+227            android:name="io.invertase.notifee.NotifeeInitProvider"
+227-->[:notifee_react-native] C:\bulksms\node_modules\@notifee\react-native\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-68
+228            android:authorities="com.bulksms.smsmanager.notifee-init-provider"
+228-->[:notifee_react-native] C:\bulksms\node_modules\@notifee\react-native\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:13-73
+229            android:exported="false"
+229-->[:notifee_react-native] C:\bulksms\node_modules\@notifee\react-native\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:13-37
+230            android:initOrder="-100" />
+230-->[:notifee_react-native] C:\bulksms\node_modules\@notifee\react-native\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:12:13-37
+231        <provider
+231-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:35:9-43:20
+232            android:name="com.ReactNativeBlobUtil.Utils.FileProvider"
+232-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:36:13-70
+233            android:authorities="com.bulksms.smsmanager.provider"
+233-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:37:13-60
+234            android:exported="false"
+234-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:38:13-37
+235            android:grantUriPermissions="true" >
+235-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:39:13-47
+236            <meta-data
+236-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:40:13-42:58
+237                android:name="android.support.FILE_PROVIDER_PATHS"
+237-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:41:17-67
+238                android:resource="@xml/provider_paths" />
+238-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:42:17-55
+239        </provider>
+240        <provider
+240-->[:react-native-share] C:\bulksms\node_modules\react-native-share\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:9-16:20
+241            android:name="cl.json.RNShareFileProvider"
+241-->[:react-native-share] C:\bulksms\node_modules\react-native-share\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-55
+242            android:authorities="com.bulksms.smsmanager.rnshare.fileprovider"
+242-->[:react-native-share] C:\bulksms\node_modules\react-native-share\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:13-72
+243            android:exported="false"
+243-->[:react-native-share] C:\bulksms\node_modules\react-native-share\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:13-37
+244            android:grantUriPermissions="true" >
+244-->[:react-native-share] C:\bulksms\node_modules\react-native-share\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:12:13-47
+245            <meta-data
+245-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:40:13-42:58
+246                android:name="android.support.FILE_PROVIDER_PATHS"
+246-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:41:17-67
+247                android:resource="@xml/share_download_paths" />
+247-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:42:17-55
+248        </provider>
+249        <provider
+249-->[:react-native-webview] C:\bulksms\node_modules\react-native-webview\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:9-16:20
+250            android:name="com.reactnativecommunity.webview.RNCWebViewFileProvider"
+250-->[:react-native-webview] C:\bulksms\node_modules\react-native-webview\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-83
+251            android:authorities="com.bulksms.smsmanager.fileprovider"
+251-->[:react-native-webview] C:\bulksms\node_modules\react-native-webview\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:13-64
+252            android:exported="false"
+252-->[:react-native-webview] C:\bulksms\node_modules\react-native-webview\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:13-37
+253            android:grantUriPermissions="true" >
+253-->[:react-native-webview] C:\bulksms\node_modules\react-native-webview\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:12:13-47
+254            <meta-data
+254-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:40:13-42:58
+255                android:name="android.support.FILE_PROVIDER_PATHS"
+255-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:41:17-67
+256                android:resource="@xml/file_provider_paths" />
+256-->[:react-native-blob-util] C:\bulksms\node_modules\react-native-blob-util\android\build\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:42:17-55
+257        </provider>
+258        <provider
+258-->[androidx.emoji2:emoji2:1.3.0] C:\Users\DELL\.gradle\caches\transforms-4\19351c23190063468af24586548094d9\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+259            android:name="androidx.startup.InitializationProvider"
+259-->[androidx.emoji2:emoji2:1.3.0] C:\Users\DELL\.gradle\caches\transforms-4\19351c23190063468af24586548094d9\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:25:13-67
+260            android:authorities="com.bulksms.smsmanager.androidx-startup"
+260-->[androidx.emoji2:emoji2:1.3.0] C:\Users\DELL\.gradle\caches\transforms-4\19351c23190063468af24586548094d9\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:26:13-68
+261            android:exported="false" >
+261-->[androidx.emoji2:emoji2:1.3.0] C:\Users\DELL\.gradle\caches\transforms-4\19351c23190063468af24586548094d9\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:27:13-37
+262            <meta-data
+262-->[androidx.emoji2:emoji2:1.3.0] C:\Users\DELL\.gradle\caches\transforms-4\19351c23190063468af24586548094d9\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+263                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+263-->[androidx.emoji2:emoji2:1.3.0] C:\Users\DELL\.gradle\caches\transforms-4\19351c23190063468af24586548094d9\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:30:17-75
+264                android:value="androidx.startup" />
+264-->[androidx.emoji2:emoji2:1.3.0] C:\Users\DELL\.gradle\caches\transforms-4\19351c23190063468af24586548094d9\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:31:17-49
+265            <meta-data
+265-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:34:13-36:52
+266                android:name="androidx.work.WorkManagerInitializer"
+266-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:35:17-68
+267                android:value="androidx.startup" />
+267-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:36:17-49
+268            <meta-data
+268-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\DELL\.gradle\caches\transforms-4\5bb68fdd329407d82f2a7f7a4ec351a5\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:29:13-31:52
+269                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+269-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\DELL\.gradle\caches\transforms-4\5bb68fdd329407d82f2a7f7a4ec351a5\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:30:17-78
+270                android:value="androidx.startup" />
+270-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\DELL\.gradle\caches\transforms-4\5bb68fdd329407d82f2a7f7a4ec351a5\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:31:17-49
+271            <meta-data
+271-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+272                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+272-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+273                android:value="androidx.startup" />
+273-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+274        </provider>
+275
+276        <service
+276-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:39:9-45:35
+277            android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"
+277-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:40:13-88
+278            android:directBootAware="false"
+278-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:41:13-44
+279            android:enabled="@bool/enable_system_alarm_service_default"
+279-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:42:13-72
+280            android:exported="false" />
+280-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:43:13-37
+281        <service
+281-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:46:9-52:35
+282            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+282-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:47:13-84
+283            android:directBootAware="false"
+283-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:48:13-44
+284            android:enabled="@bool/enable_system_job_service_default"
+284-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:49:13-70
+285            android:exported="true"
+285-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:50:13-36
+286            android:permission="android.permission.BIND_JOB_SERVICE" />
+286-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:51:13-69
+287
+288        <receiver
+288-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:61:9-66:35
+289            android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver"
+289-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:62:13-88
+290            android:directBootAware="false"
+290-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:63:13-44
+291            android:enabled="true"
+291-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:64:13-35
+292            android:exported="false" />
+292-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:65:13-37
+293        <receiver
+293-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:67:9-77:20
+294            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryChargingProxy"
+294-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:68:13-106
+295            android:directBootAware="false"
+295-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:69:13-44
+296            android:enabled="false"
+296-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:70:13-36
+297            android:exported="false" >
+297-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:71:13-37
+298            <intent-filter>
+298-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:73:13-76:29
+299                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+299-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:74:17-87
+299-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:74:25-84
+300                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+300-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:75:17-90
+300-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:75:25-87
+301            </intent-filter>
+302        </receiver>
+303        <receiver
+303-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:78:9-88:20
+304            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryNotLowProxy"
+304-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:79:13-104
+305            android:directBootAware="false"
+305-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:80:13-44
+306            android:enabled="false"
+306-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:81:13-36
+307            android:exported="false" >
+307-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:82:13-37
+308            <intent-filter>
+308-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:84:13-87:29
+309                <action android:name="android.intent.action.BATTERY_OKAY" />
+309-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:85:17-77
+309-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:85:25-74
+310                <action android:name="android.intent.action.BATTERY_LOW" />
+310-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:86:17-76
+310-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:86:25-73
+311            </intent-filter>
+312        </receiver>
+313        <receiver
+313-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:89:9-99:20
+314            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$StorageNotLowProxy"
+314-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:90:13-104
+315            android:directBootAware="false"
+315-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:91:13-44
+316            android:enabled="false"
+316-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:92:13-36
+317            android:exported="false" >
+317-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:93:13-37
+318            <intent-filter>
+318-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:95:13-98:29
+319                <action android:name="android.intent.action.DEVICE_STORAGE_LOW" />
+319-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:96:17-83
+319-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:96:25-80
+320                <action android:name="android.intent.action.DEVICE_STORAGE_OK" />
+320-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:97:17-82
+320-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:97:25-79
+321            </intent-filter>
+322        </receiver>
+323        <receiver
+323-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:100:9-109:20
+324            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$NetworkStateProxy"
+324-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:101:13-103
+325            android:directBootAware="false"
+325-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:102:13-44
+326            android:enabled="false"
+326-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:103:13-36
+327            android:exported="false" >
+327-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:104:13-37
+328            <intent-filter>
+328-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:106:13-108:29
+329                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+329-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:107:17-79
+329-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:107:25-76
+330            </intent-filter>
+331        </receiver>
+332        <receiver
+332-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:110:9-121:20
+333            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
+333-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:111:13-88
+334            android:directBootAware="false"
+334-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:112:13-44
+335            android:enabled="false"
+335-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:113:13-36
+336            android:exported="false" >
+336-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:114:13-37
+337            <intent-filter>
+337-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:116:13-120:29
+338                <action android:name="android.intent.action.BOOT_COMPLETED" />
+338-->C:\bulksms\android\app\src\main\AndroidManifest.xml:134:9-71
+338-->C:\bulksms\android\app\src\main\AndroidManifest.xml:134:17-68
+339                <action android:name="android.intent.action.TIME_SET" />
+339-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:118:17-73
+339-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:118:25-70
+340                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+340-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:119:17-81
+340-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:119:25-78
+341            </intent-filter>
+342        </receiver>
+343        <receiver
+343-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:122:9-131:20
+344            android:name="androidx.work.impl.background.systemalarm.ConstraintProxyUpdateReceiver"
+344-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:123:13-99
+345            android:directBootAware="false"
+345-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:124:13-44
+346            android:enabled="@bool/enable_system_alarm_service_default"
+346-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:125:13-72
+347            android:exported="false" >
+347-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:126:13-37
+348            <intent-filter>
+348-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:128:13-130:29
+349                <action android:name="androidx.work.impl.background.systemalarm.UpdateProxies" />
+349-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:129:17-98
+349-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:129:25-95
+350            </intent-filter>
+351        </receiver>
+352        <receiver
+352-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:132:9-142:20
+353            android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+353-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:133:13-78
+354            android:directBootAware="false"
+354-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:134:13-44
+355            android:enabled="true"
+355-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:135:13-35
+356            android:exported="true"
+356-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:136:13-36
+357            android:permission="android.permission.DUMP" >
+357-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:137:13-57
+358            <intent-filter>
+358-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:139:13-141:29
+359                <action android:name="androidx.work.diagnostics.REQUEST_DIAGNOSTICS" />
+359-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:140:17-88
+359-->[androidx.work:work-runtime:2.9.0] C:\Users\DELL\.gradle\caches\transforms-4\825a33b614b7ee55b1084d781fc00f2e\transformed\work-runtime-2.9.0\AndroidManifest.xml:140:25-85
+360            </intent-filter>
+361        </receiver>
+362
+363        <activity
+363-->[com.google.android.gms:play-services-base:17.5.0] C:\Users\DELL\.gradle\caches\transforms-4\fd5762d94e1e89d829f4fa929c07d570\transformed\jetified-play-services-base-17.5.0\AndroidManifest.xml:23:9-26:75
+364            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+364-->[com.google.android.gms:play-services-base:17.5.0] C:\Users\DELL\.gradle\caches\transforms-4\fd5762d94e1e89d829f4fa929c07d570\transformed\jetified-play-services-base-17.5.0\AndroidManifest.xml:24:13-79
+365            android:exported="false"
+365-->[com.google.android.gms:play-services-base:17.5.0] C:\Users\DELL\.gradle\caches\transforms-4\fd5762d94e1e89d829f4fa929c07d570\transformed\jetified-play-services-base-17.5.0\AndroidManifest.xml:25:13-37
+366            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+366-->[com.google.android.gms:play-services-base:17.5.0] C:\Users\DELL\.gradle\caches\transforms-4\fd5762d94e1e89d829f4fa929c07d570\transformed\jetified-play-services-base-17.5.0\AndroidManifest.xml:26:13-72
+367
+368        <meta-data
+368-->[com.google.android.gms:play-services-basement:17.5.0] C:\Users\DELL\.gradle\caches\transforms-4\1fae42b4d963e1091ba039e199d8d9d2\transformed\jetified-play-services-basement-17.5.0\AndroidManifest.xml:23:9-25:69
+369            android:name="com.google.android.gms.version"
+369-->[com.google.android.gms:play-services-basement:17.5.0] C:\Users\DELL\.gradle\caches\transforms-4\1fae42b4d963e1091ba039e199d8d9d2\transformed\jetified-play-services-basement-17.5.0\AndroidManifest.xml:24:13-58
+370            android:value="@integer/google_play_services_version" />
+370-->[com.google.android.gms:play-services-basement:17.5.0] C:\Users\DELL\.gradle\caches\transforms-4\1fae42b4d963e1091ba039e199d8d9d2\transformed\jetified-play-services-basement-17.5.0\AndroidManifest.xml:25:13-66
+371
+372        <service
+372-->[androidx.room:room-runtime:2.6.1] C:\Users\DELL\.gradle\caches\transforms-4\b0f36316ce62c658d7a49316f2c4f5b5\transformed\room-runtime-2.6.1\AndroidManifest.xml:24:9-28:63
+373            android:name="androidx.room.MultiInstanceInvalidationService"
+373-->[androidx.room:room-runtime:2.6.1] C:\Users\DELL\.gradle\caches\transforms-4\b0f36316ce62c658d7a49316f2c4f5b5\transformed\room-runtime-2.6.1\AndroidManifest.xml:25:13-74
+374            android:directBootAware="true"
+374-->[androidx.room:room-runtime:2.6.1] C:\Users\DELL\.gradle\caches\transforms-4\b0f36316ce62c658d7a49316f2c4f5b5\transformed\room-runtime-2.6.1\AndroidManifest.xml:26:13-43
+375            android:exported="false" />
+375-->[androidx.room:room-runtime:2.6.1] C:\Users\DELL\.gradle\caches\transforms-4\b0f36316ce62c658d7a49316f2c4f5b5\transformed\room-runtime-2.6.1\AndroidManifest.xml:27:13-37
+376
+377        <receiver
+377-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+378            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+378-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+379            android:directBootAware="false"
+379-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+380            android:enabled="true"
+380-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+381            android:exported="true"
+381-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+382            android:permission="android.permission.DUMP" >
+382-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+383            <intent-filter>
+383-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+384                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+384-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+384-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+385            </intent-filter>
+386            <intent-filter>
+386-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+387                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+387-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+387-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+388            </intent-filter>
+389            <intent-filter>
+389-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+390                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+390-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+390-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+391            </intent-filter>
+392            <intent-filter>
+392-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+393                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+393-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+393-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\DELL\.gradle\caches\transforms-4\67b9f1e29602c285a86f1a3ae9aa0ca4\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
+394            </intent-filter>
+395        </receiver> <!-- Receiver Service -->
+396        <service
+396-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:28:9-30:40
+397            android:name="app.notifee.core.ReceiverService"
+397-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:29:13-60
+398            android:exported="false" />
+398-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:30:13-37
+399
+400        <activity
+400-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:32:9-38:75
+401            android:name="app.notifee.core.NotificationReceiverActivity"
+401-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:33:13-73
+402            android:excludeFromRecents="true"
+402-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:34:13-46
+403            android:exported="true"
+403-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:35:13-36
+404            android:noHistory="true"
+404-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:36:13-37
+405            android:taskAffinity=""
+405-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:37:13-36
+406            android:theme="@android:style/Theme.Translucent.NoTitleBar" /> <!-- Foreground Service -->
+406-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:38:13-72
+407        <service
+407-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:41:9-44:60
+408            android:name="app.notifee.core.ForegroundService"
+408-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:42:13-62
+409            android:exported="false"
+409-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:43:13-37
+410            android:foregroundServiceType="shortService" />
+410-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:44:13-57
+411
+412        <receiver
+412-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:46:9-54:20
+413            android:name="app.notifee.core.RebootBroadcastReceiver"
+413-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:47:13-68
+414            android:exported="false" >
+414-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:48:13-37
+415            <intent-filter>
+415-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:49:13-53:29
+416                <action android:name="android.intent.action.BOOT_COMPLETED" />
+416-->C:\bulksms\android\app\src\main\AndroidManifest.xml:134:9-71
+416-->C:\bulksms\android\app\src\main\AndroidManifest.xml:134:17-68
+417                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+417-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:51:17-82
+417-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:51:25-79
+418                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+418-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:52:17-82
+418-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:52:25-79
+419            </intent-filter>
+420        </receiver>
+421        <receiver
+421-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:55:9-61:20
+422            android:name="app.notifee.core.AlarmPermissionBroadcastReceiver"
+422-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:56:13-77
+423            android:exported="true" >
+423-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:57:13-36
+424            <intent-filter>
+424-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:58:13-60:29
+425                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+425-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:59:17-107
+425-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:59:25-104
+426            </intent-filter>
+427        </receiver>
+428        <receiver
+428-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:62:9-70:20
+429            android:name="app.notifee.core.NotificationAlarmReceiver"
+429-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:63:13-70
+430            android:exported="false" >
+430-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:64:13-37
+431            <intent-filter>
+431-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:49:13-53:29
+432                <action android:name="android.intent.action.BOOT_COMPLETED" />
+432-->C:\bulksms\android\app\src\main\AndroidManifest.xml:134:9-71
+432-->C:\bulksms\android\app\src\main\AndroidManifest.xml:134:17-68
+433                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+433-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:51:17-82
+433-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:51:25-79
+434                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+434-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:52:17-82
+434-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:52:25-79
+435            </intent-filter>
+436        </receiver> <!-- Broadcast Receiver -->
+437        <receiver
+437-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:73:9-81:20
+438            android:name="app.notifee.core.BlockStateBroadcastReceiver"
+438-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:74:13-72
+439            android:exported="false" >
+439-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:75:13-37
+440            <intent-filter>
+440-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:76:13-80:29
+441                <action android:name="android.app.action.APP_BLOCK_STATE_CHANGED" />
+441-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:77:17-85
+441-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:77:25-82
+442                <action android:name="android.app.action.NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED" />
+442-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:78:17-102
+442-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:78:25-99
+443                <action android:name="android.app.action.NOTIFICATION_CHANNEL_GROUP_BLOCK_STATE_CHANGED" />
+443-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:79:17-108
+443-->[app.notifee:core:202108261754] C:\Users\DELL\.gradle\caches\transforms-4\cf070f2348103fe90f561560a0d38804\transformed\jetified-core-202108261754\AndroidManifest.xml:79:25-105
+444            </intent-filter>
+445        </receiver>
+446    </application>
+447
+448</manifest>

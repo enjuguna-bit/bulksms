@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import {
     View,
     Text,
@@ -30,6 +30,31 @@ export default function BulkProTemplate({
     const templateLen = template.length;
     const templateSegments = Math.max(1, Math.ceil(templateLen / 160));
 
+    // Track cursor position for placeholder insertion
+    const [selection, setSelection] = useState({ start: 0, end: 0 });
+    const inputRef = useRef<TextInput>(null);
+
+    // Insert placeholder at cursor position
+    const insertPlaceholder = (placeholder: string) => {
+        const { start, end } = selection;
+        const beforeCursor = template.slice(0, start);
+        const afterCursor = template.slice(end);
+        const newTemplate = beforeCursor + placeholder + afterCursor;
+
+        setTemplate(newTemplate);
+
+        // Move cursor to after the inserted placeholder
+        const newCursorPosition = start + placeholder.length;
+        setSelection({ start: newCursorPosition, end: newCursorPosition });
+
+        // Focus back to input and set cursor position
+        setTimeout(() => {
+            inputRef.current?.setNativeProps({
+                selection: { start: newCursorPosition, end: newCursorPosition }
+            });
+        }, 0);
+    };
+
     return (
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.header}>
@@ -40,9 +65,12 @@ export default function BulkProTemplate({
             </View>
 
             <TextInput
+                ref={inputRef}
                 multiline
                 value={template}
                 onChangeText={setTemplate}
+                selection={selection}
+                onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
                 placeholder="Hello {name}, your balance is KES {amount}."
                 placeholderTextColor={colors.subText}
                 style={[
@@ -70,7 +98,7 @@ export default function BulkProTemplate({
                         <TouchableOpacity
                             key={field}
                             style={[styles.placeholderChip, { backgroundColor: colors.accent + '20', borderColor: colors.accent }]}
-                            onPress={() => setTemplate(template + `{${field}}`)}
+                            onPress={() => insertPlaceholder(`{${field}}`)}
                             disabled={disabled}
                         >
                             <Text style={[styles.placeholderText, { color: colors.accent }]}>
@@ -86,7 +114,7 @@ export default function BulkProTemplate({
                             <TouchableOpacity
                                 key={field}
                                 style={[styles.placeholderChip, { backgroundColor: colors.card, borderColor: colors.border }]}
-                                onPress={() => setTemplate(template + `{${field}}`)}
+                                onPress={() => insertPlaceholder(`{${field}}`)}
                                 disabled={disabled}
                             >
                                 <Text style={[styles.placeholderText, { color: colors.text }]}>

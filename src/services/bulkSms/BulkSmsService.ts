@@ -6,6 +6,7 @@
 import { Recipient } from '@/types/bulkSms';
 import { insertMessage, updateMessageStatus } from '@/db/messaging';
 import { UnifiedMessageManager } from '@/services/unifiedMessageService';
+import { PermissionsAndroid, Platform } from 'react-native';
 
 export interface SendConfig {
     sendSpeed: number; // milliseconds between messages
@@ -91,6 +92,27 @@ export class BulkSmsService {
         template: string,
         config: SendConfig
     ): AsyncGenerator<SendProgress> {
+        // Check SMS permissions
+        const hasSendPermission = await PermissionsAndroid.check(
+            PermissionsAndroid.PERMISSIONS.SEND_SMS
+        );
+        const hasDeliveryPermission = await PermissionsAndroid.check(
+            PermissionsAndroid.PERMISSIONS.RECEIVE_SMS
+        );
+        
+        if (!hasSendPermission) {
+            throw new Error('SEND_SMS permission required');
+        }
+
+        if (!hasDeliveryPermission) {
+            console.warn('Delivery tracking disabled - RECEIVE_SMS permission missing');
+        }
+
+        const isDefault = await UnifiedMessageManager.isDefault?.();
+        if (!isDefault && Platform.OS === 'android') {
+            console.warn('Delivery reports may be unreliable - app is not default SMS handler');
+        }
+
         const total = recipients.length;
         let sent = 0;
         let failed = 0;

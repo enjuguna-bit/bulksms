@@ -14,13 +14,12 @@ buildscript {
         maven { url("$rootDir/../node_modules/@react-native/gradle-plugin") }
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.1.1")
+        classpath("com.android.tools.build:gradle:8.2.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     }
 }
 
-// ⚡ FIX: Expose variables to rootProject.ext so libraries like op-sqlite can find them
 ext {
     buildToolsVersion = "33.0.2"
     minSdkVersion = 24
@@ -31,6 +30,8 @@ ext {
     reactNativeVersion = "0.76.9"
     REACT_NATIVE_VERSION = "0.76.9"
 }
+
+
 
 allprojects {
     repositories {
@@ -46,6 +47,10 @@ allprojects {
         resolutionStrategy {
             force "com.facebook.react:react-android:0.76.9"
             force "com.facebook.react:hermes-android:0.76.9"
+            force "org.jetbrains.kotlin:kotlin-stdlib:1.9.25"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.25"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.25"
+            force "org.jetbrains.kotlin:kotlin-stdlib-common:1.9.25"
             dependencySubstitution {
                 substitute module("com.facebook.react:react-native") using module("com.facebook.react:react-android:0.76.9")
             }

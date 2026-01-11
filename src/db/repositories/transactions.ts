@@ -20,7 +20,7 @@ export async function initTransactionsDatabase() {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    const _db = openDatabase(CONFIG.DB_TRANSACTIONS);
+    const _db = await openDatabase(CONFIG.DB_TRANSACTIONS);
 
     // Create table using exec() (multi-statement supported)
     // Wrapped in a promise to ensure it completes

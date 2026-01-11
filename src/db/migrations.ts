@@ -3,7 +3,7 @@
 // -------------------------------------------------------------
 // Provides version tracking and safe schema upgrades
 
-import { runQuery, executeTransaction } from './database/core';
+import { runQuery, executeTransaction, runInternalQuery } from './database/core';
 
 export interface Migration {
     version: number;
@@ -47,12 +47,12 @@ const MIGRATIONS: Migration[] = [
         run: async (db) => {
             try {
                 // Try to select the column first (cheap check)
-                await db.execute('SELECT priority FROM sms_queue LIMIT 1');
+                await runInternalQuery('SELECT priority FROM sms_queue LIMIT 1');
                 console.log('Migration v3: Column "priority" already exists. Skipping.');
             } catch (e) {
                 // Only runs if column is missing
                 console.log('Migration v3: Adding "priority" column...');
-                await db.execute('ALTER TABLE sms_queue ADD COLUMN priority INTEGER DEFAULT 0;');
+                await runInternalQuery('ALTER TABLE sms_queue ADD COLUMN priority INTEGER DEFAULT 0;');
             }
         }
     },
@@ -77,10 +77,24 @@ const MIGRATIONS: Migration[] = [
             'CREATE INDEX IF NOT EXISTS idx_campaigns_status ON bulk_campaigns(status)',
             'CREATE INDEX IF NOT EXISTS idx_campaigns_created ON bulk_campaigns(created_at DESC)',
 
-            // Add campaign tracking to messages
-            'ALTER TABLE conversation_messages ADD COLUMN variant_id TEXT',
-            'CREATE INDEX IF NOT EXISTS idx_msg_campaign ON conversation_messages(campaign_id)'
-        ]
+            // Add campaign tracking to messages - DEPRECATED/MOVED
+            // 'ALTER TABLE conversation_messages ADD COLUMN variant_id TEXT',
+            // 'CREATE INDEX IF NOT EXISTS idx_msg_campaign ON conversation_messages(campaign_id)'
+        ],
+        run: async (db) => {
+            // Safe migration for existing tables only
+            try {
+                // Check if table exists first
+                const result = await db.executeSql("SELECT name FROM sqlite_master WHERE type='table' AND name='conversation_messages'");
+                if (result[0].rows.length > 0) {
+                    await db.executeSql('ALTER TABLE conversation_messages ADD COLUMN campaign_id TEXT');
+                    await db.executeSql('ALTER TABLE conversation_messages ADD COLUMN variant_id TEXT');
+                    await db.executeSql('CREATE INDEX IF NOT EXISTS idx_msg_campaign ON conversation_messages(campaign_id)');
+                }
+            } catch (e) {
+                console.warn('[Migration v4] safely skipped conversation_messages update:', e);
+            }
+        }
     },
     {
         version: 5,
@@ -114,6 +128,23 @@ const MIGRATIONS: Migration[] = [
             'CREATE INDEX IF NOT EXISTS idx_parsed_tx_timestamp ON parsed_transactions(timestamp)',
             'CREATE INDEX IF NOT EXISTS idx_parsed_tx_provider ON parsed_transactions(provider)'
         ]
+    },
+    {
+        version: 7,
+        name: 'Scheduled SMS Table',
+        up: [
+            'DROP TABLE IF EXISTS scheduled_sms',
+            `CREATE TABLE IF NOT EXISTS scheduled_sms (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                address TEXT NOT NULL,
+                body TEXT NOT NULL,
+                scheduledTime INTEGER NOT NULL,
+                createdAt INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'sent', 'failed', 'cancelled'))
+            )`,
+            'CREATE INDEX IF NOT EXISTS idx_scheduled_sms_time ON scheduled_sms(scheduledTime)',
+            'CREATE INDEX IF NOT EXISTS idx_scheduled_sms_status ON scheduled_sms(status)'
+        ]
     }
 ];
 
@@ -123,7 +154,7 @@ const MIGRATIONS: Migration[] = [
 export async function getCurrentVersion(): Promise<number> {
     try {
         // Create version table if doesn't exist
-        await runQuery(`
+        await runInternalQuery(`
       CREATE TABLE IF NOT EXISTS database_version (
         version INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
@@ -131,7 +162,7 @@ export async function getCurrentVersion(): Promise<number> {
       )
     `);
 
-        const result = await runQuery(
+        const result = await runInternalQuery(
             'SELECT MAX(version) as version FROM database_version'
         );
 
@@ -176,7 +207,7 @@ export async function applyMigrations(db?: any): Promise<void> {
                         const statements = migration.up.map(sql => ({ sql, params: [] }));
                         await executeTransaction(statements);
                     }
-                    await runQuery(
+                    await runInternalQuery(
                         'INSERT INTO database_version (version, name, applied_at) VALUES (?, ?, ?)',
                         [migration.version, migration.name, Date.now()]
                     );
@@ -196,7 +227,7 @@ export async function applyMigrations(db?: any): Promise<void> {
                 if (migration.version === 2) {
                     console.warn('[Migrations] Skipping FTS migration due to error');
                     try {
-                        await runQuery(
+                        await runInternalQuery(
                             'INSERT INTO database_version (version, name, applied_at) VALUES (?, ?, ?)',
                             [migration.version, migration.name + ' (skipped)', Date.now()]
                         );
@@ -205,7 +236,16 @@ export async function applyMigrations(db?: any): Promise<void> {
                     }
                     return;
                 }
-                throw new Error(`Migration v${migration.version} failed: ${error}`);
+                let errorMsg = String(error);
+                if (typeof error === 'object' && error !== null) {
+                    try {
+                        // specialized handling for potential [object Object]
+                        errorMsg = JSON.stringify(error, Object.getOwnPropertyNames(error));
+                    } catch (e) {
+                        errorMsg = String(error);
+                    }
+                }
+                throw new Error(`Migration v${migration.version} failed: ${errorMsg}`);
             }
         }));
     }

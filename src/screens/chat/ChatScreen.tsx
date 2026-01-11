@@ -106,7 +106,9 @@ interface ChatScreenProps {
       initialMessage?: any;
     };
   };
-  navigation: any;
+  navigation: {
+    setOptions: (options: any) => void;
+  };
 }
 
 // Memoized message bubble wrapper
@@ -129,7 +131,7 @@ const MemoizedMessageBubble = memo(
       searchTerm={searchTerm}
     />
   ),
-  (prev, next) =>
+  (prev: { msg: Message; isMe: boolean; highlight: boolean; searchTerm: string }, next: { msg: Message; isMe: boolean; highlight: boolean; searchTerm: string }) =>
     prev.msg.id === next.msg.id &&
     prev.msg.status === next.msg.status && // Update on status change
     prev.highlight === next.highlight &&
@@ -156,14 +158,16 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 
   const { colors } = useThemeSettings();
 
-  // Debug validation
+  // Debug validation (only in debug builds)
   useEffect(() => {
-    DebugLogger.log('CHAT', 'Mounted with params:', params);
-    if (!address || address === 'Unknown') {
-      DebugLogger.error('CHAT', 'Critical: No address provided');
-    }
-    if (!threadId) {
-      DebugLogger.warn('CHAT', 'No threadID, using fallback');
+    if (__DEV__) {
+      DebugLogger.log('CHAT', 'Mounted with params:', params);
+      if (!address || address === 'Unknown') {
+        DebugLogger.error('CHAT', 'Critical: No address provided');
+      }
+      if (!threadId) {
+        DebugLogger.warn('CHAT', 'No threadID, using fallback');
+      }
     }
   }, [address, threadId, params]);
 
@@ -171,9 +175,42 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const { getThreadMessages, markThreadRead: markRead } = useMessages();
   const effectiveThreadId = threadId ?? address;
 
+  // Convert SmsMessageRecord to Message format if needed
+  const convertToMessage = useCallback((smsRecord: any): Message | null => {
+    if (!smsRecord || typeof smsRecord.id !== 'string') return null;
+
+    return {
+      id: parseInt(smsRecord.id.replace(/\D/g, '')) || Date.now(), // Convert string id to number
+      conversationId: 0, // Will be set properly when loaded from DB
+      messageId: smsRecord.id,
+      type: 'sms' as const,
+      direction: smsRecord.type === 'incoming' ? 'incoming' : 'outgoing',
+      address: smsRecord.address,
+      body: smsRecord.body,
+      timestamp: smsRecord.timestamp,
+      dateSent: smsRecord.timestamp,
+      read: true, // Assume read for initial message
+      status: smsRecord.type === 'incoming' ? 'received' : 'sent',
+      subscriptionId: 1,
+      locked: false,
+      deliveryReceiptCount: 0,
+      readReceiptCount: 0,
+      createdAt: smsRecord.timestamp,
+    };
+  }, []);
+
+  // Convert initialMessage to proper Message format
+  const initialMessages = useMemo(() => {
+    if (initialMessage) {
+      const converted = convertToMessage(initialMessage);
+      return converted ? [converted] : [];
+    }
+    return [];
+  }, [initialMessage, convertToMessage]);
+
   // ⚡ useReducer with deduplication prevents race conditions from polling + real-time events
   const [messageState, dispatch] = useReducer(messageReducer, {
-    messages: initialMessage ? [initialMessage] : [],
+    messages: initialMessages,
     lastUpdated: Date.now(),
   });
   const threadMessages = messageState.messages;
@@ -227,7 +264,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
           address={address}
           thread={{ messages: threadMessages } as any}
           onSearchToggle={() => {
-            setSearchOpen((p) => !p);
+            setSearchOpen((p: boolean) => !p);
             setQueryRaw("");
           }}
         />
@@ -283,7 +320,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         // ⚡ Rollback: Remove optimistic message on failure
         dispatch({
           type: 'SET_MESSAGES',
-          payload: messageState.messages.filter(m => m.id !== optimisticId)
+          payload: messageState.messages.filter((m: Message) => m.id !== optimisticId)
         });
 
         // ⚡ Actionable Error Handling
@@ -313,7 +350,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       // ⚡ Rollback: Remove optimistic message on error
       dispatch({
         type: 'SET_MESSAGES',
-        payload: messageState.messages.filter(m => m.id !== optimisticId)
+        payload: messageState.messages.filter((m: Message) => m.id !== optimisticId)
       });
       console.error("Send failed:", error);
     } finally {
@@ -324,7 +361,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   // Search Logic
   const highlightedMessages = useMemo(
     () =>
-      threadMessages.map((msg, idx) => ({
+      threadMessages.map((msg: Message, idx: number) => ({
         msg,
         highlight: query.length > 0 && (msg.body || "").toLowerCase().includes(query.toLowerCase()),
         searchTerm: query,
@@ -341,7 +378,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         data={threadMessages}
         inverted // Standard for chat apps
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item, index }) => {
+        renderItem={({ item, index }: { item: Message; index: number }) => {
           const highlighted = highlightedMessages[index];
           return (
             <MemoizedMessageBubble

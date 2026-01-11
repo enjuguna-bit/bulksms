@@ -1,0 +1,23 @@
+                        -HC:\bulksms\node_modules\react-native\ReactAndroid\cmake-utils\default-app-setup
+-DCMAKE_SYSTEM_NAME=Android
+-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+-DCMAKE_SYSTEM_VERSION=24
+-DANDROID_PLATFORM=android-24
+-DANDROID_ABI=arm64-v8a
+-DCMAKE_ANDROID_ARCH_ABI=arm64-v8a
+-DANDROID_NDK=C:\Users\DELL\AppData\Local\Android\Sdk\ndk\25.2.9519653
+-DCMAKE_ANDROID_NDK=C:\Users\DELL\AppData\Local\Android\Sdk\ndk\25.2.9519653
+-DCMAKE_TOOLCHAIN_FILE=C:\Users\DELL\AppData\Local\Android\Sdk\ndk\25.2.9519653\build\cmake\android.toolchain.cmake
+-DCMAKE_MAKE_PROGRAM=C:\ninja\ninja.exe
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=C:\bulksms\android\app\build\intermediates\cxx\Debug\21625w45\obj\arm64-v8a
+-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=C:\bulksms\android\app\build\intermediates\cxx\Debug\21625w45\obj\arm64-v8a
+-DCMAKE_BUILD_TYPE=Debug
+-DCMAKE_FIND_ROOT_PATH=C:\bulksms\android\app\.cxx\Debug\21625w45\prefab\arm64-v8a\prefab
+-BC:\bulksms\android\app\.cxx\Debug\21625w45\arm64-v8a
+-GNinja
+-DPROJECT_BUILD_DIR=C:\bulksms\android\app\build
+-DREACT_ANDROID_DIR=C:\bulksms\node_modules\react-native\ReactAndroid
+-DANDROID_STL=c++_shared
+-DANDROID_USE_LEGACY_TOOLCHAIN_FILE=ON
+                        Build command args: []
+                        Version: 2

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { InteractionManager } from "react-native";
 
 // Startup hooks
 import useTrial from "../../hooks/useTrial";
@@ -90,9 +91,16 @@ export function useStartupLoader() {
       const dbStartTime = Date.now();
 
       // 🛠 CRITICAL: Verify native libraries before database operations
-      const libCheck = await verifyNativeLibraries();
+      // ⚡ TIMEOUT: Guard against native check hangs (2s)
+      const libCheckPromise = verifyNativeLibraries();
+      const libCheckTimeout = new Promise<{ valid: boolean; error?: string }>((resolve) =>
+        setTimeout(() => resolve({ valid: true }), 2000)
+      );
+
+      const libCheck = await Promise.race([libCheckPromise, libCheckTimeout]);
+
       if (!libCheck.valid) {
-        throw new Error(`Native library verification failed: ${libCheck.error}`);
+        throw new Error(`STARTUP CRITICAL: Native library verification failed: ${libCheck.error}`);
       }
 
       // ⚡ FIX: Wait for DB with exponential backoff retry
@@ -109,11 +117,13 @@ export function useStartupLoader() {
       const dbDuration = Date.now() - dbStartTime;
       errorTracking.trackStartupEvent('db_init_completed', dbDuration);
 
-      // ⚡ PERFORMANCE FIX: Run cleanup in background (setTimeout)
-      // instead of awaiting it. This unblocks the splash screen immediately.
-      setTimeout(() => {
-        pruneOldLogs();
-      }, 3000);
+      // ⚡ PERFORMANCE FIX: Run cleanup in background (InteractionManager + Timeout)
+      // Unblocks splash screen and waits for navigation animations
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          pruneOldLogs();
+        }, 5000); // Increased to 5s
+      });
 
       // ⚡ QUICK VALIDATION: Only check critical tables (non-blocking)
       logStartupEvent("running_quick_validation");
@@ -131,19 +141,21 @@ export function useStartupLoader() {
         throw new Error(`Critical database tables missing: ${quickValidation.missingCriticalTables?.join(', ') || ''}`);
       }
 
-      // ⚡ PERFORMANCE: Run detailed validations in background (non-blocking)
-      setTimeout(async () => {
-        logStartupEvent("running_detailed_validation_background");
-        const detailedResults = await runDetailedValidations();
-        if (!detailedResults.valid) {
-          console.warn('[Startup] Background validation issues detected:', detailedResults);
-          errorTracking.trackStartupEvent('detailed_validation_failed', undefined, {
-            results: detailedResults.results,
-          });
-        } else {
-          errorTracking.trackStartupEvent('detailed_validation_passed');
-        }
-      }, 2000); // Run after 2 seconds
+      // ⚡ PERFORMANCE: Run detailed validations in background (delayed diagnostics)
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(async () => {
+          logStartupEvent("running_detailed_validation_background");
+          const detailedResults = await runDetailedValidations();
+          if (!detailedResults.valid) {
+            console.warn('[Startup] Background validation issues detected:', detailedResults);
+            errorTracking.trackStartupEvent('detailed_validation_failed', undefined, {
+              results: detailedResults.results,
+            });
+          } else {
+            errorTracking.trackStartupEvent('detailed_validation_passed');
+          }
+        }, 15000); // Run after 15 seconds (low priority)
+      });
 
       // ⚡ NEW: Progressive permission requests - essential first
       logStartupEvent("requesting_essential_permissions");
@@ -154,7 +166,16 @@ export function useStartupLoader() {
       const permManager = PermissionManager.getInstance();
 
       // Request only essential permissions (SEND_SMS, READ_SMS)
-      const essential = await permManager.requestEssentialPermissions();
+      // ⚡ TIMEOUT: Prevent startup hang if user ignores permission dialog (5s timeout)
+      const permPromise = permManager.requestEssentialPermissions();
+      const permTimeout = new Promise<{ hasMinimum: boolean; deniedPermissions: any[] }>((resolve) =>
+        setTimeout(() => {
+          logStartupEvent("permission_request_timed_out");
+          resolve({ hasMinimum: false, deniedPermissions: [] });
+        }, 5000)
+      );
+
+      const essential = await Promise.race([permPromise, permTimeout]);
 
       if (!essential.hasMinimum) {
         // User denied SEND_SMS - cannot proceed

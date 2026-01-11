@@ -39,11 +39,17 @@ export function StartupErrorDisplay({
     <View style={styles.center}>
       {/* Error Title with Severity */}
       <Text style={styles.errorTitle}>
-        {isOffline ? '📡 No Connection' : '⚠️ Startup Failed'}
+        {isOffline ? '📡 No Connection' : '⚠️ DIAGNOSTIC MODE ⚠️'}
       </Text>
 
       {/* Error Message */}
-      <Text style={styles.errorMessage}>{initError.message}</Text>
+      <Text style={styles.errorMessage}>
+        {typeof initError.message === 'string'
+          ? initError.message
+          : JSON.stringify(initError.message, null, 2)}
+        {'\n\nRaw Error Dump:\n'}
+        {JSON.stringify(initError, null, 2)}
+      </Text>
 
       {/* Severity Badge */}
       <View style={[styles.severityBadge, getSeverityStyle(initError.severity)]}>

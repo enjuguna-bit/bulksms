@@ -22,7 +22,7 @@ class BootReinitWorker(appContext: Context, workerParams: WorkerParameters) :
     Log.d(TAG, "🔄 Boot detected: Starting SMS Queue Processor")
     
     return try {
-      val intent = Intent(applicationContext, SmsQueueService::class.java)
+      val intent = Intent(applicationContext, SMSRelayService::class.java)
       
       // On Android 8+, we must start foreground service properly
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

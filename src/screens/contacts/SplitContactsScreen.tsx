@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useThemeSettings } from '@/theme/ThemeProvider';
 import Contacts from 'react-native-contacts';
-import * as Haptics from 'expo-haptics';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {
   CheckCircle,
   User,
@@ -24,7 +24,26 @@ import {
   Phone
 } from 'lucide-react-native';
 import { getCustomerContacts } from '@/services/customerService';
-import { Linking, Platform, PermissionsAndroid } from 'react-native';
+import { Linking, Platform, PermissionsAndroid, NativeModules } from 'react-native';
+import { SimSelectionDialog } from '@/components/SimSelectionDialog';
+
+const { CallManagerModule } = NativeModules as {
+  CallManagerModule: {
+    hasMultipleSims: () => Promise<boolean>;
+    getAvailableSims: () => Promise<Array<{
+      subscriptionId: number;
+      simSlotIndex: number;
+      displayName: string;
+      carrierName: string;
+      countryIso: string;
+      number: string;
+      mcc: number;
+      mnc: number;
+    }>>;
+    makeCall: (phoneNumber: string, subscriptionId: number | null) => Promise<{ success: boolean; message: string }>;
+    canMakeCalls: () => Promise<boolean>;
+  };
+};
 
 interface Contact {
   id: string;
@@ -46,6 +65,9 @@ export default function SplitContactsScreen({ navigation }: SplitContactsScreenP
   const [paneRatio, setPaneRatio] = useState(0.5);
   const pan = useState(new Animated.Value(0))[0];
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSimDialog, setShowSimDialog] = useState(false);
+  const [pendingCallNumber, setPendingCallNumber] = useState<string>('');
+  const [isCalling, setIsCalling] = useState(false);
 
   useEffect(() => {
     const loadContacts = async () => {
@@ -95,12 +117,12 @@ export default function SplitContactsScreen({ navigation }: SplitContactsScreenP
       const newRatio = Math.min(Math.max(0.3, paneRatio + gestureState.dx / 300), 0.7);
       setPaneRatio(newRatio);
       pan.setValue(0);
-      Haptics.selectionAsync();
+      ReactNativeHapticFeedback.trigger("selection");
     }
   });
 
   const handleContactPress = (contact: Contact) => {
-    Haptics.selectionAsync();
+    ReactNativeHapticFeedback.trigger("selection");
 
     // Navigate based on contact type
     if (contact.isCustomer) {
@@ -117,32 +139,61 @@ export default function SplitContactsScreen({ navigation }: SplitContactsScreenP
 
   const handleCallPress = async (phoneNumber: string) => {
     try {
-      // Check Android permission
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.CALL_PHONE,
-          {
-            title: 'Phone Call Permission',
-            message: 'This app needs access to make phone calls',
-            buttonPositive: 'OK'
-          }
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
-      }
+      setPendingCallNumber(phoneNumber);
+      setIsCalling(true);
 
-      const phoneUrl = `tel:${phoneNumber}`;
-      const supported = await Linking.canOpenURL(phoneUrl);
-
-      if (supported) {
-        await Linking.openURL(phoneUrl);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Check if device has multiple SIMs
+      const hasMultipleSims = await CallManagerModule.hasMultipleSims();
+      if (hasMultipleSims) {
+        setShowSimDialog(true);
       } else {
-        Alert.alert('Call not supported', 'Your device cannot make phone calls');
+        await makeCallWithSim(null);
       }
     } catch (error) {
       console.error('Call failed:', error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Call failed', 'Could not initiate the call');
+      ReactNativeHapticFeedback.trigger("notificationError");
+      Alert.alert(
+        "Call Failed",
+        "Could not initiate call. Please check your device settings."
+      );
+    } finally {
+      setIsCalling(false);
+    }
+  };
+
+  const handleSimSelected = async (subscriptionId: number | null) => {
+    setShowSimDialog(false);
+    await makeCallWithSim(subscriptionId);
+    setPendingCallNumber('');
+  };
+
+  const handleSimDialogCancel = () => {
+    setShowSimDialog(false);
+    setPendingCallNumber('');
+    setIsCalling(false);
+  };
+
+  const makeCallWithSim = async (subscriptionId: number | null) => {
+    try {
+      const result = await CallManagerModule.makeCall(pendingCallNumber, subscriptionId);
+      if (result.success) {
+        ReactNativeHapticFeedback.trigger("notificationSuccess");
+      } else {
+        ReactNativeHapticFeedback.trigger("notificationError");
+        Alert.alert(
+          "Call Failed",
+          result.message || "Could not initiate call"
+        );
+      }
+    } catch (error) {
+      console.error('Call failed:', error);
+      ReactNativeHapticFeedback.trigger("notificationError");
+      Alert.alert(
+        "Call Failed",
+        "Could not initiate call. Please check your device settings."
+      );
+    } finally {
+      setIsCalling(false);
     }
   };
 
@@ -256,6 +307,12 @@ export default function SplitContactsScreen({ navigation }: SplitContactsScreenP
           />
         </View>
       </View>
+
+      <SimSelectionDialog
+        visible={showSimDialog}
+        onSelect={handleSimSelected}
+        onCancel={handleSimDialogCancel}
+      />
     </View>
   );
 }

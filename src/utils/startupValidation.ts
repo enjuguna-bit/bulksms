@@ -465,13 +465,7 @@ export async function runStartupValidations(): Promise<{
 // ---------------------------------------------------------
 // 🛠 Native Library Verification
 // ---------------------------------------------------------
+// Native library verification removed - unreliable and unnecessary as DB open will fail if lib is missing
 export async function verifyNativeLibraries(): Promise<{ valid: boolean, error?: string }> {
-    // Note: RNLibChecker native module is not implemented in this project.
-    // The actual native library loading is handled by React Native's module system.
-    // If critical native libraries are missing, the app will fail during module loading,
-    // which happens before this check would run anyway.
-    // 
-    // This function now always returns valid to avoid false positives.
-    safeLog.info('Startup', 'Native library verification skipped (handled by module loader)');
     return { valid: true };
 }

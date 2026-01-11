@@ -12,9 +12,9 @@ export function useSafeRouter() {
   const navigation = useNavigation<any>();
   const [ready, setReady] = useState(false);
 
-  // Mark router ready shortly after mount (reduced from 150ms to 50ms)
+  // Mark router ready shortly after mount (reduced from 150ms to 10ms for release compatibility)
   useEffect(() => {
-    const timer = setTimeout(() => setReady(true), 50);
+    const timer = setTimeout(() => setReady(true), __DEV__ ? 50 : 10);
     return () => clearTimeout(timer);
   }, []);
 
@@ -28,6 +28,15 @@ export function useSafeRouter() {
 
       if (!ready) {
         console.warn(`[useSafeRouter] push blocked until ready (${screen})`);
+        // In release builds, try again after a short delay
+        if (!__DEV__) {
+          setTimeout(() => {
+            if (ready) {
+              console.log(`[NAV] Retry navigation to ${screen}`);
+              navigation.navigate(screen, params);
+            }
+          }, 100);
+        }
         return;
       }
 
@@ -47,7 +56,10 @@ export function useSafeRouter() {
       } catch (e) {
         console.error("[useSafeRouter] push error:", e);
         console.error("[useSafeRouter] Screen:", screen, "Params:", safeParams);
-        // Fallback?
+        // In release builds, show user-friendly error
+        if (!__DEV__) {
+          alert(`Navigation failed. Please try again.`);
+        }
       }
     },
     [navigation, ready]

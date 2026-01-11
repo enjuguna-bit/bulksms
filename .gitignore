@@ -1,2 +1,41 @@
-node_modules
- b
+# Dependencies
+node_modules/
+
+# React Native
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.watchmanconfig
+android/app/src/main/assets/index.android.bundle
+
+# Production
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# MacOS
+.DS_Store
+
+# Android
+android/key.properties
+android/keystore.properties
+android/local.properties
+android/app/build/
+android/.gradle
+android/app/.cxx/
+*.keystore
+*.jks
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.iml
+
+# Testing
+coverage/
+
+# Log files
+*.log
